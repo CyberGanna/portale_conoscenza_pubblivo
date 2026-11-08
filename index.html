@@ -1316,6 +1316,40 @@ async function initData(){
   }, () => {});
 }
 
+// Una volta per dispositivo: porta all'infinito i verbi coniugati già salvati (traduzioni e voci di lingua)
+async function lemmaFix(){
+  try { if (localStorage.getItem("pc_lemma1") || !S.db || !aiReady()) return; } catch { return; }
+  const trs = S.trs.filter(t => t.testo && t.testo.trim().split(/\s+/).length <= 3);
+  const notes = S.notes.filter(n => norm(n.categoria) === "lingua" && n.titolo && n.titolo.trim().split(/\s+/).length <= 3);
+  if (!trs.length && !notes.length) { try { localStorage.setItem("pc_lemma1", "1"); } catch {} return; }
+  const items = [...trs.map(t => ({ id: "t:" + t.id, testo: t.testo, lingua: t.da || "?" })), ...notes.map(n => ({ id: "n:" + n.id, testo: n.titolo, lingua: "it" }))];
+  const prompt = `Per ogni voce qui sotto, dimmi se è un VERBO CONIUGATO (una persona, un tempo, un participio o gerundio usato come verbo). Ignora sostantivi, aggettivi, plurali e verbi già all'infinito.
+${JSON.stringify(items)}
+Rispondi solo con JSON: {"verbi": [{"id": "id identico", "infinito": "infinito (inglese senza 'to', italiano es. 'mangiare'; stessa maiuscola iniziale dell'originale)", "traduzione": "traduzione dell'infinito nell'altra lingua (solo per id che iniziano con t:)", "forma": "che forma era, es. «went» è il passato semplice di «go»"}]}
+Se nessuna voce è un verbo coniugato rispondi {"verbi": []}.`;
+  try {
+    const r = await S.sample.json(prompt, { modelTier: "default" });
+    let n = 0;
+    for (const v of (r.verbi || [])) {
+      const inf = String(v.infinito || "").trim(), id = String(v.id || "");
+      if (!inf) continue;
+      if (id.startsWith("t:")) {
+        const t = S.trs.find(x => x.id === id.slice(2)); if (!t || norm(t.testo) === norm(inf)) continue;
+        const patch = { testo: inf, scritto: t.scritto || t.testo };
+        if (v.traduzione) patch.traduzione = String(v.traduzione);
+        if (v.forma) patch.nota = String(v.forma) + (t.nota ? " " + t.nota : "");
+        await S.db.doc("translations/" + t.id).update(patch); n++;
+      } else if (id.startsWith("n:")) {
+        const x = S.notes.find(y => y.id === id.slice(2)); if (!x || norm(x.titolo) === norm(inf)) continue;
+        await patchNote(x.id, { titolo: inf.charAt(0).toUpperCase() + inf.slice(1), scritto: x.scritto || x.titolo }); n++;
+      }
+    }
+    localStorage.setItem("pc_lemma1", "1");
+    if (n) toast(`Ho portato all'infinito ${n === 1 ? "1 verbo già salvato" : n + " verbi già salvati"}`);
+  } catch {}
+}
+setTimeout(lemmaFix, 12000);
+
 async function saveNote(data){
   if (S.db) { const ref = await S.db.collection("notes").add(data); return ref.id; }
   const id = "local-" + Date.now(); ingest([{ id, ...data }, ...S.notes]); return id;
@@ -1555,7 +1589,7 @@ Se esistono legami reali con queste voci, scrivi quei titoli identici dentro "co
 
 Rispondi solo con un oggetto JSON con questa forma esatta:
 {
-  "titolo": "nome canonico breve del concetto (per una citazione: un titolo breve che la identifica)",
+  "titolo": "nome canonico breve del concetto (per una citazione: un titolo breve che la identifica; se l'utente ha scritto un verbo coniugato, es. 'erogava', 'annettono', 'secreto', il titolo è il verbo all'INFINITO, es. 'Erogare', e nella spiegazione dici che forma aveva scritto)",
   "tipo": "termine | citazione | frase | concetto | persona | evento | opera | luogo",
   "autore": "autore della citazione o della frase, altrimenti stringa vuota",
   "categoria": "una parola",
@@ -2226,6 +2260,7 @@ async function translate(){
   const prompt = `Sei un traduttore e insegnante di inglese per un utente italiano. Traduci ${dir}.
 Testo: """${text}"""
 Il testo può contenere errori di battitura o di ortografia (es. "beatiful", "acommodation", "perchè" scritto male, lettere invertite). Prima capisci quale parola o frase l'utente intendeva, correggila e traduci la versione corretta. Non cambiare il significato né riformulare: correggi solo l'ortografia.
+VERBI: se il testo è un singolo verbo coniugato (una persona, un tempo, un participio o gerundio usato come verbo: es. "overcame", "went", "has eaten", "mangiavo", "andremo", "ho visto"), metti in "corretto" il verbo all'INFINITO (inglese senza "to": "overcome", "go", "eat"; italiano: "mangiare", "andare", "vedere"), traduci l'infinito (es. "go" → "andare") e in "nota" spiega che forma aveva scritto (es. «went» è il passato semplice di «go»). Sostantivi e aggettivi restano come sono.
 Rispondi solo con JSON:
 {"corretto": "il testo originale con l'ortografia corretta, identico se era già giusto", "da": "en o it", "a": "it o en", "traduzione": "la traduzione migliore e naturale", "alternative": ["1-3 alternative con sfumature diverse, se esistono"], "categoria": "per una parola singola: sostantivo/verbo/aggettivo/espressione…; per una frase: frase", "pronuncia": "pronuncia della parte in inglese, in forma semplice leggibile da un italiano (es. 'sé-ren-dì-pi-ti'), stringa vuota per frasi lunghe", "nota": "1-3 frasi in italiano su uso, registro, sfumature o false friend", "esempi": [{"originale": "frase d'esempio in inglese", "tradotto": "la stessa in italiano"}, {"originale": "...", "tradotto": "..."}]}`;
   try {
@@ -2234,7 +2269,7 @@ Rispondi solo con JSON:
     const tr = { testo: corr ? fixed : text, ...(corr ? { scritto: text } : {}), da: String(r.da || ""), a: String(r.a || ""), traduzione: String(r.traduzione || ""), alternative: (r.alternative || []).map(String).slice(0, 4), categoria: String(r.categoria || ""), pronuncia: String(r.pronuncia || ""), nota: String(r.nota || ""), esempi: (r.esempi || []).slice(0, 3).map(x => ({ originale: String(x.originale || ""), tradotto: String(x.tradotto || "") })), createdAt: Date.now() };
     renderTr(tr);
     $("#tr-in").value = "";
-    if (corr) toast(`Corretto: «${text}» → «${fixed}»`);
+    if (corr) toast(`Salvato come «${fixed}» (avevi scritto «${text}»)`);
     if (S.db) S.db.collection("translations").add(tr).catch(() => {});
     else { S.trs = [{ id: "local-" + Date.now(), ...tr }, ...S.trs]; renderTrHist(); buildGraph(); renderArchive(); }
   } catch (e) {
