@@ -1423,6 +1423,8 @@ function renderNote(n){
   const date = n.createdAt ? new Date(n.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "";
   const showInput = n.input && !(n.foto && n.input === "Foto") && norm(n.input) !== norm(n.titolo);
   const body = $("#d-body");
+  const same = body.dataset.note === n.id, keep = same ? body.scrollTop : 0;
+  body.dataset.note = n.id;
   body.style.setProperty("--c", color);
   body.classList.toggle("is-short", S.mode === "short");
   if (S.mode === "short" && !n.in_breve?.length) setTimeout(() => genBrief(n.id), 0);
@@ -1454,7 +1456,8 @@ function renderNote(n){
       <form class="qa-form" id="qa-form"><input id="qa-in" placeholder="Fai una domanda su ${esc(n.titolo)}" autocomplete="off"><button class="btn" type="submit">Chiedi</button></form></div>
     ${n.tags?.length ? `<div class="tags">${n.tags.map(t => `<span>#${esc(t)}</span>`).join("")}</div>` : ""}
     <div class="d-actions"><button class="btn danger" id="del" type="button">Elimina voce</button></div>`;
-  body.scrollTop = 0;
+  body.scrollTop = keep;
+  if (same) requestAnimationFrame(() => { body.scrollTop = keep; setTimeout(() => { if (body.dataset.note === n.id && body.scrollTop < keep) body.scrollTop = keep; }, 400); });
   if (n.schema && n.schema.v !== 5 && aiReady() && !S.redo.has(n.id)) { S.redo.add(n.id); setTimeout(() => { if (S.selected === n.id) genSchema(true); }, 60); }
 }
 const aiReady = () => { try { return !!S.sample && (!window.claude?.__standalone || !!(localStorage.getItem("pc_groq") || localStorage.getItem("pc_openrouter") || localStorage.getItem("pc_ollama"))); } catch { return false; } };
@@ -1636,6 +1639,7 @@ async function genSchema(auto){
   if (!btn || !box) return;
   btn.disabled = true;
   const prev = box.innerHTML;
+  box.style.minHeight = box.offsetHeight + "px";
   box.innerHTML = `<div class="inline-think"><span class="mini"></span>${auto ? "Rifaccio lo schema nel nuovo stile…" : "Disegno l'infografica…"}</div>`;
   const prompt = `Sei un designer di infografiche. Trasforma questo contenuto in UNA infografica breve, chiara, fedele e bella da vedere, che fa capire l'argomento a colpo d'occhio (metodo "Visual MIT": un solo visual, etichette brevi, poi massimo tre frasi).
 Argomento: "${n.titolo}" (${catName(n.categoria)}${n.autore ? ", " + n.autore : ""})
@@ -1715,12 +1719,12 @@ function igNormalize(r){
   }
   return { v: 5, titolo: str(r.titolo, 80), template: t, data, spiegazione: (Array.isArray(r.spiegazione) ? r.spiegazione : [r.spiegazione]).map(x => str(x, 260)).filter(Boolean).slice(0, 3), inferenze: str(r.inferenze, 260) };
 }
-let igLoading = null;
+let igLoading = null; const IG_CACHE = new Map();
 const loadIG = () => window.AntVInfographic ? Promise.resolve() : (igLoading ||= new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = IG_URL; sc.onload = res; sc.onerror = () => { igLoading = null; rej(new Error("lib")); }; document.head.appendChild(sc); }));
 function igHTML(s, color){
   const frasi = (Array.isArray(s.spiegazione) ? s.spiegazione : []).filter(Boolean);
   return `<div class="schema xg mit ig" style="--c:${color}" title="Tocca per ingrandire">
-    <div class="ig-fig" data-ig="${esc(JSON.stringify({ template: s.template, data: s.data }))}"><div class="inline-think"><span class="mini"></span>Disegno l'infografica…</div></div>
+    ${(() => { const key = JSON.stringify({ template: s.template, data: s.data }), hit = IG_CACHE.get(key); return hit ? `<div class="ig-fig" data-done="1">${hit}</div>` : `<div class="ig-fig" data-ig="${esc(key)}"><div class="inline-think"><span class="mini"></span>Disegno l'infografica…</div></div>`; })()}
     ${frasi.length ? `<div class="mit-exp">${frasi.map(f => `<p>${esc(f)}</p>`).join("")}</div>` : ""}
     ${s.inferenze ? `<p class="mit-inf"><b>Da prendere con cautela:</b> ${esc(s.inferenze)}</p>` : ""}
   </div>`;
@@ -1735,6 +1739,8 @@ async function hydrateIG(el){
     await ig.render();
     const svg = el.querySelector("svg"); if (!svg) throw new Error("vuoto");
     svg.removeAttribute("width"); svg.removeAttribute("height"); svg.style.width = "100%"; svg.style.height = "auto";
+    if (IG_CACHE.size > 40) IG_CACHE.clear();
+    IG_CACHE.set(el.dataset.ig, el.innerHTML);
   } catch (e) { el.innerHTML = `<p class="err" style="padding:14px">Non riesco a disegnare l'infografica. Controlla la connessione e riapri la voce, oppure premi Rigenera schema.</p>`; }
 }
 new MutationObserver(() => document.querySelectorAll(".ig-fig[data-ig]:not([data-done])").forEach(hydrateIG)).observe(document.documentElement, { childList: true, subtree: true });
