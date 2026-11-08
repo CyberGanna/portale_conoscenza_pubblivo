@@ -512,7 +512,9 @@ const LSset = (k, v) => { try { localStorage.setItem("pc_" + k, v); } catch {} }
 const CFG = () => ({
   groq: LS("groq"), openrouter: LS("openrouter"),
   ollama: LS("ollama") || "", ollamaModel: LS("ollamaModel") || "qwen2.5:7b",
+  gh: LS("gh"), repo: LS("repo") || "CyberGanna/portale-dati",
 });
+const SITE = "https://cyberganna.github.io/portale_conoscenza_pubblivo/";
 const MODELS = {
   groq: { quick: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"], default: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3-32b"], complex: ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "qwen/qwen3-32b"], vision: ["meta-llama/llama-4-scout-17b-16e-instruct", "meta-llama/llama-4-maverick-17b-128e-instruct"] },
   openrouter: { quick: "meta-llama/llama-3.3-70b-instruct:free", default: "meta-llama/llama-3.3-70b-instruct:free", complex: "deepseek/deepseek-chat-v3-0324:free", vision: "meta-llama/llama-4-scout:free" },
@@ -626,7 +628,10 @@ sample.limits = async () => ({ images: { mediaTypes: ["image/jpeg", "image/png",
 const DBN = "portale-conoscenza", ST = "docs";
 const idb = new Promise((res, rej) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore(ST); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 const mem = new Map(); let loaded = null; const subs = new Set();
-const load = () => loaded ||= idb.then(db => new Promise((res, rej) => { const tx = db.transaction(ST), st = tx.objectStore(ST), rq = st.openCursor(); rq.onsuccess = () => { const c = rq.result; if (c) { mem.set(c.key, c.value); c.continue(); } else res(); }; rq.onerror = () => rej(rq.error); })).then(async () => {
+const META = "~meta"; let meta = { t: {}, del: {} };
+const saveMeta = () => put(META, meta);
+const touch = (k, del) => { const now = Date.now(); if (del) { meta.del[k] = now; delete meta.t[k]; } else { meta.t[k] = now; delete meta.del[k]; } };
+const load = () => loaded ||= idb.then(db => new Promise((res, rej) => { const tx = db.transaction(ST), st = tx.objectStore(ST), rq = st.openCursor(); rq.onsuccess = () => { const c = rq.result; if (c) { if (c.key === META) meta = { t: {}, del: {}, ...c.value }; else mem.set(c.key, c.value); c.continue(); } else res(); }; rq.onerror = () => rej(rq.error); })).then(async () => {
   /* primo avvio: carica l'archivio che avevi su claude.ai */
   const seed = window.__PC_SEED; if (!seed?.docs || LS("seeded")) return;
   const fresh = Object.entries(seed.docs).filter(([k]) => !mem.has(k));
@@ -637,7 +642,7 @@ const load = () => loaded ||= idb.then(db => new Promise((res, rej) => { const t
 const put = (k, v) => idb.then(db => new Promise((res, rej) => { const tx = db.transaction(ST, "readwrite"); v === undefined ? tx.objectStore(ST).delete(k) : tx.objectStore(ST).put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }));
 const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(10)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
 const parent = k => k.slice(0, k.lastIndexOf("/"));
-let fireT; const fire = () => { clearTimeout(fireT); fireT = setTimeout(() => subs.forEach(s => s()), 0); };
+let fireT; const fire = (fromSync) => { clearTimeout(fireT); fireT = setTimeout(() => subs.forEach(s => s()), 0); if (!fromSync) scheduleSync(); };
 function query(col, ord, lim){
   let docs = [...mem.entries()].filter(([k]) => parent(k) === col).map(([k, v]) => ({ id: k.slice(col.length + 1), v }));
   if (ord) docs.sort((a, b) => ((a.v[ord.f] ?? 0) > (b.v[ord.f] ?? 0) ? 1 : (a.v[ord.f] ?? 0) < (b.v[ord.f] ?? 0) ? -1 : 0) * (ord.d === "desc" ? -1 : 1));
@@ -649,19 +654,97 @@ function coll(col, ord, lim){
     orderBy: (f, d = "asc") => coll(col, { f, d }, lim),
     limit: n => coll(col, ord, n),
     get: async () => { await load(); return query(col, ord, lim); },
-    add: async data => { await load(); const id = rid(), k = col + "/" + id; mem.set(k, structuredClone(data)); await put(k, mem.get(k)); fire(); return { id }; },
+    add: async data => { await load(); const id = rid(), k = col + "/" + id; mem.set(k, structuredClone(data)); touch(k); await put(k, mem.get(k)); await saveMeta(); fire(); return { id }; },
     onSnapshot(cb, onErr){ let on = true; const s = () => on && cb(query(col, ord, lim)); load().then(() => { subs.add(s); s(); }, e => onErr?.(e)); return () => { on = false; subs.delete(s); }; },
   };
 }
 function doc(path){
   return {
     get: async () => { await load(); const v = mem.get(path); return { exists: !!v, id: path.split("/").pop(), data: () => v && structuredClone(v) }; },
-    set: async data => { await load(); mem.set(path, structuredClone(data)); await put(path, mem.get(path)); fire(); },
-    update: async patch => { await load(); const v = mem.get(path); if (!v) throw err("not_found"); for (const [f, x] of Object.entries(patch)) { if (x && x.__delete__) delete v[f]; else v[f] = structuredClone(x); } await put(path, v); fire(); },
-    delete: async () => { await load(); const pre = path + "/"; for (const k of [...mem.keys()]) if (k === path || k.startsWith(pre)) { mem.delete(k); await put(k, undefined); } fire(); },
+    set: async data => { await load(); mem.set(path, structuredClone(data)); touch(path); await put(path, mem.get(path)); await saveMeta(); fire(); },
+    update: async patch => { await load(); const v = mem.get(path); if (!v) throw err("not_found"); for (const [f, x] of Object.entries(patch)) { if (x && x.__delete__) delete v[f]; else v[f] = structuredClone(x); } touch(path); await put(path, v); await saveMeta(); fire(); },
+    delete: async () => { await load(); const pre = path + "/"; for (const k of [...mem.keys()]) if (k === path || k.startsWith(pre)) { mem.delete(k); touch(k, true); await put(k, undefined); } await saveMeta(); fire(); },
   };
 }
 const db = { collection: c => coll(c), doc };
+
+/* ---------- sincronizzazione tra dispositivi (repository GitHub privata) ---------- */
+const FILE = "archivio.json";
+const b64enc = str => { const u = new TextEncoder().encode(str); let bin = ""; for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(bin); };
+const b64dec = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), c => c.charCodeAt(0)));
+const SYNC = { busy: false, again: false, timer: null, last: 0, status: "", err: "" };
+const setSync = (status, e) => { SYNC.status = status; SYNC.err = e || ""; const el = document.getElementById("pc-sync-st"); if (el) el.textContent = status + (e ? ": " + e : ""); const dot = document.getElementById("pc-gear"); if (dot) dot.dataset.sync = e ? "err" : status === "Sincronizzato" ? "ok" : ""; };
+function scheduleSync(ms = 3000){ if (!CFG().gh) return; clearTimeout(SYNC.timer); SYNC.timer = setTimeout(sync, ms); }
+async function gh(path, opt = {}){
+  const c = CFG();
+  const r = await fetch(`https://api.github.com/repos/${c.repo}/contents/${path}${opt.method ? "" : "?t=" + Date.now()}`, { cache: "no-store", ...opt, headers: { Authorization: "Bearer " + c.gh, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opt.headers || {}) } });
+  return r;
+}
+async function sync(){
+  const c = CFG(); if (!c.gh || !c.repo) return;
+  if (SYNC.busy) { SYNC.again = true; return; }
+  SYNC.busy = true; setSync("Sincronizzo…");
+  try {
+    await load();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let sha = null, remote = { docs: {}, t: {}, del: {} };
+      const g = await gh(FILE);
+      if (g.status === 401 || g.status === 403) throw new Error("token GitHub non valido o senza permesso sulla repository");
+      if (g.status === 404) { const rr = await gh(""); if (rr.status === 404) throw new Error("repository " + c.repo + " non trovata"); }
+      else if (!g.ok) throw new Error("GitHub " + g.status);
+      else {
+        const j = await g.json(); sha = j.sha;
+        let text = j.content ? b64dec(j.content) : "";
+        if (!text && j.size) { const raw = await gh(FILE, { headers: { Accept: "application/vnd.github.raw+json" } }); text = await raw.text(); }
+        if (text) { const d = JSON.parse(text); remote = { docs: d.docs || {}, t: d.t || {}, del: d.del || {} }; }
+      }
+      let changed = false, push = !sha;
+      const keys = new Set([...mem.keys(), ...Object.keys(meta.del), ...Object.keys(remote.docs), ...Object.keys(remote.del)]);
+      for (const k of keys) {
+        const lEx = mem.has(k), rEx = k in remote.docs;
+        const lT = lEx ? (meta.t[k] || 0) : (meta.del[k] || 0), rT = rEx ? (remote.t[k] || 0) : (remote.del[k] || 0);
+        if (rT > lT || (rT === lT && rEx && !lEx && !(k in meta.del))) {
+          if (rEx) { mem.set(k, remote.docs[k]); meta.t[k] = rT; delete meta.del[k]; await put(k, remote.docs[k]); }
+          else if (lEx || !(k in meta.del)) { mem.delete(k); meta.del[k] = rT; delete meta.t[k]; await put(k, undefined); }
+          changed = true;
+        } else if (lT > rT || (lEx && !rEx && !(k in remote.del))) push = true;
+      }
+      if (changed) { await saveMeta(); fire(true); }
+      if (!push) break;
+      const cut = Date.now() - 90 * 864e5;
+      for (const [k, t] of Object.entries(meta.del)) if (t < cut) delete meta.del[k];
+      const body = { formato: "portale-conoscenza", versione: 2, aggiornato: new Date().toISOString(), docs: Object.fromEntries(mem), t: meta.t, del: meta.del };
+      const p = await gh(FILE, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "Aggiornamento archivio", content: b64enc(JSON.stringify(body)), ...(sha ? { sha } : {}) }) });
+      if (p.ok) break;
+      if (p.status === 409 || p.status === 422) continue;
+      if (p.status === 401 || p.status === 403) throw new Error("il token non può scrivere nella repository (serve Contents: Read and write)");
+      throw new Error("GitHub " + p.status);
+    }
+    SYNC.last = Date.now(); setSync("Sincronizzato");
+  } catch (e) { setSync("Sincronizzazione non riuscita", e.message || String(e)); }
+  finally { SYNC.busy = false; if (SYNC.again) { SYNC.again = false; scheduleSync(500); } }
+}
+addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - SYNC.last > 20000) scheduleSync(200); });
+setInterval(() => { if (document.visibilityState === "visible") scheduleSync(0); }, 120000);
+
+/* collegamento di un altro dispositivo: link/QR con le impostazioni nel frammento (#), che non viene mai inviato a nessun server */
+const PAIR = "#collega=";
+function pairLink(){
+  const c = CFG(), d = { groq: c.groq, openrouter: c.openrouter, gh: c.gh, repo: c.repo };
+  const b = b64enc(JSON.stringify(d)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return (location.protocol === "https:" ? location.origin + location.pathname : SITE) + PAIR + b;
+}
+function readPair(){
+  if (!location.hash.startsWith(PAIR)) return false;
+  try {
+    const b = location.hash.slice(PAIR.length).replace(/-/g, "+").replace(/_/g, "/");
+    const d = JSON.parse(b64dec(b + "=".repeat((4 - b.length % 4) % 4)));
+    for (const k of ["groq", "openrouter", "gh", "repo"]) if (d[k]) LSset(k, String(d[k]));
+    return true;
+  } catch { return false; } finally { history.replaceState(null, "", location.pathname + location.search); }
+}
+const PAIRED = readPair();
+function loadQR(){ return window.qrcode ? Promise.resolve() : new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 
 /* esporta / importa */
 async function exportAll(){
@@ -673,7 +756,9 @@ async function exportAll(){
 async function importAll(file){
   const j = JSON.parse(await file.text()); if (j.formato !== "portale-conoscenza" || !j.docs) throw new Error("File non valido");
   await load(); let n = 0;
-  for (const [k, v] of Object.entries(j.docs)) { if (!/^[\w\-./]+$/.test(k)) continue; mem.set(k, v); await put(k, v); n++; }
+  const ok = Object.entries(j.docs).filter(([k]) => /^[\w\-./]+$/.test(k));
+  ok.forEach(([k, v]) => { mem.set(k, v); touch(k); n++; });
+  const db = await idb; await new Promise((res, rej) => { const tx = db.transaction(ST, "readwrite"), st = tx.objectStore(ST); ok.forEach(([k, v]) => st.put(v, k)); st.put(meta, META); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
   fire(); return n;
 }
 
@@ -701,13 +786,31 @@ function settings(){
   <label>Modello Ollama</label><input id="pc-ollm" type="text" autocomplete="off" value="">
   <div class="row"><button class="pri" id="pc-save" type="button">Salva e prova</button><button id="pc-close" type="button">Chiudi</button></div>
   <div class="st" id="pc-st"></div>
-  <label style="margin-top:20px">Archivio</label>
-  <p>Le voci sono salvate in questo browser. Per portarle su un altro dispositivo esportale qui e importale là.</p>
+  <label style="margin-top:22px">Sincronizzazione tra PC e telefono</label>
+  <p>Le voci vengono salvate anche in una tua repository GitHub <b>privata</b>, così ogni dispositivo vede le stesse.</p>
+  <label>Repository dati (privata)</label><input id="pc-repo" type="text" autocomplete="off" placeholder="CyberGanna/portale-dati" value="">
+  <label>Token GitHub</label><input id="pc-gh" type="password" autocomplete="off" placeholder="github_pat_..." value="">
+  <div class="row"><button class="pri" id="pc-sync" type="button">Salva e sincronizza</button><button id="pc-pair" type="button">Collega telefono</button></div>
+  <div class="st" id="pc-sync-st"></div>
+  <div id="pc-qr" hidden style="margin-top:10px;text-align:center"><div id="pc-qr-img" style="display:inline-block;background:#fff;padding:10px;border-radius:12px"></div><p style="margin-top:8px">Inquadra il QR con la fotocamera del telefono e apri il link: il telefono riceve chiave Groq e sincronizzazione da solo. Non condividere questo QR con altri.</p><button id="pc-copy" type="button">Copia il link</button></div>
+  <label style="margin-top:22px">Archivio</label>
+  <p>Le voci sono salvate in questo browser. Puoi anche farne una copia in un file, o importarne una.</p>
   <div class="row" style="margin-top:0"><button id="pc-exp" type="button">Esporta archivio</button><button id="pc-imp" type="button">Importa archivio</button><input id="pc-file" type="file" accept="application/json,.json" hidden></div>
   </div>`;
   document.body.appendChild(w);
   const $ = id => document.getElementById(id);
-  $("pc-groq").value = c.groq; $("pc-or").value = c.openrouter; $("pc-oll").value = c.ollama; $("pc-ollm").value = c.ollamaModel;
+  $("pc-groq").value = c.groq; $("pc-or").value = c.openrouter; $("pc-oll").value = c.ollama; $("pc-ollm").value = c.ollamaModel; $("pc-repo").value = c.repo; $("pc-gh").value = c.gh;
+  setSync(SYNC.status || (c.gh ? "" : "Non attiva"), SYNC.err);
+  $("pc-sync").onclick = () => { LSset("repo", $("pc-repo").value.trim().replace(/^https:\/\/github\.com\//, "").replace(/\/$/, "")); LSset("gh", $("pc-gh").value.trim()); clearTimeout(SYNC.timer); sync(); };
+  $("pc-pair").onclick = async () => {
+    const box = $("pc-qr"); if (!box.hidden) { box.hidden = true; return; }
+    if (!CFG().groq) { $("pc-sync-st").textContent = "Prima inserisci la chiave Groq."; return; }
+    const link = pairLink();
+    try { await loadQR(); const q = qrcode(0, "L"); q.addData(link); q.make(); $("pc-qr-img").innerHTML = q.createSvgTag({ cellSize: 4, margin: 0 }); }
+    catch { $("pc-qr-img").textContent = "QR non disponibile: usa Copia il link."; }
+    box.hidden = false;
+    $("pc-copy").onclick = () => navigator.clipboard?.writeText(link).then(() => $("pc-copy").textContent = "Link copiato", () => {});
+  };
   $("pc-close").onclick = () => w.hidden = true;
   w.addEventListener("click", e => { if (e.target === w) w.hidden = true; });
   $("pc-save").onclick = async () => { LIVE.clear();
@@ -724,7 +827,10 @@ window.__pcOpenSettings = settings;
 addEventListener("DOMContentLoaded", () => {
   const s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   const g = document.createElement("button"); g.id = "pc-gear"; g.type = "button"; g.title = "Impostazioni AI e archivio"; g.setAttribute("aria-label", "Impostazioni AI e archivio"); g.textContent = "⚙"; g.onclick = settings; const hs = document.getElementById("hide-side"); if (hs) hs.before(g); else { g.style.cssText = "position:fixed;right:14px;bottom:14px;z-index:60"; document.body.appendChild(g); }
-  if (!providers().length) setTimeout(settings, 600);
+  const st2 = document.createElement("style"); st2.textContent = '#pc-gear[data-sync="ok"]{box-shadow:inset 0 -2px 0 #5eead4}#pc-gear[data-sync="err"]{box-shadow:inset 0 -2px 0 #fb7185}'; document.head.appendChild(st2);
+  if (CFG().gh) scheduleSync(300);
+  if (PAIRED) { settings(); const el = document.getElementById("pc-st"); if (el) el.textContent = "Dispositivo collegato: chiave e sincronizzazione importate."; }
+  else if (!providers().length) setTimeout(settings, 600);
 });
 window.claude = { use: async n => n === "sample" ? sample : n === "db" ? db : null, __standalone: true };
 })();
