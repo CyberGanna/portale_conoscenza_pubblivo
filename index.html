@@ -171,7 +171,13 @@ button{cursor:pointer}
 .d-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
 
 .qa{display:flex;flex-direction:column;gap:12px}
-.qa-item .qq{font-weight:600;font-size:14px}
+.qa-item .qq{font-weight:600;font-size:14px;padding-right:30px}
+.qa-item{position:relative}
+.qa-del{position:absolute;top:-2px;right:-4px;width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:none;color:var(--mute,#9890b3);font-size:13px;cursor:pointer;opacity:.65}
+.qa-del:hover,.qa-del:focus-visible{opacity:1;border-color:var(--line);color:#fb7185}
+.ig-fig{min-height:120px;border-radius:12px;overflow:hidden;background:#0b0912;margin:4px 0 10px}
+.ig-fig svg{display:block;width:100%;height:auto;max-height:640px}
+.ig-fig .inline-think{padding:18px}
 .qa-form{display:flex;gap:8px;margin-top:4px}
 .qa-form input{flex:1;min-width:0;border:1px solid var(--line);background:rgba(0,0,0,.55);border-radius:10px;padding:8px 12px;outline:none;font-size:13.5px}
 .qa-form input:focus{border-color:rgba(185,155,255,.5)}
@@ -878,7 +884,7 @@ const catColor = c => { c = norm(c); if (CAT[c]) return CAT[c]; let h = 0; for (
 const catName = c => { c = norm(c); if (c === "__tr") return "Traduzioni"; if (c === "__gl") return "Glossario"; return c === "ai" ? "AI" : c.charAt(0).toUpperCase() + c.slice(1); };
 
 /* ---------------- state ---------------- */
-const S = { notes: [], trs: [], tests: [], tScope: new Set(), tNum: 5, db: null, sample: null, live: false, selected: null, tab: "archivio", dir: "auto", busy: false, openCats: new Set(), photos: new Map(), imgLim: null };
+const S = { redo: new Set(), notes: [], trs: [], tests: [], tScope: new Set(), tNum: 5, db: null, sample: null, live: false, selected: null, tab: "archivio", dir: "auto", busy: false, openCats: new Set(), photos: new Map(), imgLim: null };
 
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2600); }
 function banner(msg){ const b = $("#banner"); b.textContent = msg; b.hidden = !msg; }
@@ -1444,12 +1450,14 @@ function renderNote(n){
     </div>
     ${n.collegamenti?.length ? `<div class="d-sec"><h3>Collegamenti</h3><div class="links">${n.collegamenti.map(c => { const k = known.get(norm(c)); return `<button type="button" class="chip ${k ? "known" : ""}" style="--c:${k ? catColor(k.categoria) : color}" ${k ? `data-open="${esc(k.id)}"` : `data-explore="${esc(c)}"`} title="${k ? "Apri la voce" : "Approfondisci questo concetto"}">${k ? "● " : "+ "}${esc(c)}</button>`; }).join("")}</div>
       <p class="hint" style="margin:8px 0 0">I concetti con + non sono ancora nel tuo archivio: toccali per approfondirli.</p></div>` : ""}
-    <div class="d-sec"><h3>Domande</h3><div class="qa" id="qa">${(n.domande || []).map(x => `<div class="qa-item"><div class="qq">${esc(x.q)}</div><div class="md">${md(x.a)}</div></div>`).join("")}</div>
+    <div class="d-sec"><h3>Domande</h3><div class="qa" id="qa">${(n.domande || []).map((x, i) => `<div class="qa-item"><div class="qq">${esc(x.q)}</div><button type="button" class="qa-del" data-del-qa="${i}" title="Elimina questa domanda" aria-label="Elimina questa domanda">✕</button><div class="md">${md(x.a)}</div></div>`).join("")}</div>
       <form class="qa-form" id="qa-form"><input id="qa-in" placeholder="Fai una domanda su ${esc(n.titolo)}" autocomplete="off"><button class="btn" type="submit">Chiedi</button></form></div>
     ${n.tags?.length ? `<div class="tags">${n.tags.map(t => `<span>#${esc(t)}</span>`).join("")}</div>` : ""}
     <div class="d-actions"><button class="btn danger" id="del" type="button">Elimina voce</button></div>`;
   body.scrollTop = 0;
+  if (n.schema && n.schema.v !== 5 && aiReady() && !S.redo.has(n.id)) { S.redo.add(n.id); setTimeout(() => { if (S.selected === n.id) genSchema(true); }, 60); }
 }
+const aiReady = () => { try { return !!S.sample && (!window.claude?.__standalone || !!(localStorage.getItem("pc_groq") || localStorage.getItem("pc_openrouter") || localStorage.getItem("pc_ollama"))); } catch { return false; } };
 
 function briefHTML(n){
   if (!n.in_breve?.length) return `<div class="inline-think"><span class="mini"></span>Preparo la versione sintetica…</div>`;
@@ -1484,6 +1492,8 @@ $("#d-body").addEventListener("click", async e => {
   const o = e.target.closest("[data-open]"); if (o) { openNote(o.dataset.open); return; }
   const x = e.target.closest("[data-explore]"); if (x) { explore(x.dataset.explore); return; }
   if (e.target.closest("#mk-schema")) { genSchema(); return; }
+  const dq = e.target.closest("[data-del-qa]");
+  if (dq) { const n = S.notes.find(x => x.id === S.selected); if (!n) return; const i = +dq.dataset.delQa; dq.closest(".qa-item")?.remove(); patchNote(n.id, { domande: (n.domande || []).filter((_, j) => j !== i) }).then(() => toast("Domanda eliminata"), () => toast("Non sono riuscito a eliminarla")); return; }
   if (e.target.closest("#mk-web")) { genWeb(); return; }
   if (e.target.closest("#add-img")) { $("#add-img-in").click(); return; }
   const di = e.target.closest("[data-delimg]"); if (di) { delImg(di.dataset.delimg); return; }
@@ -1620,43 +1630,114 @@ async function explore(text, img){
 }
 document.addEventListener("click", e => { if (e.target.id === "th-stop") S.ctl?.abort(); });
 
-async function genSchema(){
+async function genSchema(auto){
   const n = S.notes.find(x => x.id === S.selected); if (!n || !needSample()) return;
   const btn = $("#mk-schema"), box = $("#schema-box");
+  if (!btn || !box) return;
   btn.disabled = true;
-  box.innerHTML = `<div class="inline-think"><span class="mini"></span>L'AI sta disegnando lo schema.</div>`;
-  const prompt = `Trasforma questo contenuto in UNA rappresentazione visiva breve, chiara, fedele e memorabile (metodo "Visual MIT").
+  const prev = box.innerHTML;
+  box.innerHTML = `<div class="inline-think"><span class="mini"></span>${auto ? "Rifaccio lo schema nel nuovo stile…" : "Disegno l'infografica…"}</div>`;
+  const prompt = `Sei un designer di infografiche. Trasforma questo contenuto in UNA infografica breve, chiara, fedele e bella da vedere, che fa capire l'argomento a colpo d'occhio (metodo "Visual MIT": un solo visual, etichette brevi, poi massimo tre frasi).
 Argomento: "${n.titolo}" (${catName(n.categoria)}${n.autore ? ", " + n.autore : ""})
 Sintesi: ${n.sintesi}
 Testo: ${String(n.spiegazione || "").slice(0, 2500)}
+${(n.esempi || []).length ? "Esempi: " + n.esempi.slice(0, 4).join(" / ") : ""}
 
-1. Individua i concetti principali, le relazioni, le sequenze, le gerarchie, le cause e gli effetti.
-2. Scegli il formato più adatto, uno solo:
-   - "passi": diagramma di flusso per un processo (3-5 passi) → {"schema":"passi","passi":[{"t":"max 3 parole","nota":"max 5 parole"}]}
-   - "ventaglio": mappa concettuale per idee collegate a un centro (3-5 rami) → {"schema":"ventaglio","centro":"max 3 parole","rami":[{"t":"max 3 parole","nota":"max 4 parole"}]}
-   - "timeline": eventi nel tempo (3-6) → {"schema":"timeline","eventi":[{"data":"...","t":"max 4 parole","nota":"max 5 parole"}]}
-   - "albero": schema gerarchico per categorie (max 4 rami, 3 foglie) → {"schema":"albero","radice":"...","figli":[{"t":"...","figli":["..."]}]}
-   - "tabella": confronto tra cose (2-4 colonne, 3-5 righe) → {"schema":"tabella","colonne":["Aspetto","A","B"],"righe":[["...","...","..."]]}
-   - "causa": cause → fenomeno → effetti (2-3 e 2-3) → {"schema":"causa","cause":["..."],"centro":"...","effetti":["..."]}
-   - "ciclo": fasi che si ripetono (3-5) → {"schema":"ciclo","fasi":["..."],"centro":"..."}
-3. Etichette brevi. Conserva numeri, nomi e relazioni importanti. Meglio pochi elementi che fanno capire subito.
-4. Non inventare informazioni. Se qualcosa è un'inferenza e non un fatto, scrivilo in "inferenze" (altrimenti stringa vuota).
-5. Poi una spiegazione in massimo tre frasi brevi e semplici, che una persona senza basi capisce subito.
+PASSO 1. Capisci la STRUTTURA del contenuto: è un processo? una linea del tempo? un ciclo? cause ed effetti? parti di un tutto? un confronto? caratteristiche chiave? numeri da confrontare?
+PASSO 2. Scegli UN SOLO template, quello che corrisponde alla struttura:
+${IG_GUIDE}
+PASSO 3. Regole di scrittura:
+- etichette (label) brevissime: 1-4 parole; descrizioni (desc) massimo 8 parole;
+- conserva nomi propri, date e numeri veri; non inventare nulla; se qualcosa è un'inferenza scrivilo in "inferenze";
+- il titolo dice in max 7 parole cosa spiega l'infografica;
+- per le icone usa UNA parola inglese semplice (es. money, brain, globe, chart, shield, clock, book, people, factory, heart, robot, leaf).
 In italiano.
 
 Rispondi solo con JSON:
-{"titolo": "max 8 parole, dice cosa spiega lo schema", "schema": { ... }, "spiegazione": ["frase 1", "frase 2", "frase 3"], "inferenze": ""}`;
+{"titolo": "...", "template": "nome esatto del template", "data": { ...i campi richiesti dal template... }, "spiegazione": ["frase 1", "frase 2", "frase 3"], "inferenze": ""}`;
   try {
-    const r = await S.sample.json(prompt, { modelTier: "complex", cache: false });
-    const ok = new Set(["passi","ventaglio","timeline","albero","tabella","causa","ciclo","convergenza","confronto","trasformazione"]);
-    if (!r?.schema || !ok.has(String(r.schema.schema).toLowerCase())) throw { code: "invalid_json" };
-    const schema = JSON.parse(JSON.stringify({ v: 4, titolo: String(r.titolo || ""), schema: { ...r.schema, schema: String(r.schema.schema).toLowerCase() }, spiegazione: (Array.isArray(r.spiegazione) ? r.spiegazione : [r.spiegazione]).map(String).filter(Boolean).slice(0, 3), inferenze: String(r.inferenze || "") }));
+    let schema = null, lastErr;
+    for (let i = 0; i < 2 && !schema; i++) {
+      try { const r = await S.sample.json(prompt, { modelTier: "complex", cache: false }); schema = igNormalize(r); if (!schema) lastErr = { code: "invalid_json" }; }
+      catch (e) { lastErr = e; if (e?.code === "cancelled" || e?.code === "no_provider") break; }
+    }
+    if (!schema) throw lastErr || { code: "invalid_json" };
     await patchNote(n.id, { schema });
-    if (S.selected === n.id) { box.innerHTML = schemaHTML(schema, catColor(n.categoria), n); btn.textContent = "Rigenera schema"; btn.classList.remove("primary"); }
+    if (S.selected === n.id && box.isConnected) { box.innerHTML = schemaHTML(schema, catColor(n.categoria), n); btn.textContent = "Rigenera schema"; btn.classList.remove("primary"); }
   } catch (e) {
-    box.innerHTML = (n.schema ? schemaHTML(n.schema, catColor(n.categoria), n) : "") + `<p class="err">${esc(errMsg(e))}</p>`;
+    if (box.isConnected) box.innerHTML = prev + `<p class="err">${esc(errMsg(e))}</p>`;
   } finally { if (btn.isConnected) btn.disabled = false; }
 }
+
+/* ---------- infografiche v5: AntV Infographic (open source, licenza MIT) ---------- */
+const IG_URL = "https://cdn.jsdelivr.net/npm/@antv/infographic@0.2.20/dist/infographic.min.js";
+const IG_T = {
+  "sequence-ascending-steps": ["items", "processo o progressione in 3-5 passi", '{"title":"...","items":[{"label":"passo","desc":"..."}]}'],
+  "sequence-snake-steps-compact-card": ["items", "procedura o istruzioni in 4-6 passi", '{"title":"...","items":[{"label":"passo","desc":"..."}]}'],
+  "sequence-roadmap-vertical-badge-card": ["items", "linea del tempo con date o anni (3-6 tappe)", '{"title":"...","items":[{"label":"1914","desc":"cosa succede"}]}'],
+  "sequence-circular-simple": ["items", "ciclo di fasi che si ripetono (3-6)", '{"title":"...","items":[{"label":"fase"}]}'],
+  "relation-dagre-flow-tb-badge-card": ["nodes", "catena di cause ed effetti o flusso con frecce (3-6 nodi)", '{"title":"...","nodes":[{"id":"a","label":"...","desc":"facoltativa"},{"id":"b","label":"..."}],"relations":[{"from":"a","to":"b","label":"facoltativa, max 2 parole"}]}'],
+  "list-grid-badge-card": ["items", "3-6 caratteristiche, punti chiave o elementi di una categoria (anche esempi reali con nome)", '{"title":"...","items":[{"label":"...","desc":"...","icon":"money"}]}'],
+  "list-row-horizontal-icon-arrow": ["items", "3-4 punti chiave da leggere in ordine", '{"title":"...","items":[{"label":"...","desc":"...","icon":"brain"}]}'],
+  "hierarchy-structure": ["root", "gerarchia, componenti o organizzazione (radice, 2-4 rami, 1-3 foglie per ramo)", '{"title":"...","root":{"label":"...","children":[{"label":"ramo","children":[{"label":"foglia"}]}]}}'],
+  "compare-binary-horizontal-badge-card-vs": ["items", "confronto tra DUE cose (2-4 caratteristiche per lato)", '{"title":"...","items":[{"label":"A","children":[{"label":"..."}]},{"label":"B","children":[{"label":"..."}]}]}'],
+  "compare-swot": ["items", "punti di forza, debolezze, opportunità, minacce (esattamente 4 gruppi)", '{"title":"...","items":[{"label":"Punti di forza","children":[{"label":"..."}]},{"label":"Debolezze","children":[]},{"label":"Opportunità","children":[]},{"label":"Minacce","children":[]}]}'],
+  "compare-quadrant-quarter-simple-card": ["items", "4 casi su due assi (es. rischio e rendimento)", '{"title":"...","items":[{"label":"...","desc":"..."}]}'],
+  "chart-column-simple": ["items", "numeri veri da confrontare (3-7 valori)", '{"title":"...","items":[{"label":"...","value":12}]}'],
+  "chart-pie-donut-compact-card": ["items", "parti di un totale in percentuale (3-6 parti)", '{"title":"...","items":[{"label":"...","value":30}]}'],
+};
+const IG_GUIDE = Object.entries(IG_T).map(([t, [, quando, forma]]) => `- "${t}": ${quando} → data = ${forma}`).join("\n");
+const IG_THEME = { colorBg: "#0b0912", base: { text: { "font-family": "Sora, Helvetica, Arial, sans-serif" } }, palette: ["#a78bfa", "#5eead4", "#f2b55c", "#fb7185", "#7dd3fc", "#86efac"] };
+function igNormalize(r){
+  const t = String(r?.template || "").trim(); if (!IG_T[t]) return null;
+  const key = IG_T[t][0], d = r.data && typeof r.data === "object" ? r.data : {};
+  const str = (v, n = 80) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+  const item = (x, depth = 0) => { if (typeof x === "string") x = { label: x }; if (!x || !str(x.label)) return null;
+    const o = { label: str(x.label, 48) }; if (str(x.desc)) o.desc = str(x.desc, 90); if (str(x.icon)) o.icon = str(x.icon, 24);
+    if (x.value != null && x.value !== "") { const v = parseFloat(String(x.value).replace(",", ".")); if (isFinite(v)) o.value = v; }
+    if (x.id) o.id = str(x.id, 24);
+    if (Array.isArray(x.children) && depth < 2) o.children = x.children.map(c => item(c, depth + 1)).filter(Boolean).slice(0, 6);
+    return o; };
+  const data = { title: str(d.title || r.titolo, 70) };
+  if (key === "root") { const root = item(d.root || (Array.isArray(d.items) ? { label: data.title, children: d.items } : null)); if (!root?.children?.length) return null; data.root = root; }
+  else if (key === "nodes") {
+    const nodes = (d.nodes || d.items || []).map(item).filter(Boolean).slice(0, 8); if (nodes.length < 2) return null;
+    nodes.forEach((x, i) => { if (!x.id) x.id = "n" + i; });
+    const ids = new Set(nodes.map(x => x.id));
+    let rel = (Array.isArray(d.relations) ? d.relations : []).map(x => ({ from: str(x?.from, 24), to: str(x?.to, 24), ...(str(x?.label) ? { label: str(x.label, 24) } : {}) })).filter(x => ids.has(x.from) && ids.has(x.to));
+    if (!rel.length) rel = nodes.slice(1).map((x, i) => ({ from: nodes[i].id, to: x.id }));
+    data.nodes = nodes; data.relations = rel;
+  } else {
+    let items = (d.items || d.lists || d.sequences || d.compares || d.values || []).map(x => item(x)).filter(Boolean).slice(0, 7);
+    if (t.startsWith("chart-")) items = items.filter(x => typeof x.value === "number");
+    if (items.length < 2) return null;
+    data.items = items;
+  }
+  return { v: 5, titolo: str(r.titolo, 80), template: t, data, spiegazione: (Array.isArray(r.spiegazione) ? r.spiegazione : [r.spiegazione]).map(x => str(x, 260)).filter(Boolean).slice(0, 3), inferenze: str(r.inferenze, 260) };
+}
+let igLoading = null;
+const loadIG = () => window.AntVInfographic ? Promise.resolve() : (igLoading ||= new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = IG_URL; sc.onload = res; sc.onerror = () => { igLoading = null; rej(new Error("lib")); }; document.head.appendChild(sc); }));
+function igHTML(s, color){
+  const frasi = (Array.isArray(s.spiegazione) ? s.spiegazione : []).filter(Boolean);
+  return `<div class="schema xg mit ig" style="--c:${color}" title="Tocca per ingrandire">
+    <div class="ig-fig" data-ig="${esc(JSON.stringify({ template: s.template, data: s.data }))}"><div class="inline-think"><span class="mini"></span>Disegno l'infografica…</div></div>
+    ${frasi.length ? `<div class="mit-exp">${frasi.map(f => `<p>${esc(f)}</p>`).join("")}</div>` : ""}
+    ${s.inferenze ? `<p class="mit-inf"><b>Da prendere con cautela:</b> ${esc(s.inferenze)}</p>` : ""}
+  </div>`;
+}
+async function hydrateIG(el){
+  if (el.dataset.done) return; el.dataset.done = "1";
+  try {
+    await loadIG();
+    const { template, data } = JSON.parse(el.dataset.ig);
+    el.innerHTML = "";
+    const ig = new AntVInfographic.Infographic({ container: el, padding: 20, template, theme: "dark", themeConfig: IG_THEME, data: structuredClone(data) });
+    await ig.render();
+    const svg = el.querySelector("svg"); if (!svg) throw new Error("vuoto");
+    svg.removeAttribute("width"); svg.removeAttribute("height"); svg.style.width = "100%"; svg.style.height = "auto";
+  } catch (e) { el.innerHTML = `<p class="err" style="padding:14px">Non riesco a disegnare l'infografica. Controlla la connessione e riapri la voce, oppure premi Rigenera schema.</p>`; }
+}
+new MutationObserver(() => document.querySelectorAll(".ig-fig[data-ig]:not([data-done])").forEach(hydrateIG)).observe(document.documentElement, { childList: true, subtree: true });
 
 /* ---------- schema breve stile Visual MIT (la skill di Karim) ---------- */
 function mitHTML(s, color){
@@ -2080,6 +2161,7 @@ function xDraw(s, color){
   return out.join("");
 }
 function schemaHTML(s, color, n){
+  if (s?.v === 5) return igHTML(s, color);
   if (typeof rough === "undefined") return `<p class="err">Non riesco a caricare la libreria dei disegni. Ricarica la pagina.</p>`;
   if (!document.fonts?.check?.("15px Kalam")) document.fonts?.load?.("700 15px Kalam").then(() => document.fonts.load("15px Kalam")).then(() => {
     const box = $("#schema-box"), cur = S.notes.find(x => x.id === S.selected);
