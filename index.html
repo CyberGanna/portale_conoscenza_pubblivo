@@ -1,0 +1,2451 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Ale Conoscenza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Sora:wght@200..700&display=swap">
+</head>
+<body>
+<style>
+/* Layout: a living constellation fills the screen; glass panels float over it (archive left, note right, sheets on phone). Single dark look by choice. */
+:root{
+  color-scheme:dark;
+  --void:#000;
+  --ink:#ece8f7;
+  --muted:#9890b3;
+  --faint:#5d5677;
+  --line:rgba(255,255,255,.08);
+  --glass:rgba(4,3,8,.66);
+  --glass-hi:rgba(10,8,18,.92);
+  --core:#b99bff;
+  --accent:#a78bfa;
+  --accent-ink:#120c24;
+  --danger:#fb7185;
+  --ok:#5eead4;
+  --f-display:"Sora",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-ui:"Sora",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Sora",ui-sans-serif,system-ui,sans-serif;
+  --side-w:360px;
+  --detail-w:460px;
+  --r:14px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+#mtitle{display:none}
+body{background:var(--void);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:rgba(167,139,250,.35)}
+
+#stage{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage.dragging{cursor:grabbing}
+#stage.pointing{cursor:pointer}
+
+/* ---------- glass panels ---------- */
+.glass{background:linear-gradient(180deg,rgba(167,139,250,.06),rgba(0,0,0,0) 140px),var(--glass);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);border:1px solid var(--line);border-radius:var(--r);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px -20px rgba(0,0,0,.9)}
+
+#side{transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s;position:fixed;z-index:5;top:calc(16px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:var(--side-w);display:flex;flex-direction:column;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:300;font-size:24px;letter-spacing:-.02em;line-height:1}
+.brand h1 em{color:var(--core);font-style:normal;font-weight:600;text-shadow:0 0 24px rgba(185,155,255,.55)}
+.brand .count{margin-left:0;margin-right:4px;font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+
+#compose{padding:10px 16px 14px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
+#compose label{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.inputwrap{position:relative;border-radius:12px;background:rgba(0,0,0,.65);border:1px solid var(--line);transition:border-color .2s, box-shadow .2s}
+.inputwrap:focus-within{border-color:rgba(185,155,255,.6);box-shadow:0 0 0 4px rgba(167,139,250,.12),0 0 30px -6px rgba(167,139,250,.5)}
+#q{display:block;width:100%;min-height:74px;max-height:180px;resize:none;border:0;background:transparent;padding:12px 14px 40px;outline:none;font-size:15px;line-height:1.45}
+#q::placeholder{color:var(--faint)}
+#go{position:absolute;right:8px;bottom:8px;border:0;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:13px;padding:7px 12px;display:flex;align-items:center;gap:6px;box-shadow:0 0 22px -4px rgba(167,139,250,.8)}
+#go:disabled{opacity:.45;box-shadow:none;cursor:default}
+#photo{position:absolute;left:8px;bottom:8px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.04);color:var(--ink);font-size:13px;font-weight:500;padding:6px 10px;display:flex;align-items:center;gap:6px;cursor:pointer}
+#photo:hover{border-color:rgba(185,155,255,.6);color:#fff}
+#photo:disabled{opacity:.45;cursor:default}
+.d-photo{margin:14px 0 4px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#07060b;min-height:120px;display:flex;align-items:center;justify-content:center}
+.d-photo img{display:block;width:100%;max-height:420px;object-fit:contain}
+.d-photo .ph-wait{font-size:12px;color:var(--faint)}
+.scheda{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;font-size:14px;line-height:1.45}
+.scheda dt{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.scheda dd{margin:0;color:var(--ink)}
+.conf{display:inline-block;margin-left:8px;font-size:10px;letter-spacing:.08em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);vertical-align:middle}
+.th-photo{width:140px;height:140px;object-fit:cover;border-radius:14px;border:1px solid var(--line);margin-bottom:6px}
+.hint{font-size:12px;color:var(--faint)}
+.sugg{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted);transition:color .15s,border-color .15s,background .15s}
+.chip:hover{color:var(--ink);border-color:rgba(185,155,255,.5);background:rgba(167,139,250,.08)}
+
+.tabs{display:flex;gap:2px;padding:10px 10px 0}
+.tab{flex:1;border:0;background:transparent;padding:8px 2px;border-radius:9px;font-size:12.5px;white-space:nowrap;color:var(--muted);font-weight:500}
+.tab[aria-selected="true"]{background:rgba(167,139,250,.14);color:var(--ink)}
+.view{flex:1;overflow:auto;padding:12px 12px 16px;min-height:0;overscroll-behavior:contain}
+.view::-webkit-scrollbar{width:8px}.view::-webkit-scrollbar-thumb{background:rgba(167,139,250,.18);border-radius:8px}
+
+#search{width:100%;border:1px solid var(--line);background:rgba(0,0,0,.55);border-radius:10px;padding:8px 12px;outline:none;font-size:13px;margin-bottom:10px}
+#search:focus{border-color:rgba(185,155,255,.5)}
+.cat{border-radius:10px;margin-bottom:2px}
+.cat>button{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:8px 8px;border-radius:10px;text-align:left}
+.cat>button:hover{background:rgba(255,255,255,.03)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 10px 1px currentColor;background:currentColor}
+.cat .name{font-weight:500;text-transform:capitalize}
+.cat .n{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cat .chev{color:var(--faint);transition:transform .2s;font-size:11px}
+.cat.open .chev{transform:rotate(90deg)}
+.notes{display:none;padding:0 0 6px 27px}
+.cat.open .notes,.searching .notes{display:block}
+.note-item{display:block;width:100%;border:0;background:transparent;text-align:left;padding:6px 8px;border-radius:8px;color:var(--ink)}
+.note-item:hover,.note-item.active{background:rgba(167,139,250,.1)}
+.note-item .t{font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note-item .s{font-size:12px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.badge{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:1px}
+.empty{color:var(--muted);font-size:13px;padding:14px 8px;line-height:1.6}
+.section-label{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:14px 8px 6px}
+.linkbtn{border:0;background:transparent;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:3px;padding:4px 8px}
+.linkbtn:hover{color:var(--ink)}
+
+/* translate */
+.tr-dir{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.seg{display:flex;background:rgba(0,0,0,.55);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+.seg button[aria-pressed="true"]{background:rgba(167,139,250,.18);color:var(--ink)}
+#tr-in{display:block;width:100%;min-height:64px;resize:vertical;border:1px solid var(--line);background:rgba(0,0,0,.55);border-radius:12px;padding:10px 12px;outline:none;font-size:15px}
+.tr-src{font-size:13px;color:#cfc6ec;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.tr-fix{font-size:11.5px;color:#86efac;font-style:italic}
+#tr-in:focus{border-color:rgba(185,155,255,.5)}
+.btn{border:1px solid var(--line);background:rgba(167,139,250,.1);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:rgba(167,139,250,.18)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600;box-shadow:0 0 22px -6px rgba(167,139,250,.8)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.danger{color:var(--danger);background:transparent;border-color:rgba(251,113,133,.3)}
+.btn.danger.armed{background:var(--danger);color:#1a0610}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tr-out{margin-top:14px;padding:14px;border-radius:12px;background:rgba(0,0,0,.6);border:1px solid var(--line)}
+.tr-main{font-family:var(--f-display);font-weight:300;font-size:26px;letter-spacing:-.02em;line-height:1.2}
+.tr-meta{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:4px}
+.tr-out p{margin:10px 0 0;color:#cfc8e6}
+.tr-ex{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.tr-ex li{font-size:13px;border-left:2px solid rgba(167,139,250,.4);padding-left:10px}
+.tr-ex li span{display:block;color:var(--muted)}
+.tr-hist button{display:flex;width:100%;gap:8px;border:0;background:transparent;padding:6px 8px;border-radius:8px;text-align:left;font-size:13px}
+.tr-hist button:hover{background:rgba(167,139,250,.08)}
+.tr-hist .a{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-hist .b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- detail ---------- */
+#detail{position:fixed;z-index:6;top:calc(16px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:var(--detail-w);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(100% + 40px));transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+#detail.open{transform:none}
+.d-head{display:flex;align-items:center;gap:8px;padding:12px 12px 0 18px}
+.d-cat{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.iconbtn{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:transparent;display:grid;place-items:center;color:var(--muted)}
+.iconbtn:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.d-body{flex:1;overflow:auto;padding:6px 22px 28px;min-height:0;overscroll-behavior:contain}
+.d-body::-webkit-scrollbar{width:8px}.d-body::-webkit-scrollbar-thumb{background:rgba(167,139,250,.18);border-radius:8px}
+.d-title{font-family:var(--f-display);font-weight:300;font-size:34px;letter-spacing:-.03em;line-height:1.08;margin:10px 0 6px;text-wrap:balance}
+.d-kind{font-family:var(--f-mono);font-size:11px;color:var(--faint);letter-spacing:.06em}
+.d-input{margin:14px 0 0;padding:12px 14px;border-left:2px solid var(--core);background:rgba(167,139,250,.06);border-radius:0 10px 10px 0;font-family:var(--f-display);font-weight:300;font-size:16.5px;line-height:1.5;color:#ddd3fb}
+.d-input small{display:block;font-family:var(--f-ui);font-style:normal;font-size:12px;color:var(--muted);margin-top:6px}
+.d-sum{font-size:15.5px;line-height:1.55;font-weight:400;color:#ddd7ef;margin:16px 0 4px;max-width:62ch}
+.md{font-size:14px;line-height:1.75;font-weight:300;color:#cfc8e4;max-width:65ch}
+.md p{margin:.7em 0}.md strong{color:var(--ink)}.md h1,.md h2,.md h3{font-family:var(--f-display);font-weight:500;color:var(--ink);font-size:17px;margin:1.1em 0 .3em}
+.md ul,.md ol{padding-left:1.2em}.md li{margin:.25em 0}
+.md code{font-family:var(--f-mono);font-size:.9em;background:rgba(167,139,250,.12);padding:1px 5px;border-radius:5px}
+.md blockquote{margin:.8em 0;padding-left:12px;border-left:2px solid var(--line);color:var(--muted)}
+.d-sec{margin-top:24px}
+.d-sec h3{font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.d-sec h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.list li{position:relative;padding-left:18px;font-size:13.5px;font-weight:300;line-height:1.6;color:#cfc8e4}
+.list li::before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--c,var(--accent));box-shadow:0 0 8px var(--c,var(--accent))}
+.links{display:flex;flex-wrap:wrap;gap:6px}
+.links .chip.known{color:var(--ink);border-color:color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tags span{font-family:var(--f-mono);font-size:11px;color:var(--faint)}
+.d-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+
+.qa{display:flex;flex-direction:column;gap:12px}
+.qa-item .qq{font-weight:600;font-size:14px}
+.qa-form{display:flex;gap:8px;margin-top:4px}
+.qa-form input{flex:1;min-width:0;border:1px solid var(--line);background:rgba(0,0,0,.55);border-radius:10px;padding:8px 12px;outline:none;font-size:13.5px}
+.qa-form input:focus{border-color:rgba(185,155,255,.5)}
+
+/* schema */
+.wl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.wl,.wn-i{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);text-decoration:none;color:var(--ink)}
+.wl:hover,.wn-i:hover{border-color:color-mix(in srgb,var(--c) 60%,transparent);background:color-mix(in srgb,var(--c) 8%,transparent)}
+.wl b,.wn-i b{font-size:13.5px;font-weight:600;color:#fff}.wl b::after,.wn-i b::after{content:" ↗";color:var(--muted);font-weight:400}
+.wl small,.wn-i small{font-size:11.5px;color:var(--muted)}
+.wn{display:flex;flex-direction:column;gap:8px}.wn-i span{font-size:13px;color:#cfc8e6;margin-top:2px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}.gal:empty{display:none}
+.gal figure{position:relative;margin:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#07060b}
+.gal img{display:block;width:100%;height:120px;object-fit:cover}
+.gal button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;font-size:12px}
+
+.mit{gap:14px;padding:18px 12px 14px;background:#08070c}
+.mit-title{font-size:17px;font-weight:600;color:#fff;text-align:center;line-height:1.3;padding:0 6px}
+.mit .xg-sec svg{max-width:440px;margin:0 auto}
+.mit-exp{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.mit-exp p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink)}
+.mit-inf{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.mit-inf b{color:#fca5a5;font-weight:600}
+.mit-tw{overflow-x:auto}
+.mit-t{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;line-height:1.4}
+.mit-t th{text-align:left;padding:8px 10px;color:var(--c);font-weight:600;border-bottom:1px solid color-mix(in srgb,var(--c) 50%,transparent)}
+.mit-t td{padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top}
+.mit-t td:first-child{font-weight:600;color:#fff}
+
+.el{cursor:default;gap:18px;padding:18px 12px 16px}
+.el p{margin:0}
+.el-head{display:flex;flex-direction:column;gap:8px;text-align:center}
+.el-one{font-size:16px;line-height:1.5;color:#fff;font-weight:500}
+.el-k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.el-ana{display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:14px;background:rgba(252,211,77,.07);border:1px dashed rgba(252,211,77,.45)}
+.el-ana-e{font-size:38px;line-height:1}
+.el-ana b{display:block;font-family:"Kalam",var(--f-ui);font-size:18px;color:#fcd34d;margin-bottom:2px}
+.el-ana p{font-size:15px;line-height:1.55;color:var(--ink)}
+.el-chips{display:flex;flex-wrap:wrap;gap:8px}
+.el-chip{display:inline-flex;flex-direction:column;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:14px;font-weight:600;color:var(--ink)}
+.el-chip small{font-weight:400;font-size:11.5px;color:var(--muted)}
+.el-chip.hero{border-color:color-mix(in srgb,var(--c) 60%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.el-scene{border-top:1px dashed rgba(255,255,255,.1);padding-top:16px}
+.el-step{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.08em}
+.el-step span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#0b0816;font-weight:700;font-size:13px;font-family:var(--f-ui)}
+.el-scene h4{font-family:"Kalam",var(--f-ui);font-size:21px;font-weight:700;margin:8px 0 6px;color:#fff;line-height:1.2}
+.el-scene .xg-sec{cursor:zoom-in}
+.el-cap{font-size:15.5px;line-height:1.6;color:var(--ink);margin-top:8px!important}
+.el-more{margin-top:10px;font-size:13.5px;color:var(--muted)}
+.el-more summary{cursor:pointer;color:#c4b5fd;font-weight:500}
+.el-more p{margin-top:6px!important;line-height:1.55;color:#cfc8e6}
+.el-lim{padding:12px 14px;border-radius:12px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.3)}
+.el-lim b{font-size:13.5px;color:#fca5a5}.el-lim p{font-size:14px;line-height:1.5;margin-top:4px!important}
+.el-real{padding:14px;border-radius:12px;background:#07140d;border:1px solid #2c4a37}
+.el-real h4{margin:0 0 8px;font-family:"Kalam",var(--f-ui);font-size:19px;color:#bbf7d0}
+.el-real ol,.el-recap ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14.5px;line-height:1.5}
+.el-real li{color:#d1fae5}
+.el-gl dl{margin:0;font-size:14px;line-height:1.45}
+.el-gl dt{margin-top:8px}
+.el-gl dt{font-weight:700;color:var(--c)}.el-gl dd{margin:0;color:var(--ink)}
+.el-recap{padding:14px;border-radius:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.35)}
+.el-recap li{color:#fff;font-weight:500}
+.el-quiz{padding:14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--c) 50%,transparent);background:color-mix(in srgb,var(--c) 8%,transparent)}
+.el-quiz summary{cursor:pointer;font-size:15px;font-weight:600;color:#fff;list-style:none}
+.el-quiz summary .el-k{display:block}
+.el-quiz summary::after{content:" Tocca per la risposta";display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:4px}
+.el-quiz[open] summary::after{content:""}
+.el-quiz p{margin-top:8px!important;font-size:14.5px;line-height:1.55;color:var(--ink)}
+
+.xg{padding:16px 6px 10px;display:flex;flex-direction:column;gap:26px;cursor:zoom-in;background:#050407}
+.xg-title{font-family:"Kalam",var(--f-ui);font-weight:700;font-size:24px;color:#fff;text-align:center;line-height:1.15;padding:0 8px}
+.xg-sec svg{display:block;width:100%;height:auto}
+.xg-sec+.xg-sec{border-top:1px dashed rgba(255,255,255,.1);padding-top:22px}
+#xzoom{position:fixed;inset:0;z-index:9999;background:#000;overflow:auto;-webkit-overflow-scrolling:touch;padding:56px 16px 40px}
+#xzoom .xz-in{max-width:760px;margin:0 auto}
+#xzoom .xg{cursor:default;border:0;background:none}
+@media (max-width:860px){#xzoom{padding:56px 8px 40px}#xzoom .xz-in{width:150%;max-width:none}}
+.xz-close{position:fixed;top:12px;right:14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:#111;color:#fff;font-size:18px;cursor:pointer;z-index:10000}
+
+.schema{margin-top:8px;padding:18px 14px 16px;border-radius:14px;background:radial-gradient(120% 80% at 50% 0%,rgba(167,139,250,.14),rgba(7,6,12,.4) 60%);border:1px solid var(--line);overflow:hidden}
+.sc-root{display:flex;justify-content:center}
+.sc-root span{display:inline-block;max-width:90%;text-align:center;padding:10px 18px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 70%,transparent);background:color-mix(in srgb,var(--c) 18%,#0b0915);font-family:var(--f-display);font-weight:400;font-size:18px;letter-spacing:-.01em;line-height:1.2;box-shadow:0 0 30px -4px color-mix(in srgb,var(--c) 60%,transparent)}
+.sc-trunk{width:1px;height:18px;margin:0 auto;background:linear-gradient(var(--c),transparent)}
+.sc-branches{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;position:relative}
+.sc-b{position:relative;padding:12px 12px 10px;border-radius:12px;background:rgba(11,9,21,.75);border:1px solid var(--line);border-top:2px solid var(--bc)}
+.sc-b h4{margin:0 0 8px;font-size:13.5px;font-weight:600;color:var(--ink);display:flex;gap:8px;align-items:baseline}
+.sc-b h4 i{font-style:normal;font-family:var(--f-mono);font-size:10px;color:var(--bc)}
+.sc-b ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.sc-b li{font-size:12.5px;line-height:1.45;color:#c8c1de;padding-left:12px;position:relative}
+.sc-b li::before{content:"";position:absolute;left:0;top:.6em;width:5px;height:1px;background:var(--bc)}
+.sc-key{margin-top:14px;padding:10px 12px;border-radius:10px;font-size:13.5px;color:#ddd5f7;background:rgba(167,139,250,.08);border:1px dashed rgba(167,139,250,.35)}
+.sc-key b{font-family:var(--f-mono);font-weight:500;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+
+.dg{padding:14px 10px 14px;display:flex;flex-direction:column;gap:18px}
+.dg-fig{margin:0}
+.dg-fig figcaption{font-size:13px;font-weight:600;color:var(--ink);margin:0 4px 10px;display:flex;flex-direction:column;gap:2px}
+.dg-fig figcaption span{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
+.dg-fig svg{display:block;width:100%;height:auto;max-width:100%;font-family:var(--f-ui);overflow:visible}
+.dg-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch}
+.dg-side{border-radius:12px;border:1px solid color-mix(in srgb,var(--bc) 55%,transparent);background:color-mix(in srgb,var(--bc) 9%,transparent);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.dg-h{font-weight:700;font-size:13px;color:var(--bc);margin-bottom:2px}
+.dg-i{font-size:12.5px;color:#e6defa;padding:5px 8px;border-radius:8px;background:rgba(0,0,0,.35)}
+.dg-vs-mid{align-self:center;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em}
+.dg-causa{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.dg-lab{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.dg-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.dg-chips span{font-size:12.5px;padding:6px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--bc) 60%,transparent);background:color-mix(in srgb,var(--bc) 12%,transparent);color:#f1ecff}
+.dg-arrow{color:var(--muted);font-size:16px;line-height:1}
+.dg-center{font-weight:700;font-size:15px;padding:10px 18px;border-radius:14px;border:1px solid var(--bc);background:color-mix(in srgb,var(--bc) 16%,#07050e);box-shadow:0 0 26px -6px var(--bc)}
+
+.tr-sub{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:8px 8px 2px}
+/* glossary */
+#g-search{width:100%;border:1px solid var(--line);background:rgba(0,0,0,.55);border-radius:10px;padding:8px 12px;outline:none;font-size:13px;margin-bottom:8px}
+#g-search:focus{border-color:rgba(185,155,255,.5)}
+.g-letters{display:flex;flex-wrap:wrap;gap:2px;margin:0 2px 8px}
+.g-letters button{border:0;background:transparent;color:var(--muted);font-size:11.5px;font-weight:600;width:22px;height:22px;border-radius:6px}
+.g-letters button:hover{background:rgba(167,139,250,.14);color:var(--ink)}
+.g-L{font-size:22px;font-weight:300;color:var(--core);margin:14px 8px 4px;letter-spacing:-.02em;scroll-margin-top:8px}
+.g-item{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 8px 9px;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.g-item:hover{background:rgba(167,139,250,.08)}
+.g-item .gt{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink)}
+.g-item .gt .dot{width:7px;height:7px}
+.g-item .gk{font-size:10.5px;font-weight:500;color:var(--faint);text-transform:lowercase;margin-left:auto}
+.g-item .gd{display:block;font-size:12.5px;line-height:1.5;color:#c8c1de;margin-top:3px;font-weight:300}
+/* full / short */
+.d-mode{display:inline-flex;margin-top:14px}
+.d-mode button{font-family:var(--f-ui);font-size:12.5px;padding:5px 14px}
+#d-body .short-only{display:none}
+#d-body.is-short .short-only{display:block}
+#d-body.is-short .full-only{display:none}
+.brief{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.brief li{position:relative;padding:10px 12px 10px 34px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);font-size:14.5px;line-height:1.45;color:#ece6ff}
+.brief li::before{content:"";position:absolute;left:14px;top:1.05em;width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+
+/* test */
+.t-intro{margin:2px 8px 4px;font-size:13px;color:var(--muted);line-height:1.55}
+.t-scope{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px}
+.t-scope .chip[aria-pressed="true"]{color:var(--ink);border-color:color-mix(in srgb,var(--c,var(--accent)) 70%,transparent);background:color-mix(in srgb,var(--c,var(--accent)) 16%,transparent)}
+#t-num{display:inline-flex;margin-left:4px}
+#v-test .row{padding:0 4px}
+.t-h{display:flex;align-items:center;gap:10px;padding:7px 8px;font-size:13px}
+.t-h .sc{font-weight:700;font-variant-numeric:tabular-nums;min-width:52px}
+.t-h .w{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-h .d{color:var(--faint);font-size:11.5px}
+.quiz{display:flex;flex-direction:column;gap:16px;padding-top:6px}
+.q-top{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.q-bar{height:3px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.q-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#f0abfc);box-shadow:0 0 12px var(--accent);transition:width .4s}
+.q-text{font-size:20px;font-weight:400;line-height:1.4;letter-spacing:-.01em;margin:6px 0 4px;text-wrap:balance}
+.q-opts{display:flex;flex-direction:column;gap:8px}
+.q-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);font-size:14px;line-height:1.45;transition:background .15s,border-color .15s}
+.q-opt:hover:not(:disabled){border-color:rgba(185,155,255,.5);background:rgba(167,139,250,.08)}
+.q-opt b{flex:none;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:11px;background:rgba(255,255,255,.06);color:var(--muted)}
+.q-opt:disabled{cursor:default}
+.q-opt.ok{border-color:rgba(94,234,212,.7);background:rgba(94,234,212,.1)}
+.q-opt.ok b{background:var(--ok);color:#03130f}
+.q-opt.ko{border-color:rgba(251,113,133,.7);background:rgba(251,113,133,.1)}
+.q-opt.ko b{background:var(--danger);color:#1a0610}
+.q-exp{padding:12px 14px;border-radius:12px;background:rgba(167,139,250,.07);border:1px dashed rgba(167,139,250,.3);font-size:13.5px;line-height:1.55;color:#ddd5f7}
+.q-exp strong{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.q-exp .linkbtn{padding:4px 0 0}
+.q-why{margin:6px 0 0;font-size:14px;line-height:1.55;color:#e9e3fb}
+.q-why b{color:#fff;font-weight:600}
+.t-h{flex-wrap:wrap}
+.t-rt{margin-left:auto;border:1px solid rgba(251,113,133,.45);background:rgba(251,113,133,.08);color:#fecdd3;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+.q-ask{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.q-ask h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9890b3;font-weight:500}
+.q-ask form{display:flex;gap:8px}
+.q-ask input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:14px}
+.q-ask input:focus{outline:none;border-color:rgba(167,139,250,.6)}
+.q-chat{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.q-chat .me{align-self:flex-end;max-width:85%;padding:8px 12px;border-radius:12px 12px 4px 12px;background:rgba(167,139,250,.18);font-size:14px}
+.q-chat .ai{max-width:95%;padding:8px 12px;border-radius:12px 12px 12px 4px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:14px;line-height:1.55;color:#e9e3fb}
+.q-chat .ai p{margin:0 0 6px}.q-chat .ai p:last-child{margin:0}
+.q-chat .ai.wait{color:#9890b3;font-style:italic}
+.q-sugg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.q-sugg button{padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:none;color:#cfc6ec;font-size:12.5px}
+.q-end{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0 6px}
+.q-ring{width:150px;height:150px}
+.q-score{font-size:15px;color:var(--muted)}
+.q-verdict{font-size:22px;font-weight:300;letter-spacing:-.02em}
+.q-review{text-align:left;width:100%;margin-top:10px}
+
+/* thinking */
+.thinking{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:60px 10px}
+.orb{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#fff 0,#d8c8ff 12%,rgba(167,139,250,.6) 35%,rgba(167,139,250,0) 70%);animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(.85);opacity:.75}50%{transform:scale(1.08);opacity:1}}
+.thinking .msg{font-family:var(--f-display);font-weight:300;font-size:19px;letter-spacing:-.01em}
+.thinking .sub{font-size:12.5px;color:var(--muted);max-width:30ch}
+.inline-think{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:12px 4px}
+.inline-think .mini{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#fff 0,var(--accent) 40%,transparent 70%);animation:pulse 1.4s ease-in-out infinite}
+.err{color:var(--danger);font-size:13px;margin-top:8px}
+
+/* graph chrome */
+#hud{position:fixed;z-index:4;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;transition:right .45s cubic-bezier(.2,.8,.2,1)}
+body.detail-open #hud{right:calc(var(--detail-w) + 32px)}
+#hud button{height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--muted);font-size:12px;font-family:var(--f-mono);display:flex;align-items:center;gap:6px}
+#hud button:hover{color:var(--ink)}
+#hud button[aria-pressed="true"]{color:var(--ink);border-color:rgba(185,155,255,.5)}
+#tip{position:fixed;z-index:7;pointer-events:none;padding:6px 10px;border-radius:8px;background:var(--glass-hi);border:1px solid var(--line);font-size:12.5px;max-width:240px;opacity:0;transition:opacity .12s;transform:translate(12px,12px)}
+#tip.on{opacity:1}
+#tip small{display:block;color:var(--muted);font-size:11px}
+#banner{position:fixed;z-index:8;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);padding:8px 14px;border-radius:10px;background:var(--glass-hi);border:1px solid rgba(251,113,133,.35);font-size:12.5px;color:#f7c6d0;max-width:min(560px,calc(100% - 32px));text-align:center}
+#toast{position:fixed;z-index:9;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;transition:all .3s;padding:9px 16px;border-radius:999px;background:var(--glass-hi);border:1px solid var(--line);font-size:13px;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+#nav{display:none}
+body.side-hidden #side{transform:translateX(calc(-100% - 40px));opacity:0;pointer-events:none}
+#hide-side{margin-left:auto;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);display:grid;place-items:center;font-size:12px;align-self:center}
+#hide-side:hover{color:var(--ink)}
+#show-side{position:fixed;z-index:4;top:calc(16px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:10px;width:40px;height:40px;justify-content:center;padding:0;border-radius:12px;color:var(--muted);border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-family:var(--f-display);font-weight:300;font-size:17px;letter-spacing:-.01em;opacity:0;pointer-events:none;transform:translateX(-12px);transition:all .4s}
+#show-side em{color:var(--core);font-style:normal;font-weight:600}
+body.side-hidden #show-side{opacity:1;pointer-events:auto;transform:none}
+
+/* ---------- phone ---------- */
+@media (max-width:860px){
+  :root{--nav-h:62px}
+  #side{left:0;right:0;width:auto;top:auto;bottom:0;height:min(82%,680px);border-radius:20px 20px 0 0;border-bottom:0;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+  #side .brand,#side #compose,#side .tabs,#side .view{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  body.sheet #side{transform:none}
+  #side .brand{display:none}
+  #compose{padding-top:16px}
+  body[data-tab="traduci"] #compose,body[data-tab="test"] #compose,body[data-tab="glossario"] #compose{display:none}
+  body[data-tab="nuovo"] #side .tabs{display:none}
+  body[data-tab="nuovo"] #side .view{display:none}
+  body[data-tab="nuovo"] #side{height:auto}
+  #detail{left:0;right:0;width:auto;top:calc(10px + env(safe-area-inset-top,0px));bottom:0;border-radius:20px 20px 0 0;border-bottom:0;transform:translateY(105%);z-index:12;background:rgba(3,2,7,.96)}
+  #side{background:rgba(3,2,7,.94)}
+  #detail .d-body{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+  #detail.open{transform:none}
+  .d-title{font-size:29px}
+  #hud{bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom,0px))}
+  body.detail-open #hud{right:max(16px,env(safe-area-inset-right,0px))}
+  #hide-side,#show-side{display:none!important}
+  #nav{display:flex;position:fixed;z-index:10;left:0;right:0;bottom:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));padding:6px max(10px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(10px,env(safe-area-inset-left,0px));background:rgba(0,0,0,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);gap:4px}
+  #nav button{flex:1;border:0;background:transparent;color:var(--faint);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;letter-spacing:.04em;border-radius:12px}
+  #nav button svg{width:22px;height:22px}
+  #nav button[aria-current="true"]{color:var(--ink)}
+  #nav button.plus span.p{width:44px;height:30px;border-radius:12px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);box-shadow:0 0 22px -4px rgba(167,139,250,.9)}
+  #nav button.plus span.p svg{width:18px;height:18px}
+  #banner{top:calc(10px + env(safe-area-inset-top,0px))}
+  #toast{bottom:calc(var(--nav-h) + 20px + env(safe-area-inset-bottom,0px))}
+  #mtitle{display:block}
+}
+#mtitle{position:fixed;z-index:3;left:max(18px,env(safe-area-inset-left,0px));top:calc(14px + env(safe-area-inset-top,0px));pointer-events:none}
+#mtitle h1{margin:0;font-family:var(--f-display);font-weight:300;font-size:24px;letter-spacing:-.02em;line-height:1;text-shadow:0 0 30px #000,0 0 12px #000}
+#mtitle h1 em{color:var(--core);font-style:normal;font-weight:600}
+#mtitle p{margin:0;text-shadow:0 0 12px #000;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<canvas id="stage" aria-label="Grafo della conoscenza: ogni punto è una voce, raggruppata per categoria"></canvas>
+
+<button id="show-side" type="button" aria-label="Mostra il pannello" title="Mostra il pannello">☰</button>
+<div id="mtitle"><p id="mcount"></p></div>
+
+<aside id="side" class="glass" aria-label="Archivio">
+  <div class="brand"><span class="count" id="count"></span><button id="hide-side" type="button" aria-label="Nascondi il pannello" title="Nascondi il pannello">⟨</button></div>
+  <form id="compose" autocomplete="off">
+    <label for="q">Cosa ti ha incuriosito?</label>
+    <div class="inputwrap">
+      <textarea id="q" rows="2" placeholder="Un termine, una frase, una citazione, un nome… oppure una foto"></textarea>
+      <button id="photo" type="button" hidden aria-label="Scatta o importa una foto" title="Scatta o importa una foto"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg><span>Foto</span></button><input id="photo-in" type="file" accept="image/*" hidden>
+      <button id="go" type="submit" disabled>Approfondisci <span aria-hidden="true">↵</span></button>
+    </div>
+    <div class="sugg" id="sugg"></div>
+  </form>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-archivio" aria-selected="true" data-tab="archivio">Archivio</button>
+    <button class="tab" role="tab" id="tab-glossario" aria-selected="false" data-tab="glossario">Glossario</button>
+    <button class="tab" role="tab" id="tab-traduci" aria-selected="false" data-tab="traduci">Traduzione</button>
+    <button class="tab" role="tab" id="tab-test" aria-selected="false" data-tab="test">Test</button>
+  </div>
+  <div class="view" id="v-archivio" role="tabpanel">
+    <input id="search" type="search" placeholder="Cerca nel tuo archivio">
+    <div id="cats"></div>
+  </div>
+  <div class="view" id="v-glossario" role="tabpanel" hidden>
+    <input id="g-search" type="search" placeholder="Cerca nel glossario">
+    <div class="g-letters" id="g-letters"></div>
+    <div id="g-list"></div>
+  </div>
+  <div class="view" id="v-test" role="tabpanel" hidden>
+    <p class="t-intro">L'AI ti interroga su ciò che hai cercato finora: domande a scelta multipla e vero o falso, con la spiegazione di ogni risposta.</p>
+    <div class="section-label">Su cosa</div>
+    <div class="t-scope" id="t-scope"></div>
+    <div class="section-label">Quante domande</div>
+    <div class="seg" role="group" aria-label="Numero di domande" id="t-num">
+      <button type="button" data-n="5" aria-pressed="true">5</button><button type="button" data-n="10" aria-pressed="false">10</button><button type="button" data-n="15" aria-pressed="false">15</button><button type="button" data-n="0" id="t-all" aria-pressed="false">Tutte</button>
+    </div>
+    <div class="row" style="margin-top:16px"><button class="btn primary" id="t-go" type="button">Inizia il test</button></div>
+    <div class="section-label" id="t-hist-l" hidden>Risultati recenti</div>
+    <div id="t-hist"></div>
+  </div>
+  <div class="view" id="v-traduci" role="tabpanel" hidden>
+    <div class="tr-dir">
+      <div class="seg" role="group" aria-label="Direzione">
+        <button type="button" data-dir="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-dir="en-it" aria-pressed="false">EN → IT</button>
+        <button type="button" data-dir="it-en" aria-pressed="false">IT → EN</button>
+      </div>
+    </div>
+    <textarea id="tr-in" placeholder="Scrivi una parola o una frase in inglese o in italiano"></textarea>
+    <div class="row" style="margin-top:10px"><button class="btn primary" id="tr-go" type="button">Traduci</button><span class="hint" id="tr-hint"></span></div>
+    <div id="tr-out"></div>
+    <div class="section-label" id="tr-hist-l" hidden>Tutte le tue traduzioni</div>
+    <input id="tr-search" type="search" placeholder="Cerca tra le traduzioni" hidden style="width:100%;border:1px solid var(--line);background:rgba(0,0,0,.55);border-radius:10px;padding:8px 12px;outline:none;font-size:13px;margin:0 0 6px">
+    <div class="tr-hist" id="tr-hist"></div>
+  </div>
+</aside>
+
+<section id="detail" class="glass" aria-label="Dettaglio voce" aria-hidden="true">
+  <div class="d-head"><span class="d-cat" id="d-cat"></span><button class="iconbtn" id="d-close" aria-label="Chiudi">✕</button></div>
+  <div class="d-body" id="d-body"></div>
+</section>
+
+<div id="hud">
+  <button id="h-all" aria-pressed="false" title="Mostra tutte le categorie, sottocategorie, voci e collegamenti">✦ Mostra tutto</button>
+  <button id="h-fit" title="Inquadra tutto">⤢</button>
+</div>
+
+<nav id="nav" aria-label="Sezioni">
+  <button data-go="grafo" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="2.4"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="7" r="1.6"/><circle cx="6" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/><path d="M10.2 10.6 6.3 7.1M13.9 10.9l3.7-2.9M10.4 13.6l-3.2 3.2M13.7 13.6l3.1 3.3"/></svg>Grafo</button>
+  <button data-go="archivio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Archivio</button>
+  <button data-go="nuovo" class="plus" aria-label="Nuova voce"><span class="p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
+  <button data-go="test"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 9a3 3 0 1 1 4.2 2.75c-.75.35-1.2 1.05-1.2 1.85V14"/><circle cx="12" cy="17.5" r=".6" fill="currentColor"/><circle cx="12" cy="12" r="9"/></svg>Test</button>
+  <button data-go="traduci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h9M8.5 3v2M6 5c.8 3.5 3.2 6 6 7.5M11 5c-.8 3.5-3.5 6.5-7 8"/><path d="m13 21 4-10 4 10M14.5 17.5h5"/></svg>Traduci</button>
+</nav>
+
+<div id="tip"></div>
+<div id="banner" hidden></div>
+<div id="toast" role="status"></div>
+
+<script>
+/* Portale della conoscenza, versione indipendente da Claude.
+   AI: Groq (Llama open source, gratis) -> OpenRouter (modelli :free) -> Ollama locale.
+   Archivio: IndexedDB nel browser, con esporta/importa JSON. */
+(() => {
+if (window.claude?.use) return;
+const LS = k => { try { return localStorage.getItem("pc_" + k) || ""; } catch { return ""; } };
+const LSset = (k, v) => { try { localStorage.setItem("pc_" + k, v); } catch {} };
+const CFG = () => ({
+  groq: LS("groq"), openrouter: LS("openrouter"),
+  ollama: LS("ollama") || "", ollamaModel: LS("ollamaModel") || "qwen2.5:7b",
+});
+const MODELS = {
+  groq: { quick: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"], default: ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3-32b"], complex: ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "qwen/qwen3-32b"], vision: ["meta-llama/llama-4-scout-17b-16e-instruct", "meta-llama/llama-4-maverick-17b-128e-instruct"] },
+  openrouter: { quick: "meta-llama/llama-3.3-70b-instruct:free", default: "meta-llama/llama-3.3-70b-instruct:free", complex: "deepseek/deepseek-chat-v3-0324:free", vision: "meta-llama/llama-4-scout:free" },
+};
+const err = (code, msg) => Object.assign(new Error(msg || code), { code });
+const toDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+
+function providers(){
+  const c = CFG(), out = [];
+  if (c.groq) out.push({ name: "Groq", url: "https://api.groq.com/openai/v1/chat/completions", models: "https://api.groq.com/openai/v1/models", key: c.groq, m: MODELS.groq });
+  if (c.openrouter) out.push({ name: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", models: "https://openrouter.ai/api/v1/models", onlyFree: true, key: c.openrouter, m: MODELS.openrouter, extra: { "HTTP-Referer": location.origin || "https://localhost", "X-Title": "Portale conoscenza" } });
+  if (c.ollama) { const m = c.ollamaModel; out.push({ name: "Ollama", url: c.ollama.replace(/\/$/, "") + "/v1/chat/completions", key: "", m: { quick: m, default: m, complex: m, vision: LS("ollamaVision") || "" } }); }
+  return out;
+}
+
+const LIVE = new Map();
+const PREF = {
+  text: [/gpt-oss-120b/, /llama-4-maverick/, /llama-3\.3-70b/, /kimi-k2/, /qwen3?-?(235|32)/, /deepseek/, /llama.*70b/, /gpt-oss-20b/, /qwen/, /llama-4-scout/, /llama/],
+  quick: [/llama-3\.1-8b|8b-instant/, /gpt-oss-20b/, /llama-4-scout/, /gpt-oss-120b/, /llama/],
+  vision: [/llama-4-scout/, /llama-4-maverick/, /vision|vl\b|-vl-/],
+};
+async function liveModels(p){
+  if (!p.models) return null;
+  if (LIVE.has(p.name)) return LIVE.get(p.name);
+  const pr = fetch(p.models, { headers: p.key ? { Authorization: "Bearer " + p.key } : {} }).then(r => r.ok ? r.json() : null).then(d => (d?.data || []).filter(m => m.active !== false).map(m => m.id).filter(id => !p.onlyFree || /:free$/.test(id)).filter(id => !/whisper|tts|guard|playai|orpheus|prompt-guard|safeguard|allam/i.test(id))).catch(() => null);
+  LIVE.set(p.name, pr); return pr;
+}
+function rank(ids, kind){
+  const out = [];
+  for (const re of PREF[kind]) for (const id of ids) if (re.test(id) && !out.includes(id)) out.push(id);
+  if (kind !== "vision") for (const id of ids) if (!out.includes(id)) out.push(id);
+  return out;
+}
+async function call(p, o){
+  const kind = o.images?.length ? "vision" : o.tier === "quick" ? "quick" : "text";
+  const want = o.images?.length ? p.m.vision : (p.m[o.tier] || p.m.default);
+  let list = (Array.isArray(want) ? want : [want]).filter(Boolean);
+  const live = await liveModels(p);
+  if (live?.length) { const ok = list.filter(m => live.includes(m)); list = [...ok, ...rank(live, kind).filter(m => !ok.includes(m))].slice(0, 5); }
+  if (!list.length) throw err("no_vision");
+  let last;
+  for (const model of list) {
+    try { const r = await call1(p, model, o); window.__pcLast = p.name + " · " + model; return r; }
+    catch (e) { last = e; if (!(e.code === "model_gone" || e.code === "rate_limited")) throw e; }
+  }
+  throw last;
+}
+async function call1(p, model, { prompt, images = [], tier = "default", json = false, signal, onText }){
+  const content = images.length ? [{ type: "text", text: prompt }, ...images.map(u => ({ type: "image_url", image_url: { url: u } }))] : prompt;
+  const sys = "Sei l'assistente di un portale di conoscenza personale. Scrivi sempre in italiano corretto e naturale. Sii preciso: non inventare fatti, nomi o numeri." + (json ? " Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo e senza blocchi di codice." : "");
+  const body = { model, messages: [{ role: "system", content: sys }, { role: "user", content }], temperature: json ? 0.4 : 0.6, max_tokens: tier === "complex" ? 6000 : 4000 };
+  if (json) body.response_format = { type: "json_object" };
+  const stream = !!onText && !json;
+  if (stream) body.stream = true;
+  const headers = { "Content-Type": "application/json", ...(p.key ? { Authorization: "Bearer " + p.key } : {}), ...(p.extra || {}) };
+  let res;
+  try { res = await fetch(p.url, { method: "POST", headers, body: JSON.stringify(body), signal }); }
+  catch (e) { if (e.name === "AbortError") throw err("cancelled"); throw err("network", p.name + " non raggiungibile (" + (e.message || e.name) + ")" + (/claude|usercontent/i.test(location.host) || location.origin === "null" && window.top !== window ? ". Sembra aperto dentro un'anteprima che blocca internet: scarica il file e aprilo con Chrome." : "")); }
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    if (res.status === 429) throw err("rate_limited", t);
+    if (res.status === 401 || res.status === 403) throw err("bad_key", p.name + ": chiave non valida");
+    if (res.status === 413) throw err("prompt_too_large");
+    if (res.status === 404 || /model.{0,40}(not.?found|decommission|does not exist)/i.test(t)) throw err("model_gone", p.name + " " + model + ": " + t.slice(0, 160));
+    if (json && res.status === 400 && /json/i.test(t)) { const b2 = { ...body }; delete b2.response_format; const r2 = await fetch(p.url, { method: "POST", headers, body: JSON.stringify(b2), signal }); if (r2.ok) return (await r2.json()).choices?.[0]?.message?.content || ""; }
+    throw err("provider", p.name + " " + res.status + ": " + t.slice(0, 200));
+  }
+  if (!stream) { const d = await res.json(); return d.choices?.[0]?.message?.content || ""; }
+  const rd = res.body.getReader(), dec = new TextDecoder(); let buf = "", text = "";
+  for (;;) {
+    const { done, value } = await rd.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n"); buf = lines.pop();
+    for (const l of lines) {
+      const s = l.trim(); if (!s.startsWith("data:")) continue;
+      const data = s.slice(5).trim(); if (data === "[DONE]") continue;
+      try { const delta = JSON.parse(data).choices?.[0]?.delta?.content || ""; if (delta) { text += delta; onText({ text, delta }); } } catch {}
+    }
+  }
+  return text;
+}
+
+async function run(opts){
+  const list = providers();
+  if (!list.length) { window.__pcOpenSettings?.(); throw err("no_provider"); }
+  let last;
+  for (const p of list) {
+    try { const out = await call(p, opts); if (!String(out).trim()) throw err("empty_completion"); return out; }
+    catch (e) { if (e.code === "cancelled") throw e; last = e; console.warn("[AI]", p.name, e.code, e.message); }
+  }
+  throw last;
+}
+function parseJSON(t){
+  t = String(t).replace(/<think>[\s\S]*?<\/think>/g, "").trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+  try { return JSON.parse(t); } catch {}
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch {} }
+  throw err("invalid_json");
+}
+const sample = async (prompt, o = {}) => ({ text: await run({ prompt, tier: o.modelTier || "default", signal: o.signal, onText: o.onText }) });
+sample.json = async (prompt, o = {}) => {
+  const images = o.images ? await Promise.all(o.images.map(toDataURL)) : [];
+  for (let i = 0; i < 2; i++) {
+    const t = await run({ prompt, images, tier: o.modelTier || "default", json: true, signal: o.signal });
+    try { return parseJSON(t); } catch (e) { if (i) throw e; }
+  }
+};
+sample.limits = async () => ({ images: { mediaTypes: ["image/jpeg", "image/png", "image/webp"], maxInputBytes: 3500000 } });
+
+/* ---------- archivio locale (IndexedDB) con API simile a quella di prima ---------- */
+const DBN = "portale-conoscenza", ST = "docs";
+const idb = new Promise((res, rej) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore(ST); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const mem = new Map(); let loaded = null; const subs = new Set();
+const load = () => loaded ||= idb.then(db => new Promise((res, rej) => { const tx = db.transaction(ST), st = tx.objectStore(ST), rq = st.openCursor(); rq.onsuccess = () => { const c = rq.result; if (c) { mem.set(c.key, c.value); c.continue(); } else res(); }; rq.onerror = () => rej(rq.error); })).then(async () => {
+  /* primo avvio: carica l'archivio che avevi su claude.ai */
+  const seed = window.__PC_SEED; if (!seed?.docs || LS("seeded")) return;
+  const fresh = Object.entries(seed.docs).filter(([k]) => !mem.has(k));
+  fresh.forEach(([k, v]) => mem.set(k, v));
+  const db = await idb; await new Promise((res, rej) => { const tx = db.transaction(ST, "readwrite"), st = tx.objectStore(ST); fresh.forEach(([k, v]) => st.put(v, k)); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  LSset("seeded", "1");
+});
+const put = (k, v) => idb.then(db => new Promise((res, rej) => { const tx = db.transaction(ST, "readwrite"); v === undefined ? tx.objectStore(ST).delete(k) : tx.objectStore(ST).put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }));
+const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(10)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+const parent = k => k.slice(0, k.lastIndexOf("/"));
+let fireT; const fire = () => { clearTimeout(fireT); fireT = setTimeout(() => subs.forEach(s => s()), 0); };
+function query(col, ord, lim){
+  let docs = [...mem.entries()].filter(([k]) => parent(k) === col).map(([k, v]) => ({ id: k.slice(col.length + 1), v }));
+  if (ord) docs.sort((a, b) => ((a.v[ord.f] ?? 0) > (b.v[ord.f] ?? 0) ? 1 : (a.v[ord.f] ?? 0) < (b.v[ord.f] ?? 0) ? -1 : 0) * (ord.d === "desc" ? -1 : 1));
+  if (lim) docs = docs.slice(0, lim);
+  return { docs: docs.map(x => ({ id: x.id, data: () => structuredClone(x.v) })), metadata: { fromCache: false } };
+}
+function coll(col, ord, lim){
+  return {
+    orderBy: (f, d = "asc") => coll(col, { f, d }, lim),
+    limit: n => coll(col, ord, n),
+    get: async () => { await load(); return query(col, ord, lim); },
+    add: async data => { await load(); const id = rid(), k = col + "/" + id; mem.set(k, structuredClone(data)); await put(k, mem.get(k)); fire(); return { id }; },
+    onSnapshot(cb, onErr){ let on = true; const s = () => on && cb(query(col, ord, lim)); load().then(() => { subs.add(s); s(); }, e => onErr?.(e)); return () => { on = false; subs.delete(s); }; },
+  };
+}
+function doc(path){
+  return {
+    get: async () => { await load(); const v = mem.get(path); return { exists: !!v, id: path.split("/").pop(), data: () => v && structuredClone(v) }; },
+    set: async data => { await load(); mem.set(path, structuredClone(data)); await put(path, mem.get(path)); fire(); },
+    update: async patch => { await load(); const v = mem.get(path); if (!v) throw err("not_found"); for (const [f, x] of Object.entries(patch)) { if (x && x.__delete__) delete v[f]; else v[f] = structuredClone(x); } await put(path, v); fire(); },
+    delete: async () => { await load(); const pre = path + "/"; for (const k of [...mem.keys()]) if (k === path || k.startsWith(pre)) { mem.delete(k); await put(k, undefined); } fire(); },
+  };
+}
+const db = { collection: c => coll(c), doc };
+
+/* esporta / importa */
+async function exportAll(){
+  await load();
+  const out = { formato: "portale-conoscenza", versione: 1, esportato: new Date().toISOString(), docs: Object.fromEntries(mem) };
+  const blob = new Blob([JSON.stringify(out)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `portale-conoscenza-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function importAll(file){
+  const j = JSON.parse(await file.text()); if (j.formato !== "portale-conoscenza" || !j.docs) throw new Error("File non valido");
+  await load(); let n = 0;
+  for (const [k, v] of Object.entries(j.docs)) { if (!/^[\w\-./]+$/.test(k)) continue; mem.set(k, v); await put(k, v); n++; }
+  fire(); return n;
+}
+
+/* ---------- impostazioni ---------- */
+const css = `#pc-set{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+#pc-set[hidden]{display:none}
+#pc-set .box{width:min(520px,100%);max-height:90vh;overflow:auto;background:#0d0b14;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;color:#e9e3fb;font:14px/1.5 Sora,system-ui,sans-serif}
+#pc-set h2{margin:0 0 4px;font-size:18px;font-weight:500}#pc-set p{margin:4px 0 12px;color:#a59cc4;font-size:13px}
+#pc-set label{display:block;margin:12px 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9890b3}
+#pc-set input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#fff;font:inherit}
+#pc-set a{color:#c4b5fd}#pc-set .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+#pc-set button{padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font:inherit;cursor:pointer}
+#pc-set button.pri{background:#a78bfa;border-color:#a78bfa;color:#120c24;font-weight:600}
+#pc-set .st{margin-top:10px;font-size:13px;min-height:1.4em}
+#pc-gear{margin-left:auto;margin-right:6px;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#d9d0f7;font-size:15px;cursor:pointer}`;
+function settings(){
+  if (document.getElementById("pc-set")) { document.getElementById("pc-set").hidden = false; return; }
+  const c = CFG(), w = document.createElement("div"); w.id = "pc-set";
+  w.innerHTML = `<div class="box" role="dialog" aria-label="Impostazioni AI">
+  <h2>AI gratuita</h2>
+  <p>Il portale usa modelli open source gratuiti. Serve almeno la chiave Groq: si crea gratis in un minuto su <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>, senza carta di credito. Le chiavi restano solo in questo browser.</p>
+  <label>Chiave Groq (principale)</label><input id="pc-groq" type="password" autocomplete="off" placeholder="gsk_..." value="">
+  <label>Chiave OpenRouter (riserva, facoltativa)</label><input id="pc-or" type="password" autocomplete="off" placeholder="sk-or-..." value="">
+  <label>Ollama sul PC (facoltativo)</label><input id="pc-oll" type="text" autocomplete="off" placeholder="http://localhost:11434" value="">
+  <label>Modello Ollama</label><input id="pc-ollm" type="text" autocomplete="off" value="">
+  <div class="row"><button class="pri" id="pc-save" type="button">Salva e prova</button><button id="pc-close" type="button">Chiudi</button></div>
+  <div class="st" id="pc-st"></div>
+  <label style="margin-top:20px">Archivio</label>
+  <p>Le voci sono salvate in questo browser. Per portarle su un altro dispositivo esportale qui e importale là.</p>
+  <div class="row" style="margin-top:0"><button id="pc-exp" type="button">Esporta archivio</button><button id="pc-imp" type="button">Importa archivio</button><input id="pc-file" type="file" accept="application/json,.json" hidden></div>
+  </div>`;
+  document.body.appendChild(w);
+  const $ = id => document.getElementById(id);
+  $("pc-groq").value = c.groq; $("pc-or").value = c.openrouter; $("pc-oll").value = c.ollama; $("pc-ollm").value = c.ollamaModel;
+  $("pc-close").onclick = () => w.hidden = true;
+  w.addEventListener("click", e => { if (e.target === w) w.hidden = true; });
+  $("pc-save").onclick = async () => { LIVE.clear();
+    LSset("groq", $("pc-groq").value.trim()); LSset("openrouter", $("pc-or").value.trim()); LSset("ollama", $("pc-oll").value.trim()); LSset("ollamaModel", $("pc-ollm").value.trim() || "qwen2.5:7b");
+    const st = $("pc-st"); st.textContent = "Provo la connessione…";
+    try { const r = await sample.json('Rispondi con questo JSON: {"ok": true}', { modelTier: "quick" }); const live = await liveModels(providers()[0]).catch(() => null); st.textContent = (r?.ok ? "Funziona" : "La connessione c'è") + ` (${window.__pcLast || ""}${live?.length ? `, ${live.length} modelli disponibili` : ""}). Puoi chiudere.`; }
+    catch (e) { LIVE.clear(); st.textContent = "Non funziona: " + (e.message || e.code); }
+  };
+  $("pc-exp").onclick = () => exportAll();
+  $("pc-imp").onclick = () => $("pc-file").click();
+  $("pc-file").onchange = async e => { const f = e.target.files?.[0]; e.target.value = ""; if (!f) return; try { const n = await importAll(f); $("pc-st").textContent = `Importate ${n} voci e file.`; } catch (x) { $("pc-st").textContent = "Importazione fallita: " + x.message; } };
+}
+window.__pcOpenSettings = settings;
+addEventListener("DOMContentLoaded", () => {
+  const s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+  const g = document.createElement("button"); g.id = "pc-gear"; g.type = "button"; g.title = "Impostazioni AI e archivio"; g.setAttribute("aria-label", "Impostazioni AI e archivio"); g.textContent = "⚙"; g.onclick = settings; const hs = document.getElementById("hide-side"); if (hs) hs.before(g); else { g.style.cssText = "position:fixed;right:14px;bottom:14px;z-index:60"; document.body.appendChild(g); }
+  if (!providers().length) setTimeout(settings, 600);
+});
+window.claude = { use: async n => n === "sample" ? sample : n === "db" ? db : null, __standalone: true };
+})();
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const md = s => { try { return DOMPurify.sanitize(marked.parse(String(s || ""))); } catch { return "<p>" + esc(s) + "</p>"; } };
+const norm = s => String(s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
+const isPhone = () => matchMedia("(max-width:860px)").matches;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------------- categories ---------------- */
+const CAT = {
+  storia:"#f2b55c", arte:"#f472b6", economia:"#4ade80", politica:"#fb7185", scienza:"#5eead4",
+  ai:"#a78bfa", filosofia:"#93c5fd", psicologia:"#fdba74", letteratura:"#fde68a", tecnologia:"#67e8f9",
+  lingua:"#86efac", musica:"#f0abfc", geografia:"#bef264", religione:"#e9d5ff", sport:"#fca5a5", cinema:"#fcd34d",
+  diritto:"#a5b4fc", medicina:"#99f6e4", altro:"#cbd5e1", __tr:"#7dd3fc", __gl:"#ffd166"
+};
+const catColor = c => { c = norm(c); if (CAT[c]) return CAT[c]; let h = 0; for (const ch of c) h = (h * 31 + ch.charCodeAt(0)) % 360; return `hsl(${h} 85% 72%)`; };
+const catName = c => { c = norm(c); if (c === "__tr") return "Traduzioni"; if (c === "__gl") return "Glossario"; return c === "ai" ? "AI" : c.charAt(0).toUpperCase() + c.slice(1); };
+
+/* ---------------- state ---------------- */
+const S = { notes: [], trs: [], tests: [], tScope: new Set(), tNum: 5, db: null, sample: null, live: false, selected: null, tab: "archivio", dir: "auto", busy: false, openCats: new Set(), photos: new Map(), imgLim: null };
+
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2600); }
+function banner(msg){ const b = $("#banner"); b.textContent = msg; b.hidden = !msg; }
+
+const ERR = {
+  not_granted: "Claude non è autorizzato per questa pagina. Consenti l'accesso quando te lo chiede, poi riprova.",
+  sampling_disabled: "Claude non è disponibile per questo account.",
+  rate_limited: "Hai fatto molte richieste di fila. Aspetta un minuto e riprova.",
+  session_expired: "La sessione è scaduta: accedi di nuovo a claude.ai.",
+  refused: "L'AI non ha risposto a questa richiesta. Prova a riformularla.",
+  invalid_json: "La risposta non era nel formato atteso. Riprova.",
+  empty_completion: "Nessuna risposta. Riprova con un testo più breve.",
+  prompt_too_large: "Il testo è troppo lungo. Accorcialo e riprova.",
+  no_provider: "Manca la chiave dell'AI: tocca ⚙ in alto a destra e inserisci la chiave Groq gratuita.",
+  bad_key: "La chiave dell'AI non è valida: controllala in ⚙ in alto a destra.",
+  network: "Non riesco a raggiungere l'AI. Controlla la connessione.",
+  no_vision: "Nessun modello configurato sa leggere le foto: serve la chiave Groq.",
+  provider: "Il servizio AI ha dato un errore. Riprova tra poco.",
+};
+const errMsg = e => ERR[e?.code] || "Qualcosa è andato storto nella risposta dell'AI. Riprova.";
+
+/* ---------------- suggestions ---------------- */
+const IDEAS = ["Effetto Lindy", "«Eppur si muove»", "Stagflazione", "Sfumato leonardesco", "Overfitting", "Trappola di Tucidide", "Memento mori", "Serendipity"];
+function renderSugg(){
+  const pick = IDEAS.slice().sort(() => Math.random() - .5).slice(0, 3);
+  $("#sugg").innerHTML = `<span class="hint">Prova:</span>` + pick.map(p => `<button type="button" class="chip" data-q="${esc(p)}">${esc(p)}</button>`).join("");
+}
+
+/* ================= GRAPH ================= */
+const canvas = $("#stage"), ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1, T = d3.zoomIdentity;
+const G = { nodes: new Map(), links: [], all: false, expanded: new Set(), hover: null, neigh: new Set(), stars: [] };
+const sim = d3.forceSimulation()
+  .force("link", d3.forceLink().id(d => d.id).distance(l => l.dist).strength(l => l.str))
+  .force("charge", d3.forceManyBody().strength(d => d.charge).distanceMax(700))
+  .force("collide", d3.forceCollide().radius(d => d.r + (d.kind === "ghost" ? 1 : 4)).iterations(2))
+  .force("radial", d3.forceRadial(d => d.kind === "cat" ? (d.cat === "__gl" ? G.catRing + 110 : G.catRing) : 0).strength(d => d.kind === "cat" ? (d.cat === "__gl" ? .6 : .25) : 0))
+  .alphaDecay(.025).velocityDecay(.35)
+  .stop();
+
+const spriteCache = new Map();
+function glow(color){
+  if (spriteCache.has(color)) return spriteCache.get(color);
+  const s = 96, c = document.createElement("canvas"); c.width = c.height = s;
+  const g = c.getContext("2d"), gr = g.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  gr.addColorStop(0, color); gr.addColorStop(.18, color); gr.addColorStop(.35, "rgba(0,0,0,0)");
+  g.fillStyle = gr; g.globalAlpha = .55; g.fillRect(0, 0, s, s);
+  const gr2 = g.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  gr2.addColorStop(0, color); gr2.addColorStop(1, "rgba(0,0,0,0)");
+  g.globalAlpha = .35; g.fillStyle = gr2; g.fillRect(0, 0, s, s);
+  spriteCache.set(color, c); return c;
+}
+
+function makeStars(){
+  const N = isPhone() ? 1100 : 1900;
+  const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+  const clusters = [
+    { a: -1.95, s: .55, w: .2, cols: ["#f2b55c", "#fcd34d", "#fde68a", "#fdba74"] },
+    { a: Math.PI + .15, s: .55, w: .2, cols: ["#5eead4", "#67e8f9", "#99f6e4", "#f9a8d4", "#f472b6"] },
+    { a: .35, s: .35, w: .05, cols: ["#f472b6", "#fb7185", "#4ade80"] }
+  ];
+  const base = ["#c4b5fd", "#a78bfa", "#ddd6fe", "#ffffff", "#b99bff", "#e9d5ff"];
+  G.stars = Array.from({ length: N }, () => {
+    let a = Math.random() * 6.283, cols = base, cl = false;
+    const r = Math.random(); let acc = 0;
+    for (const c of clusters) { acc += c.w; if (r < acc) { a = c.a + gauss() * c.s; cols = c.cols; cl = true; break; } }
+    const d = 60 + Math.pow(Math.random(), cl ? .45 : .6) * 1550;
+    return { a, d, r: (Math.random() * 1.5 + .35) * (cl ? 1.35 : 1), p: Math.random() * 6.28, hue: cols[Math.random() * cols.length | 0], ray: !cl || Math.random() < .25 };
+  });
+  G.t0 = performance.now();
+}
+
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+}
+
+function buildGraph(){
+  const prev = G.nodes, next = new Map(), links = [];
+  const mk = (id, base) => { const o = prev.get(id); const n = Object.assign(o || {}, { id }, base); next.set(id, n); return n; };
+  const core = mk("core", { kind: "core", label: "Conoscenza", color: "#c9b2ff", r: 16, charge: -900 });
+  core.fx = 0; core.fy = 0;
+  const cats = new Map();
+  for (const n of S.notes) { const c = norm(n.categoria) || "altro"; cats.set(c, (cats.get(c) || 0) + 1); }
+  if (S.trs.length) cats.set("__tr", S.trs.length);
+  if (S.notes.length) cats.set("__gl", S.notes.length);
+  const open = c => G.all || G.expanded.has(c);
+  G.catRing = 130 + Math.min(200, cats.size * 20) + (G.all ? 60 : 0);
+  let i = 0;
+  for (const [c, count] of cats) {
+    const node = mk("c:" + c, { kind: "cat", cat: c, label: catName(c), color: catColor(c), r: 8 + Math.min(10, Math.sqrt(count) * 2.6), charge: open(c) ? -700 : -420, count, open: open(c) });
+    if (node.x == null) { const a = (i / cats.size) * Math.PI * 2 - Math.PI / 2; node.x = Math.cos(a) * G.catRing; node.y = Math.sin(a) * G.catRing; }
+    links.push({ source: "core", target: node.id, dist: G.catRing, str: .08, kind: "core" });
+    i++;
+  }
+  const visible = new Set();
+  if (open("__gl")) {
+    const hub = next.get("c:__gl");
+    for (const n of S.notes) {
+      let L = norm(n.titolo).replace(/^[^a-z0-9]+/, "").charAt(0).toUpperCase() || "#"; if (/[0-9]/.test(L)) L = "#";
+      const sid = "s:__gl|" + L;
+      const sn = next.get(sid) || (() => {
+        const x = mk(sid, { kind: "sub", cat: "__gl", label: L, color: hub.color, r: 4.6, charge: -160, count: 0 });
+        if (x.x == null) { x.x = hub.x + (Math.random() - .5) * 40; x.y = hub.y + (Math.random() - .5) * 40; }
+        links.push({ source: hub.id, target: sid, dist: 58, str: .5, kind: "cat" });
+        return x;
+      })();
+      sn.count++;
+      const node = mk("w:" + n.id, { kind: "word", note: n, label: n.titolo, color: hub.color, r: 3.2, charge: -60 });
+      if (node.x == null) { node.x = sn.x + (Math.random() - .5) * 26; node.y = sn.y + (Math.random() - .5) * 26; }
+      links.push({ source: node.id, target: sid, dist: 28, str: .7, kind: "cat" });
+    }
+  }
+  if (open("__tr")) {
+    const hub = next.get("c:__tr");
+    for (const t of S.trs) {
+      const dk = trDir(t), sid = "s:__tr|" + dk;
+      const sn = next.get(sid) || (() => {
+        const x = mk(sid, { kind: "sub", cat: "__tr", label: dk === "it-en" ? "IT → EN" : "EN → IT", color: hub.color, r: 4.6, charge: -160, count: 0 });
+        if (x.x == null) { x.x = hub.x + (Math.random() - .5) * 40; x.y = hub.y + (Math.random() - .5) * 40; }
+        links.push({ source: hub.id, target: sid, dist: 62, str: .5, kind: "cat" });
+        return x;
+      })();
+      sn.count++;
+      const node = mk("t:" + t.id, { kind: "tr", tr: t, label: t.testo, color: hub.color, r: 3.2, charge: -60 });
+      if (node.x == null) { node.x = sn.x + (Math.random() - .5) * 26; node.y = sn.y + (Math.random() - .5) * 26; }
+      links.push({ source: node.id, target: sid, dist: 30, str: .7, kind: "cat" });
+    }
+  }
+  for (const n of S.notes) {
+    const c = norm(n.categoria) || "altro"; if (!open(c)) continue;
+    const hub = next.get("c:" + c);
+    let parent = hub;
+    const sk = norm(n.sottocategoria);
+    if (sk) {
+      const sid = "s:" + c + "|" + sk;
+      parent = next.get(sid) || (() => {
+        const sn = mk(sid, { kind: "sub", cat: c, label: n.sottocategoria.charAt(0).toUpperCase() + n.sottocategoria.slice(1), color: hub.color, r: 4.6, charge: -160, count: 0 });
+        if (sn.x == null) { sn.x = hub.x + (Math.random() - .5) * 40; sn.y = hub.y + (Math.random() - .5) * 40; }
+        links.push({ source: hub.id, target: sid, dist: 62, str: .5, kind: "cat" });
+        return sn;
+      })();
+      parent.count++;
+    }
+    const node = mk("n:" + n.id, { kind: "note", note: n, label: n.titolo, color: hub.color, r: 3.6, charge: -70 });
+    if (node.x == null) { node.x = parent.x + (Math.random() - .5) * 26; node.y = parent.y + (Math.random() - .5) * 26; }
+    links.push({ source: node.id, target: parent.id, dist: parent === hub ? 50 : 34, str: .7, kind: "cat" });
+    visible.add(n.id);
+  }
+  const byTitle = new Map(S.notes.map(n => [norm(n.titolo), n]));
+  const pairs = new Set(), ghostCount = new Map();
+  for (const n of S.notes) {
+    if (!visible.has(n.id)) continue;
+    for (const raw of (n.collegamenti || [])) {
+      const k = norm(raw); if (!k) continue;
+      const other = byTitle.get(k);
+      if (other && other.id !== n.id) {
+        if (!visible.has(other.id)) continue;
+        const key = [n.id, other.id].sort().join("|");
+        if (!pairs.has(key)) { pairs.add(key); links.push({ source: "n:" + n.id, target: "n:" + other.id, dist: 110, str: .05, kind: "note" }); }
+      } else if (!other && G.all) {
+        ghostCount.set(k, (ghostCount.get(k) || 0) + 1);
+        const gid = "g:" + k, src = next.get("n:" + n.id);
+        const g = mk(gid, { kind: "ghost", label: raw, color: "#bfb2e6", r: 1.8, charge: -14 });
+        if (g.x == null) { g.x = src.x + (Math.random() - .5) * 40; g.y = src.y + (Math.random() - .5) * 40; }
+        links.push({ source: src.id, target: gid, dist: 22 + Math.random() * 16, str: .5, kind: "ghost" });
+      }
+    }
+  }
+  for (const [k, c] of ghostCount) { const g = next.get("g:" + k); g.r = 1.8 + Math.min(3, (c - 1) * 1.2); g.shared = c; }
+  G.nodes = next; G.links = links;
+  sim.nodes([...next.values()]);
+  sim.force("link").links(links);
+  sim.force("radial", d3.forceRadial(d => d.kind === "cat" ? (d.cat === "__gl" ? G.catRing + 110 : G.catRing) : 0).strength(d => d.kind === "cat" ? (d.cat === "__gl" ? .6 : .25) : 0));
+  const cold = prev.size <= 1 && next.size > 1;
+  sim.alpha(cold ? 1 : .6);
+  if (cold) for (let k = 0; k < 220; k++) sim.tick();
+  setHover(null);
+}
+
+function setHover(n){
+  G.hover = n; G.neigh = new Set();
+  const focus = n || (S.selected && G.nodes.get("n:" + S.selected));
+  if (focus) { G.neigh.add(focus.id); for (const l of G.links) { if (l.source.id === focus.id) G.neigh.add(l.target.id); if (l.target.id === focus.id) G.neigh.add(l.source.id); } }
+}
+
+function viewCenter(){
+  let cx = W / 2;
+  if (!isPhone()) { const l = document.body.classList.contains("side-hidden") ? 0 : 360 + 32, r = document.body.classList.contains("detail-open") ? 460 + 32 : 0; cx = l + (W - l - r) / 2; }
+  return [cx, isPhone() ? H / 2 - 30 : H / 2];
+}
+
+function draw(t){
+  if (sim.alpha() > sim.alphaMin()) sim.tick();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+
+  ctx.setTransform(DPR * T.k, 0, 0, DPR * T.k, DPR * T.x, DPR * T.y);
+  const k = T.k, time = t / 1000, focus = G.hover || (S.selected && G.nodes.get("n:" + S.selected));
+  const q = S.query;
+
+  // burst: rays from the core + coloured dust, like an exploding vault
+  ctx.globalCompositeOperation = "lighter";
+  const prog = reduced ? 1 : 1 - Math.pow(1 - Math.min(1, Math.max(0, (t - G.t0) / 2600)), 3);
+  const rot = reduced ? 0 : time * .006;
+  const dimAll = focus ? .35 : 1;
+  for (const s of G.stars) { const e = s.d * prog; s.x = Math.cos(s.a + rot) * e; s.y = Math.sin(s.a + rot) * e; }
+  const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, 1500 * prog + 1);
+  rg.addColorStop(0, "rgba(214,190,255,1)"); rg.addColorStop(.25, "rgba(160,120,255,.7)"); rg.addColorStop(1, "rgba(120,80,230,0)");
+  ctx.strokeStyle = rg; ctx.lineWidth = .7 / k; ctx.globalAlpha = .16 * dimAll;
+  ctx.beginPath();
+  for (const s of G.stars) if (s.ray) { ctx.moveTo(0, 0); ctx.lineTo(s.x, s.y); }
+  ctx.stroke();
+  const sk = 1 / Math.sqrt(k);
+  for (const s of G.stars) {
+    ctx.globalAlpha = (reduced ? .7 : .45 + .4 * Math.sin(time * .9 + s.p)) * dimAll;
+    ctx.fillStyle = s.hue;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r * sk, 0, 6.283); ctx.fill();
+  }
+  // core bloom
+  const cb = ctx.createRadialGradient(0, 0, 0, 0, 0, 340);
+  cb.addColorStop(0, "rgba(235,220,255,.95)"); cb.addColorStop(.08, "rgba(190,150,255,.6)"); cb.addColorStop(.3, "rgba(140,90,255,.22)"); cb.addColorStop(1, "rgba(90,50,200,0)");
+  ctx.globalAlpha = (reduced ? .8 : .7 + .12 * Math.sin(time * 1.1)) * prog;
+  ctx.fillStyle = cb; ctx.beginPath(); ctx.arc(0, 0, 340, 0, 6.283); ctx.fill();
+
+  // links
+  ctx.lineWidth = 1 / k;
+  for (const l of G.links) {
+    const a = l.source, b = l.target;
+    const on = focus ? (G.neigh.has(a.id) && G.neigh.has(b.id) && (a.id === focus.id || b.id === focus.id)) : true;
+    let alpha = l.kind === "core" ? .22 : l.kind === "cat" ? .28 : l.kind === "note" ? .4 : .14;
+    if (focus) alpha = on ? Math.min(.85, alpha * 2.6) : alpha * .25;
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = l.kind === "core" ? "#b99bff" : (l.kind === "note" ? "#e9ddff" : (a.color || "#b99bff"));
+    if (l.kind === "core" && !focus) {
+      const gr = ctx.createLinearGradient(a.x, a.y, b.x, b.y); gr.addColorStop(0, "rgba(185,155,255,.9)"); gr.addColorStop(1, b.color); ctx.strokeStyle = gr;
+    }
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+
+  // nodes
+  for (const n of G.nodes.values()) {
+    const dim = focus && !G.neigh.has(n.id);
+    const match = q && n.kind === "note" && (norm(n.label).includes(q) || norm(n.note?.sintesi).includes(q));
+    const tw = reduced ? 1 : 1 + .08 * Math.sin(time * 1.4 + (n.x || 0) * .05);
+    let r = n.r * tw * (n === G.hover ? 1.5 : 1) * (match ? 1.7 : 1);
+    if (n.kind === "core") r = n.r * (reduced ? 1 : 1 + .06 * Math.sin(time * 1.1));
+    const halo = n.kind === "core" ? r * 6 : n.kind === "cat" ? r * (n.open ? 7.5 : 6.5) : n.kind === "ghost" ? r * 4.5 : n.kind === "sub" ? r * 5.5 : r * 7;
+    ctx.globalAlpha = dim ? .08 : (n.kind === "ghost" ? .5 : .9);
+    if (q && !match && n.kind !== "core") ctx.globalAlpha *= .25;
+    ctx.drawImage(glow(n.color), n.x - halo, n.y - halo, halo * 2, halo * 2);
+    ctx.globalAlpha = dim ? .2 : 1;
+    if (q && !match && n.kind !== "core") ctx.globalAlpha = .2;
+    const gl = n.cat === "__gl" || n.kind === "word";
+    if (gl) {
+      ctx.fillStyle = n.color;
+      if (n.kind === "cat") {
+        const R2 = r * 1.5, rot = reduced ? 0 : time * .4;
+        ctx.save(); ctx.translate(n.x, n.y);
+        ctx.lineWidth = 1 / k; ctx.strokeStyle = n.color;
+        ctx.setLineDash([3 / k, 4 / k]); ctx.rotate(rot); ctx.beginPath(); ctx.arc(0, 0, R2 * 2.1, 0, 6.283); ctx.stroke();
+        ctx.rotate(-rot * 2); ctx.globalAlpha *= .6; ctx.beginPath(); ctx.arc(0, 0, R2 * 2.8, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
+        ctx.globalAlpha = dim ? .2 : 1; ctx.rotate(rot + Math.PI / 4);
+        ctx.beginPath(); ctx.rect(-R2 * .75, -R2 * .75, R2 * 1.5, R2 * 1.5); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = "#1a1300"; ctx.font = `700 ${R2 * .78}px Sora, system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.globalCompositeOperation = "source-over"; ctx.fillText("A–Z", n.x, n.y + .5); ctx.globalCompositeOperation = "lighter";
+      } else if (n.kind === "sub") {
+        const h = r * 1.9;
+        ctx.beginPath(); ctx.roundRect(n.x - h, n.y - h, h * 2, h * 2, h * .45); ctx.fill();
+        ctx.fillStyle = "#1a1300"; ctx.font = `700 ${h * 1.25}px Sora, system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.globalCompositeOperation = "source-over"; ctx.fillText(n.label, n.x, n.y + .3); ctx.globalCompositeOperation = "lighter";
+      } else {
+        ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.rect(-r * .8, -r * .8, r * 1.6, r * 1.6); ctx.fill(); ctx.restore();
+      }
+      continue;
+    }
+    ctx.fillStyle = n.kind === "ghost" ? "#d7ccf5" : n.color;
+    ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 6.283); ctx.fill();
+    if (n.kind !== "ghost") { ctx.fillStyle = "#fff"; ctx.globalAlpha *= .85; ctx.beginPath(); ctx.arc(n.x, n.y, r * .42, 0, 6.283); ctx.fill(); }
+  }
+  ctx.globalCompositeOperation = "source-over";
+
+  // selection ring
+  if (S.selected) {
+    const n = G.nodes.get("n:" + S.selected);
+    if (n) { ctx.globalAlpha = .9; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2 / k; ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 5 / k + (reduced ? 0 : 1.5 * Math.sin(time * 3) / k), 0, 6.283); ctx.stroke(); }
+  }
+
+  // labels
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  const PRI = { core: 0, cat: 1, sub: 2, note: 3, tr: 3, word: 3, ghost: 4 }, placed = [];
+  const order = [...G.nodes.values()].sort((a, b) => (a === G.hover ? -1 : b === G.hover ? 1 : (PRI[a.kind] ?? 5) - (PRI[b.kind] ?? 5)));
+  const hit = (x0, y0, x1, y1) => placed.some(r => x0 < r[2] && x1 > r[0] && y0 < r[3] && y1 > r[1]);
+  for (const n of order) {
+    const dim = focus && !G.neigh.has(n.id);
+    let show = false, size = 11, color = "#d9d1f2", alpha = .85, font = "Sora, system-ui, sans-serif", weight = 500;
+    if (n.kind === "core") { show = true; size = 13; color = "#efe7ff"; font = "Sora, system-ui, sans-serif"; size = 14; weight = 300; }
+    else if (n.kind === "cat") { show = true; size = 11; color = n.color; font = "Sora, system-ui, sans-serif"; weight = 600; alpha = .95; }
+    else if (n.kind === "sub" && n.cat === "__gl") { show = false; }
+    else if (n.kind === "sub") { show = true; size = isPhone() ? 9.5 : 10; color = n.color; weight = 600; alpha = .9; }
+    else if (n.kind === "note" || n.kind === "tr" || n.kind === "word") { show = true; size = isPhone() ? 9 : 10; alpha = .88; color = "#ece6fb"; }
+    else if (n.kind === "ghost") { show = n === G.hover || (focus && G.neigh.has(n.id)) || k > 2.2; color = "#a79fc6"; size = 10; alpha = .7; }
+    if (n === G.hover) { show = true; alpha = 1; color = "#fff"; }
+    if (!show) continue;
+    if (dim) alpha *= .2;
+    ctx.globalAlpha = alpha;
+    ctx.font = `${weight} ${size / k}px ${font}`;
+    let label = n.kind === "cat" ? (n.cat === "__gl" ? "GLOSSARIO · TUTTE LE PAROLE" : n.label.toUpperCase()) : n.label;
+    const leaf = n.kind === "note" || n.kind === "tr" || n.kind === "word" || n.kind === "ghost";
+    if (leaf && n !== G.hover && label.length > 26) label = label.slice(0, 24).trimEnd() + "…";
+    const w = ctx.measureText(label).width, h = size * 1.25 / k, pad = 2 / k;
+    const off = (n.cat === "__gl" && n.kind === "cat" ? n.r * 4.4 + 6 / k : (n.r + 6) / k) + (n.kind === "core" ? n.r * .6 : 0);
+    let x = n.x, y = n.y + off;
+    if ((leaf || n.kind === "sub") && n !== G.hover) {
+      const gap = (n.r + 5) / k, spots = [[n.x, n.y + off], [n.x, n.y - off - h], [n.x + gap + w / 2, n.y - h / 2], [n.x - gap - w / 2, n.y - h / 2],
+        [n.x + gap + w / 2, n.y + off * .4], [n.x - gap - w / 2, n.y + off * .4], [n.x + gap + w / 2, n.y - off * .4 - h], [n.x - gap - w / 2, n.y - off * .4 - h], [n.x, n.y + off + h], [n.x, n.y - off - 2 * h]];
+      const ok = spots.find(([sx, sy]) => !hit(sx - w / 2 - pad, sy - pad, sx + w / 2 + pad, sy + h + pad));
+      if (!ok) continue;
+      [x, y] = ok;
+    }
+    placed.push([x - w / 2 - pad, y - pad, x + w / 2 + pad, y + h + pad]);
+    ctx.lineWidth = 3 / k; ctx.strokeStyle = "rgba(7,6,12,.85)"; ctx.strokeText(label, x, y);
+    ctx.fillStyle = color; ctx.fillText(label, x, y);
+  }
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(draw);
+}
+
+function pick(px, py){
+  const [x, y] = T.invert([px, py]);
+  let best = null, bd = Infinity;
+  for (const n of G.nodes.values()) {
+    const d = Math.hypot(n.x - x, n.y - y), lim = n.r + 8 / T.k;
+    if (d < lim && d < bd) { bd = d; best = n; }
+  }
+  return best;
+}
+
+const zoom = d3.zoom().scaleExtent([.15, 6]).clickDistance(5)
+  .on("start", e => { if (e.sourceEvent?.type === "mousedown") canvas.classList.add("dragging"); })
+  .on("zoom", e => { T = e.transform; })
+  .on("end", () => canvas.classList.remove("dragging"));
+d3.select(canvas).call(zoom).on("dblclick.zoom", null);
+
+function fit(animate = true){
+  const ns = [...G.nodes.values()].filter(n => n.kind !== "ghost");
+  if (!ns.length) return;
+  const xs = ns.map(n => n.x), ys = ns.map(n => n.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs) - 40, Math.max(...xs) + 40, Math.min(...ys) - 40, Math.max(...ys) + 50];
+  const [cx, cy] = viewCenter();
+  const availW = isPhone() ? W - 32 : (W - (document.body.classList.contains("side-hidden") ? 0 : 392) - (document.body.classList.contains("detail-open") ? 492 : 0)) - 40;
+  const availH = isPhone() ? H - 200 : H - 80;
+  const k = Math.max(.3, Math.min(1.6, Math.min(availW / (x1 - x0), availH / (y1 - y0))));
+  const t = d3.zoomIdentity.translate(cx - k * (x0 + x1) / 2, cy - k * (y0 + y1) / 2).scale(k);
+  const sel = d3.select(canvas);
+  (animate && !reduced ? sel.transition().duration(800) : sel).call(zoom.transform, t);
+}
+function focusNode(id, minK = 1.3){
+  const n = G.nodes.get(id); if (!n) return;
+  const [cx, cy] = viewCenter();
+  const k = Math.max(T.k, minK);
+  const target = isPhone() ? [W / 2, H * .18] : [cx, cy];
+  d3.select(canvas).transition().duration(reduced ? 0 : 700).call(zoom.transform, d3.zoomIdentity.translate(target[0] - k * n.x, target[1] - k * n.y).scale(k));
+}
+
+const tip = $("#tip");
+canvas.addEventListener("pointermove", e => {
+  if (e.pointerType === "touch") return;
+  const n = pick(e.clientX, e.clientY);
+  if (n !== G.hover) setHover(n);
+  canvas.classList.toggle("pointing", !!n);
+  if (n && n.kind !== "core") {
+    const sub = n.kind === "cat" ? `${n.count} ${n.count === 1 ? "voce" : "voci"} · ${n.open ? "clic per chiudere" : "clic per aprire"}` : n.kind === "sub" ? `${catName(n.cat)} · ${n.count} ${n.count === 1 ? "voce" : "voci"}` : n.kind === "word" ? (n.note.sintesi || "").slice(0, 90) : n.kind === "tr" ? `${n.tr.traduzione} · ${trDir(n.tr) === "it-en" ? "IT → EN" : "EN → IT"}` : n.kind === "ghost" ? "Da esplorare · clic per approfondire" : catName(n.note.categoria) + " · " + (n.note.tipo || "");
+    tip.innerHTML = `${esc(n.label)}<small>${esc(sub)}</small>`;
+    tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; tip.classList.add("on");
+  } else tip.classList.remove("on");
+});
+canvas.addEventListener("pointerleave", () => { setHover(null); tip.classList.remove("on"); });
+canvas.addEventListener("click", e => {
+  const n = pick(e.clientX, e.clientY);
+  tip.classList.remove("on");
+  if (!n) { if (isPhone()) closeSheet(); return; }
+  if (n.kind === "note") openNote(n.note.id);
+  else if (n.kind === "tr") openTr(n.tr.id);
+  else if (n.kind === "word") openNote(n.note.id);
+  else if (n.kind === "cat") { toggleCat(n.cat); }
+  else if (n.kind === "sub") focusNode(n.id);
+  else if (n.kind === "ghost") explore(n.label);
+  else fit();
+});
+
+/* ================= DATA ================= */
+function ingest(list){
+  S.notes = list;
+  $("#count").textContent = list.length ? `${list.length} ${list.length === 1 ? "voce" : "voci"}` : "";
+  $("#mcount").textContent = list.length ? `${list.length} ${list.length === 1 ? "VOCE" : "VOCI"} · ${new Set(list.map(n => norm(n.categoria))).size} CATEGORIE` : "IL TUO GRAFO DELLA CONOSCENZA";
+  const first = G.nodes.size <= 1;
+  buildGraph();
+  renderArchive(); renderTestHome(); renderGlossary();
+  if (S.selected) { const n = S.notes.find(x => x.id === S.selected); if (n) { if (!S.editing) renderNote(n); } else closeDetail(); }
+  if (first) setTimeout(() => fit(false), 30);
+}
+
+async function initData(){
+  const c = window.claude;
+  if (!c?.use) { banner("Apri questa pagina su claude.ai per salvare le voci e usare Claude."); ingest([]); return; }
+  const loading = setTimeout(() => { if (!S.live) banner("Il tuo archivio non risponde ancora. Controlla la connessione."); }, 10000);
+  c.use("sample").then(s => { S.sample = s; s?.limits?.().then(l => { if (l?.images) { S.imgLim = l.images; $("#photo").hidden = false; $("#photo-in").accept = l.images.mediaTypes.join(","); } }).catch(() => {}); });
+  const db = await c.use("db");
+  if (!db) { clearTimeout(loading); banner("Archivio non disponibile in questa vista: le voci nuove non verranno salvate."); ingest([]); return; }
+  S.db = db;
+  db.collection("notes").orderBy("createdAt", "desc").onSnapshot(snap => {
+    if (!snap.metadata.fromCache) { S.live = true; clearTimeout(loading); banner(""); }
+    ingest(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, () => { clearTimeout(loading); banner("Non riesco a leggere l'archivio. Ricarica la pagina tra poco."); });
+  db.collection("tests").orderBy("createdAt", "desc").limit(10).onSnapshot(snap => {
+    S.tests = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTestHome();
+  }, () => {});
+  db.collection("translations").orderBy("createdAt", "desc").limit(1000).onSnapshot(snap => {
+    S.trs = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTrHist(); buildGraph(); renderArchive(); renderTestHome();
+  }, () => {});
+}
+
+async function saveNote(data){
+  if (S.db) { const ref = await S.db.collection("notes").add(data); return ref.id; }
+  const id = "local-" + Date.now(); ingest([{ id, ...data }, ...S.notes]); return id;
+}
+async function patchNote(id, patch){
+  if (S.db && !id.startsWith("local-")) return S.db.doc("notes/" + id).update(patch);
+  const n = S.notes.find(x => x.id === id); Object.assign(n, patch); ingest([...S.notes]);
+}
+async function deleteNote(id){
+  if (S.db && !id.startsWith("local-")) { const n = S.notes.find(x => x.id === id); if (n?.foto) S.db.doc("foto/" + id).delete().catch(() => {}); return S.db.doc("notes/" + id).delete(); }
+  ingest(S.notes.filter(x => x.id !== id));
+}
+
+/* ================= ARCHIVE ================= */
+function renderArchive(){
+  const q = S.query, box = $("#cats");
+  if (!S.notes.length && !S.trs.length) {
+    box.innerHTML = `<div class="empty">Il grafo è ancora vuoto. Scrivi qui sopra la prima cosa che ti ha incuriosito: l'AI te la spiega, la salva e la colloca nella sua categoria. Ogni voce diventa una stella del grafo.</div>`;
+    return;
+  }
+  const groups = new Map();
+  for (const n of S.notes) {
+    if (q && !(norm(n.titolo).includes(q) || norm(n.sintesi).includes(q) || norm(n.input).includes(q) || (n.tags || []).some(t => norm(t).includes(q)))) continue;
+    const c = norm(n.categoria) || "altro";
+    if (!groups.has(c)) groups.set(c, []);
+    groups.get(c).push(n);
+  }
+  const sorted = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  box.classList.toggle("searching", !!q);
+  const trs = S.trs.filter(t => !q || norm(t.testo).includes(q) || norm(t.traduzione).includes(q));
+  if (!sorted.length && !trs.length) { box.innerHTML = `<div class="empty">Nessuna voce corrisponde a «${esc(S.queryRaw)}». <button class="linkbtn" data-explore="${esc(S.queryRaw)}">Approfondiscilo ora</button></div>`; return; }
+  const hasEx = S.notes.some(n => n.esempio);
+  box.innerHTML = sorted.map(([c, list]) => `
+    <div class="cat ${S.openCats.has(c) ? "open" : ""}" data-cat="${esc(c)}">
+      <button type="button" aria-expanded="${S.openCats.has(c)}"><span class="chev">▶</span><span class="dot" style="color:${catColor(c)}"></span><span class="name">${esc(catName(c))}</span><span class="n">${list.length}</span></button>
+      <div class="notes">${list.map(n => `<button type="button" class="note-item ${n.id === S.selected ? "active" : ""}" data-id="${esc(n.id)}"><span class="t">${esc(n.titolo)}${n.esempio ? '<span class="badge">esempio</span>' : ""}</span><span class="s">${esc(n.sintesi)}</span></button>`).join("")}</div>
+    </div>`).join("") + (trs.length ? `
+    <div class="cat ${S.openCats.has("__tr") ? "open" : ""}" data-cat="__tr">
+      <button type="button" aria-expanded="${S.openCats.has("__tr")}"><span class="chev">▶</span><span class="dot" style="color:${catColor("__tr")}"></span><span class="name">Traduzioni</span><span class="n">${trs.length}</span></button>
+      <div class="notes">${[["en-it", "EN → IT"], ["it-en", "IT → EN"]].map(([k, lab]) => { const l = trs.filter(t => trDir(t) === k); return l.length ? `<div class="tr-sub">${lab} · ${l.length}</div>` + l.map(t => `<button type="button" class="note-item ${t.id === S.selTr ? "active" : ""}" data-tr="${esc(t.id)}"><span class="t">${esc(t.testo)}</span><span class="s">${esc(t.traduzione)}</span></button>`).join("") : ""; }).join("")}</div>
+    </div>` : "") + (hasEx ? `<div style="margin-top:14px"><button class="linkbtn" id="rm-ex">Rimuovi le voci di esempio</button></div>` : "");
+}
+$("#cats").addEventListener("click", async e => {
+  const ex = e.target.closest("[data-explore]"); if (ex) { explore(ex.dataset.explore); return; }
+  if (e.target.closest("#rm-ex")) {
+    const b = e.target.closest("#rm-ex");
+    if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "Conferma: rimuovi tutte le voci di esempio"; return; }
+    for (const n of S.notes.filter(n => n.esempio)) await deleteNote(n.id);
+    toast("Voci di esempio rimosse"); return;
+  }
+  const item = e.target.closest(".note-item"); if (item) { item.dataset.tr ? openTr(item.dataset.tr) : openNote(item.dataset.id); return; }
+  const head = e.target.closest(".cat>button");
+  if (head) { const c = head.parentElement.dataset.cat; if (S.openCats.has(c)) { S.openCats.delete(c); renderArchive(); } else { S.openCats.add(c); if (!isPhone()) toggleCat(c, true); else renderArchive(); } }
+});
+$("#search").addEventListener("input", e => { S.queryRaw = e.target.value.trim(); S.query = norm(S.queryRaw); renderArchive(); });
+
+/* ================= DETAIL ================= */
+function openDetail(){ const d = $("#detail"); d.classList.add("open"); d.setAttribute("aria-hidden", "false"); document.body.classList.add("detail-open"); }
+function closeDetail(){ const d = $("#detail"); d.classList.remove("open"); d.setAttribute("aria-hidden", "true"); document.body.classList.remove("detail-open"); S.selected = null; S.selTr = null; setHover(null); renderArchive(); }
+$("#d-close").addEventListener("click", closeDetail);
+addEventListener("keydown", e => { if (e.key === "Escape" && $("#detail").classList.contains("open")) closeDetail(); });
+
+function trDir(t){ return (t.da || "").toLowerCase().startsWith("it") ? "it-en" : "en-it"; }
+function trCard(t){
+  return `<div class="tr-out">
+    ${t.testo ? `<div class="tr-src">${esc(t.testo)}${t.scritto ? `<span class="tr-fix">avevi scritto «${esc(t.scritto)}»</span>` : ""}</div>` : ""}
+    <div class="tr-meta">${esc((t.da || "?").toUpperCase())} → ${esc((t.a || "?").toUpperCase())}${t.categoria ? " · " + esc(t.categoria) : ""}</div>
+    <div class="tr-main">${esc(t.traduzione)}</div>
+    ${t.pronuncia ? `<div class="tr-meta">/${esc(t.pronuncia)}/</div>` : ""}
+    ${t.alternative?.length ? `<p><span class="hint">Anche:</span> ${t.alternative.map(esc).join(" · ")}</p>` : ""}
+    ${t.nota ? `<p>${esc(t.nota)}</p>` : ""}
+    ${t.esempi?.length ? `<ul class="tr-ex">${t.esempi.map(x => `<li>${esc(x.originale)}<span>${esc(x.tradotto)}</span></li>`).join("")}</ul>` : ""}
+  </div>`;
+}
+function openTr(id){
+  const t = S.trs.find(x => x.id === id); if (!t) return;
+  if (!G.all && !G.expanded.has("__tr")) { G.expanded.add("__tr"); buildGraph(); }
+  S.selected = null; S.selTr = id; setHover(null);
+  if (isPhone()) closeSheet();
+  const dk = trDir(t);
+  $("#d-cat").innerHTML = `<span class="dot" style="color:${catColor("__tr")}"></span>Traduzioni · ${dk === "it-en" ? "IT → EN" : "EN → IT"}`;
+  const body = $("#d-body"); body.classList.remove("is-short"); body.style.setProperty("--c", catColor("__tr"));
+  body.innerHTML = `<h2 class="d-title">${esc(t.testo)}</h2>
+    <div class="d-kind">TRADUZIONE${t.createdAt ? " · " + esc(new Date(t.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })) : ""}</div>
+    <div style="margin-top:16px">${trCard(t)}</div>
+    <div class="d-actions"><button class="btn" type="button" data-explore="${esc(t.testo)}">Approfondisci come voce</button><button class="btn danger" id="del-tr" type="button" data-id="${esc(t.id)}">Elimina traduzione</button></div>`;
+  body.scrollTop = 0;
+  openDetail(); renderArchive();
+  setTimeout(() => focusNode("t:" + id), 60);
+}
+function toggleCat(c, force){
+  const on = force ?? !G.expanded.has(c);
+  if (on) { G.expanded.add(c); S.openCats.add(c); } else G.expanded.delete(c);
+  buildGraph(); renderArchive();
+  if (on) setTimeout(() => focusNode("c:" + c, 1.15), 80);
+}
+function openNote(id){
+  const n = S.notes.find(x => x.id === id); if (!n) return;
+  const c = norm(n.categoria) || "altro";
+  if (!G.all && !G.expanded.has(c)) { G.expanded.add(c); buildGraph(); }
+  S.selected = id; setHover(null);
+  if (isPhone()) closeSheet();
+  renderNote(n); openDetail(); renderArchive();
+  setTimeout(() => focusNode("n:" + id), 60);
+}
+
+function renderNote(n){
+  const color = catColor(n.categoria);
+  $("#d-cat").innerHTML = `<span class="dot" style="color:${color}"></span>${esc(catName(n.categoria))}${n.sottocategoria ? " · " + esc(n.sottocategoria) : ""}`;
+  const known = new Map(S.notes.map(x => [norm(x.titolo), x]));
+  const date = n.createdAt ? new Date(n.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "";
+  const showInput = n.input && !(n.foto && n.input === "Foto") && norm(n.input) !== norm(n.titolo);
+  const body = $("#d-body");
+  body.style.setProperty("--c", color);
+  body.classList.toggle("is-short", S.mode === "short");
+  if (S.mode === "short" && !n.in_breve?.length) setTimeout(() => genBrief(n.id), 0);
+  if (n.foto) setTimeout(() => loadPhoto(n.id), 0);
+  setTimeout(() => loadGallery(n.id), 0);
+  body.innerHTML = `
+    <h2 class="d-title">${esc(n.titolo)}</h2>
+    <div class="d-kind">${esc((n.tipo || "voce").toUpperCase())}${n.autore ? " · " + esc(n.autore) : ""}${date ? " · " + esc(date) : ""}${n.esempio ? " · VOCE DI ESEMPIO" : ""}</div>
+    ${showInput ? `<div class="d-input">${esc(n.input)}${n.tipo === "citazione" && n.autore ? `<small>— ${esc(n.autore)}</small>` : ""}</div>` : ""}
+    <div class="seg d-mode" role="group" aria-label="Lunghezza della risposta"><button type="button" data-mode="full" aria-pressed="${S.mode !== "short"}">Completa</button><button type="button" data-mode="short" aria-pressed="${S.mode === "short"}">In breve</button></div>
+    ${n.foto ? `<figure class="d-photo" id="d-photo"><span class="ph-wait">Carico la foto…</span></figure>` : ""}
+    ${n.sintesi ? `<p class="d-sum">${esc(n.sintesi)}</p>` : ""}
+    <div class="short-only" id="brief">${briefHTML(n)}</div>
+    <div class="full-only">
+    ${n.scheda ? `<div class="d-sec"><h3>Scheda${n.scheda.riconoscimento && n.scheda.riconoscimento !== "certo" ? `<span class="conf">riconoscimento ${esc(n.scheda.riconoscimento)}</span>` : ""}</h3><dl class="scheda">${[["Cosa vedi", n.scheda.cosa], ["Dove", n.scheda.dove], ["Quando", n.scheda.quando]].filter(x => x[1]).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${n.scheda.info?.length ? `<ul class="list" style="margin-top:12px">${n.scheda.info.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>` : ""}
+    <div class="md">${md(n.spiegazione)}</div>
+    ${n.esempi?.length ? `<div class="d-sec"><h3>Esempi</h3><ul class="list">${n.esempi.map(x => `<li>${esc(x).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")}</li>`).join("")}</ul></div>` : ""}
+    ${n.curiosita?.length ? `<div class="d-sec"><h3>Curiosità</h3><ul class="list">${n.curiosita.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    <div class="d-sec"><h3>Schema</h3><div id="schema-box">${n.schema ? schemaHTML(n.schema, color, n) : `<p class="hint" style="margin:0 0 10px">Un solo schema chiaro e breve (flusso, mappa, linea del tempo, gerarchia o tabella) e una spiegazione in tre frasi.</p>`}</div>
+      <div class="row" style="margin-top:10px"><button class="btn ${n.schema ? "" : "primary"}" id="mk-schema" type="button">${n.schema ? "Rigenera schema" : "Genera schema"}</button></div></div>
+    <div class="d-sec"><h3>Immagini e schemi dal web</h3>
+      <div id="web-box">${n.web ? webHTML(n) : `<p class="hint" style="margin:0 0 10px">L'AI prepara le ricerche giuste e ti segnala gli schemi famosi già fatti da altri. Quando trovi un'immagine che ti piace, aggiungila qui e resta salvata nella voce.</p>`}</div>
+      <div class="gal" id="gal"></div>
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn ${n.web ? "" : "primary"}" id="mk-web" type="button">${n.web ? "Cerca di nuovo" : "Cerca immagini e schemi"}</button><button class="btn" id="add-img" type="button">Aggiungi immagine</button><input id="add-img-in" type="file" accept="image/*" hidden></div></div>
+    </div>
+    ${n.collegamenti?.length ? `<div class="d-sec"><h3>Collegamenti</h3><div class="links">${n.collegamenti.map(c => { const k = known.get(norm(c)); return `<button type="button" class="chip ${k ? "known" : ""}" style="--c:${k ? catColor(k.categoria) : color}" ${k ? `data-open="${esc(k.id)}"` : `data-explore="${esc(c)}"`} title="${k ? "Apri la voce" : "Approfondisci questo concetto"}">${k ? "● " : "+ "}${esc(c)}</button>`; }).join("")}</div>
+      <p class="hint" style="margin:8px 0 0">I concetti con + non sono ancora nel tuo archivio: toccali per approfondirli.</p></div>` : ""}
+    <div class="d-sec"><h3>Domande</h3><div class="qa" id="qa">${(n.domande || []).map(x => `<div class="qa-item"><div class="qq">${esc(x.q)}</div><div class="md">${md(x.a)}</div></div>`).join("")}</div>
+      <form class="qa-form" id="qa-form"><input id="qa-in" placeholder="Fai una domanda su ${esc(n.titolo)}" autocomplete="off"><button class="btn" type="submit">Chiedi</button></form></div>
+    ${n.tags?.length ? `<div class="tags">${n.tags.map(t => `<span>#${esc(t)}</span>`).join("")}</div>` : ""}
+    <div class="d-actions"><button class="btn danger" id="del" type="button">Elimina voce</button></div>`;
+  body.scrollTop = 0;
+}
+
+function briefHTML(n){
+  if (!n.in_breve?.length) return `<div class="inline-think"><span class="mini"></span>Preparo la versione sintetica…</div>`;
+  return `<ul class="brief">${n.in_breve.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${n.schema?.chiave ? `<div class="sc-key" style="margin-top:14px"><b>Da ricordare</b>${esc(n.schema.chiave)}</div>` : ""}`;
+}
+async function genBrief(id){
+  const n = S.notes.find(x => x.id === id); if (!n || n.in_breve?.length || S.briefing === id) return;
+  if (!S.sample) { const b = $("#brief"); if (b) b.innerHTML = `<p class="hint">La versione sintetica richiede l'AI: inserisci la chiave in ⚙.</p>`; return; }
+  S.briefing = id;
+  try {
+    const r = await S.sample.json(`Riassumi "${n.titolo}" in 3-5 punti chiave brevissimi (massimo 12 parole ciascuno), in italiano, per chi vuole capirlo in 20 secondi.
+Testo: ${n.sintesi}
+${String(n.spiegazione || "").slice(0, 2500)}
+Rispondi solo con JSON: {"in_breve": ["...", "..."]}`, { modelTier: "quick" });
+    const list = (Array.isArray(r.in_breve) ? r.in_breve : []).map(String).filter(Boolean).slice(0, 6);
+    if (!list.length) throw { code: "invalid_json" };
+    await patchNote(id, { in_breve: list });
+    const b = $("#brief"); if (b && S.selected === id) b.innerHTML = briefHTML({ ...n, in_breve: list });
+  } catch (e) {
+    const b = $("#brief"); if (b && S.selected === id) b.innerHTML = `<p class="err">${esc(errMsg(e))}</p>`;
+  } finally { S.briefing = null; }
+}
+$("#d-body").addEventListener("click", async e => {
+  const m = e.target.closest("[data-mode]");
+  if (m) {
+    S.mode = m.dataset.mode; try { localStorage.setItem("ac-mode", S.mode); } catch {}
+    m.parentElement.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b === m));
+    $("#d-body").classList.toggle("is-short", S.mode === "short");
+    if (S.mode === "short" && S.selected) genBrief(S.selected);
+    return;
+  }
+  const o = e.target.closest("[data-open]"); if (o) { openNote(o.dataset.open); return; }
+  const x = e.target.closest("[data-explore]"); if (x) { explore(x.dataset.explore); return; }
+  if (e.target.closest("#mk-schema")) { genSchema(); return; }
+  if (e.target.closest("#mk-web")) { genWeb(); return; }
+  if (e.target.closest("#add-img")) { $("#add-img-in").click(); return; }
+  const di = e.target.closest("[data-delimg]"); if (di) { delImg(di.dataset.delimg); return; }
+  const dt = e.target.closest("#del-tr");
+  if (dt) {
+    if (!dt.classList.contains("armed")) { dt.classList.add("armed"); dt.textContent = "Conferma eliminazione"; return; }
+    const id = dt.dataset.id; closeDetail();
+    try { if (S.db && !id.startsWith("local-")) await S.db.doc("translations/" + id).delete(); else { S.trs = S.trs.filter(x => x.id !== id); renderTrHist(); buildGraph(); renderArchive(); } toast("Traduzione eliminata"); } catch { toast("Non sono riuscito a eliminarla. Riprova."); }
+    return;
+  }
+  const del = e.target.closest("#del");
+  if (del) {
+    if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "Conferma eliminazione"; setTimeout(() => { del.classList.remove("armed"); del.textContent = "Elimina voce"; }, 4000); return; }
+    const id = S.selected; closeDetail();
+    try { await deleteNote(id); toast("Voce eliminata"); } catch { toast("Non sono riuscito a eliminarla. Riprova."); }
+  }
+});
+$("#d-body").addEventListener("submit", e => { if (e.target.id === "qa-form") { e.preventDefault(); ask(); } });
+
+/* ================= AI ================= */
+function needSample(){
+  if (S.sample) return true;
+  toast("L'AI non è configurata: tocca ⚙ in alto a destra.");
+  return false;
+}
+
+function explainPrompt(text, photo){
+  const cats = [...new Set(S.notes.map(n => norm(n.categoria)))];
+  const base = ["storia","arte","economia","politica","scienza","ai","filosofia","letteratura","tecnologia","lingua","musica","geografia","diritto","medicina"];
+  const titles = S.notes.slice(0, 150).map(n => n.titolo);
+  const subs = {};
+  for (const n of S.notes) if (n.sottocategoria) { const c = norm(n.categoria); (subs[c] ||= new Set()).add(n.sottocategoria); }
+  const subsTxt = Object.entries(subs).map(([c, set]) => `${c}: ${[...set].join(", ")}`).join("; ");
+  const intro = photo
+    ? `Sei il motore di un portale di conoscenza personale, simile a un vault di Obsidian. L'utente ha scattato o caricato la FOTO allegata perché qualcosa lo ha incuriosito. Guardala con attenzione e riconosci cosa raffigura: un'opera d'arte, un monumento, un edificio, un luogo o paesaggio, un oggetto, una pianta, un animale, un cibo, un testo o un cartello, un logo o un prodotto. Se riconosci con sicurezza l'elemento preciso (per esempio «La notte stellata di Van Gogh» o «Duomo di Milano»), usa quello come titolo. Se non sei sicuro, scegli la descrizione più precisa che puoi dare con certezza e dillo, senza inventare. Poi spiegaglielo come farebbe un divulgatore colto e preciso.
+
+NOTA DELL'UTENTE SULLA FOTO: ${text ? `"""${text}"""` : "(nessuna)"}`
+    : `Sei il motore di un portale di conoscenza personale, simile a un vault di Obsidian. L'utente scrive in italiano qualcosa che lo ha incuriosito: un termine, una frase, una citazione, un nome, un evento o un concetto. Spiegaglielo come farebbe un divulgatore colto e preciso.
+
+TESTO DELL'UTENTE:
+"""${text}"""`;
+  return `${intro}
+
+CATEGORIE GIÀ USATE NEL SUO ARCHIVIO: ${cats.length ? cats.join(", ") : "(nessuna)"}
+CATEGORIE DI RIFERIMENTO: ${base.join(", ")}
+Scegli UNA categoria ampia: preferisci una già usata o di riferimento; creane una nuova (una parola, minuscolo, italiano) solo se nessuna è adatta. Per intelligenza artificiale usa "ai". Non usare mai la categoria "psicologia": significati di parole, differenze tra termini, etimologie e modi di dire vanno in "lingua".
+
+VOCI GIÀ NEL SUO ARCHIVIO: ${titles.length ? titles.join(" | ") : "(nessuna)"}
+Se esistono legami reali con queste voci, scrivi quei titoli identici dentro "collegamenti".
+
+Rispondi solo con un oggetto JSON con questa forma esatta:
+{
+  "titolo": "nome canonico breve del concetto (per una citazione: un titolo breve che la identifica)",
+  "tipo": "termine | citazione | frase | concetto | persona | evento | opera | luogo",
+  "autore": "autore della citazione o della frase, altrimenti stringa vuota",
+  "categoria": "una parola",
+  "sottocategoria": "ambito più preciso dentro la categoria, 1-2 parole, minuscolo; riusa una sottocategoria esistente se adatta (${subsTxt || "nessuna ancora"})",
+  "sintesi": "una frase che coglie l'essenza, massimo 25 parole",
+  "in_breve": ["3-5 punti chiave brevissimi, massimo 12 parole ciascuno: la versione sintetica da leggere in 20 secondi"],
+  "spiegazione": "testo in Markdown di 180-300 parole: cos'è, origine e contesto, perché conta. Per una citazione: chi l'ha detta, quando, cosa significa, come è stata interpretata. Usa **grassetto** per i termini chiave e paragrafi brevi.",
+  "esempi": ["3-5 esempi REALI e concreti, con il nome proprio in **grassetto** all'inizio, poi 1 frase su cosa fa o perché è un esempio. Se il concetto è una categoria (settore, tipo di azienda, prodotto, movimento, fenomeno) elenca casi reali che ne fanno parte: es. per 'financial technology' → **Revolut**, **Satispay**, **PayPal**, **Stripe**, **Klarna**; per 'impressionismo' → opere e artisti veri; per un bias → un caso storico o quotidiano preciso. Usa solo nomi che esistono davvero, niente esempi inventati o generici; lista vuota se non hanno senso"],
+  "curiosita": ["2-3 fatti interessanti e verificabili"],
+  "collegamenti": ["4-6 concetti correlati da esplorare, nomi brevi"],
+  "tags": ["3-5 parole chiave in minuscolo"]${photo ? `,
+  "scheda": {
+    "riconoscimento": "certo | probabile | incerto",
+    "cosa": "cosa si vede nella foto, massimo 15 parole",
+    "dove": "dove si trova o da dove viene (città, museo, paese, habitat); stringa vuota se non si può sapere",
+    "quando": "periodo, epoca o data di creazione; stringa vuota se non pertinente",
+    "info": ["3-5 informazioni belle e utili: come riconoscerlo, come visitarlo o vederlo dal vivo, dimensioni, stile, curiosità pratiche"]
+  }` : ""}
+}
+Scrivi sempre in italiano, anche se il testo è in inglese. Non inventare fatti, date o citazioni: se un'attribuzione è incerta o apocrifa, dillo.`;
+}
+
+const STAGES = ["Sto leggendo la tua curiosità", "Cerco il contesto giusto", "Scelgo esempi concreti", "La colloco nel tuo grafo"];
+function showThinking(text, thumb){
+  S.selected = null; renderArchive();
+  $("#d-cat").innerHTML = `<span class="dot" style="color:var(--core)"></span>Nuova voce`;
+  $("#d-body").innerHTML = `<div class="thinking"><div class="orb"></div>${thumb ? `<img class="th-photo" src="${thumb}" alt="">` : ""}<div class="msg" id="th-msg">${thumb ? "Guardo la foto" : STAGES[0]}…</div><div class="sub">«${esc(text.length > 120 ? text.slice(0, 120) + "…" : text)}»</div><button class="btn" id="th-stop" type="button">Annulla</button></div>`;
+  openDetail(); if (isPhone()) closeSheet();
+  let i = 0; clearInterval(showThinking.iv);
+  showThinking.iv = setInterval(() => { i = Math.min(i + 1, STAGES.length - 1); const m = $("#th-msg"); if (m) m.textContent = STAGES[i] + "…"; }, 5000);
+}
+
+async function explore(text, img){
+  text = String(text || "").trim();
+  if ((!text && !img) || S.busy) return;
+  if (!img) {
+    const dup = S.notes.find(n => norm(n.titolo) === norm(text) || norm(n.input) === norm(text));
+    if (dup) { $("#q").value = ""; $("#go").disabled = true; openNote(dup.id); toast("È già nel tuo archivio"); return; }
+  }
+  if (!needSample()) return;
+  S.busy = true; $("#go").disabled = true; $("#photo").disabled = true;
+  if (!img && norm($("#q").value) === norm(text)) $("#q").value = "";
+  showThinking(img ? (text || "La tua foto") : text, img?.thumb);
+  const ctl = new AbortController(); S.ctl = ctl;
+  try {
+    const r = await S.sample.json(explainPrompt(text, !!img), { signal: ctl.signal, modelTier: "default", cache: false, ...(img ? { images: [img.blob] } : {}) });
+    const arr = v => Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 8) : [];
+    const note = {
+      input: text,
+      titolo: String(r.titolo || text).slice(0, 120),
+      tipo: String(r.tipo || "termine").split("|")[0].trim().toLowerCase(),
+      autore: String(r.autore || ""),
+      categoria: norm(r.categoria) || "altro",
+      sottocategoria: String(r.sottocategoria || ""),
+      sintesi: String(r.sintesi || ""),
+      in_breve: Array.isArray(r.in_breve) ? r.in_breve.map(String).filter(Boolean).slice(0, 6) : [],
+      spiegazione: String(r.spiegazione || ""),
+      esempi: arr(r.esempi), curiosita: arr(r.curiosita), collegamenti: arr(r.collegamenti), tags: arr(r.tags).map(norm),
+      createdAt: Date.now()
+    };
+    if (img) {
+      const sc = r.scheda || {}, str = v => String(v ?? "").trim();
+      note.foto = true; note.input = text || "Foto";
+      note.scheda = { riconoscimento: str(sc.riconoscimento).split("|")[0].trim().toLowerCase(), cosa: str(sc.cosa), dove: str(sc.dove), quando: str(sc.quando), info: Array.isArray(sc.info) ? sc.info.map(String).filter(Boolean).slice(0, 6) : [] };
+    }
+    const id = await saveNote(note);
+    if (img) { S.photos.set(id, img.thumb); if (S.db && !id.startsWith("local-")) S.db.doc("foto/" + id).set({ data: img.thumb, createdAt: Date.now() }).catch(() => toast("Non sono riuscito a salvare la foto")); }
+    $("#q").value = ""; $("#go").disabled = true;
+    S.selected = id;
+    const wait = Date.now();
+    const tryOpen = () => { if (S.notes.find(x => x.id === id)) openNote(id); else if (Date.now() - wait < 4000) setTimeout(tryOpen, 120); else { renderNote({ id, ...note }); } };
+    tryOpen();
+    toast(`Salvata in ${catName(note.categoria)}`);
+  } catch (e) {
+    if (e?.code === "cancelled") { closeDetail(); }
+    else if (e?.code === "quota_exceeded") { $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Archivio pieno</div><div class="sub">Elimina qualche voce e riprova.</div></div>`; }
+    else $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Non ci sono riuscito</div><div class="sub">${esc(errMsg(e))}</div><button class="btn primary" type="button" data-explore="${esc(text)}">Riprova</button></div>`;
+  } finally {
+    clearInterval(showThinking.iv); S.busy = false; $("#go").disabled = !$("#q").value.trim(); $("#photo").disabled = false;
+  }
+}
+document.addEventListener("click", e => { if (e.target.id === "th-stop") S.ctl?.abort(); });
+
+async function genSchema(){
+  const n = S.notes.find(x => x.id === S.selected); if (!n || !needSample()) return;
+  const btn = $("#mk-schema"), box = $("#schema-box");
+  btn.disabled = true;
+  box.innerHTML = `<div class="inline-think"><span class="mini"></span>L'AI sta disegnando lo schema.</div>`;
+  const prompt = `Trasforma questo contenuto in UNA rappresentazione visiva breve, chiara, fedele e memorabile (metodo "Visual MIT").
+Argomento: "${n.titolo}" (${catName(n.categoria)}${n.autore ? ", " + n.autore : ""})
+Sintesi: ${n.sintesi}
+Testo: ${String(n.spiegazione || "").slice(0, 2500)}
+
+1. Individua i concetti principali, le relazioni, le sequenze, le gerarchie, le cause e gli effetti.
+2. Scegli il formato più adatto, uno solo:
+   - "passi": diagramma di flusso per un processo (3-5 passi) → {"schema":"passi","passi":[{"t":"max 3 parole","nota":"max 5 parole"}]}
+   - "ventaglio": mappa concettuale per idee collegate a un centro (3-5 rami) → {"schema":"ventaglio","centro":"max 3 parole","rami":[{"t":"max 3 parole","nota":"max 4 parole"}]}
+   - "timeline": eventi nel tempo (3-6) → {"schema":"timeline","eventi":[{"data":"...","t":"max 4 parole","nota":"max 5 parole"}]}
+   - "albero": schema gerarchico per categorie (max 4 rami, 3 foglie) → {"schema":"albero","radice":"...","figli":[{"t":"...","figli":["..."]}]}
+   - "tabella": confronto tra cose (2-4 colonne, 3-5 righe) → {"schema":"tabella","colonne":["Aspetto","A","B"],"righe":[["...","...","..."]]}
+   - "causa": cause → fenomeno → effetti (2-3 e 2-3) → {"schema":"causa","cause":["..."],"centro":"...","effetti":["..."]}
+   - "ciclo": fasi che si ripetono (3-5) → {"schema":"ciclo","fasi":["..."],"centro":"..."}
+3. Etichette brevi. Conserva numeri, nomi e relazioni importanti. Meglio pochi elementi che fanno capire subito.
+4. Non inventare informazioni. Se qualcosa è un'inferenza e non un fatto, scrivilo in "inferenze" (altrimenti stringa vuota).
+5. Poi una spiegazione in massimo tre frasi brevi e semplici, che una persona senza basi capisce subito.
+In italiano.
+
+Rispondi solo con JSON:
+{"titolo": "max 8 parole, dice cosa spiega lo schema", "schema": { ... }, "spiegazione": ["frase 1", "frase 2", "frase 3"], "inferenze": ""}`;
+  try {
+    const r = await S.sample.json(prompt, { modelTier: "complex", cache: false });
+    const ok = new Set(["passi","ventaglio","timeline","albero","tabella","causa","ciclo","convergenza","confronto","trasformazione"]);
+    if (!r?.schema || !ok.has(String(r.schema.schema).toLowerCase())) throw { code: "invalid_json" };
+    const schema = JSON.parse(JSON.stringify({ v: 4, titolo: String(r.titolo || ""), schema: { ...r.schema, schema: String(r.schema.schema).toLowerCase() }, spiegazione: (Array.isArray(r.spiegazione) ? r.spiegazione : [r.spiegazione]).map(String).filter(Boolean).slice(0, 3), inferenze: String(r.inferenze || "") }));
+    await patchNote(n.id, { schema });
+    if (S.selected === n.id) { box.innerHTML = schemaHTML(schema, catColor(n.categoria), n); btn.textContent = "Rigenera schema"; btn.classList.remove("primary"); }
+  } catch (e) {
+    box.innerHTML = (n.schema ? schemaHTML(n.schema, catColor(n.categoria), n) : "") + `<p class="err">${esc(errMsg(e))}</p>`;
+  } finally { if (btn.isConnected) btn.disabled = false; }
+}
+
+/* ---------- schema breve stile Visual MIT (la skill di Karim) ---------- */
+function mitHTML(s, color){
+  const core = { s: color, f: xAlpha(color, .3) };
+  let fig = "";
+  const sec = s.schema || {}, kind = XALIAS[sec.schema] || sec.schema;
+  if (kind === "tabella") {
+    const cols = xArr(sec.colonne, 4).map(xs), rows = xArr(sec.righe, 6).filter(Array.isArray);
+    fig = `<div class="mit-tw"><table class="mit-t"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map((_, i) => `<td>${esc(xs(r[i]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  } else if (XPAT[kind]) {
+    XFLAT = true;
+    try { const S2 = new XScene(); XPAT[kind](S2, sec, 0, core); fig = `<div class="xg-sec">${xRender(S2, 1, xs(s.titolo))}</div>`; }
+    catch { fig = ""; } finally { XFLAT = false; }
+  }
+  const frasi = xArr(s.spiegazione, 3).map(xs).filter(Boolean);
+  return `<div class="schema xg mit" style="--c:${color}">
+    ${xs(s.titolo) ? `<div class="mit-title">${esc(s.titolo)}</div>` : ""}
+    ${fig}
+    ${frasi.length ? `<div class="mit-exp">${frasi.map(f => `<p>${esc(f)}</p>`).join("")}</div>` : ""}
+    ${xs(s.inferenze) ? `<p class="mit-inf"><b>Da prendere con cautela:</b> ${esc(s.inferenze)}</p>` : ""}
+  </div>`;
+}
+/* ---------- spiegazioni ELI5 a scene (metodo DreambigOu/ELI5 + Fireworks Open ELI5) ---------- */
+function eliScene(sc, color, idx){
+  const S2 = new XScene(), nodes = xArr(sc.nodi, 5).filter(n => xs(n?.t)), n = nodes.length;
+  if (!n) return "";
+  const pos = {}, boxes = [];
+  const card = (nd, cx, cy, maxW, i) => {
+    const pal = XP[XSEQ[(i + idx) % XSEQ.length]], size = 15, lines = xWrap(xs(nd.t), size, maxW, 2, 700), lh = size * 1.22;
+    const tw = Math.max(46, ...lines.map(l => xMeasure(l, size, 700)));
+    const w = tw + 28, h = 38 + lines.length * lh + 14;
+    cx = Math.max(w / 2 + 6, Math.min(XW - w / 2 - 6, cx));
+    const b = S2.shape("rect", cx, cy + h / 2, w, h, pal, { r: 14 });
+    S2.text(cx, cy + 25, xs(nd.emoji) || "•", { size: 26 });
+    S2.text(cx, cy + 40, lines, { top: true, size, weight: 700 });
+    let bottom = cy + h;
+    if (xs(nd.nota)) { const t = S2.text(cx, bottom + 5, xs(nd.nota), { top: true, size: 12.5, color: XMUT, maxW: maxW + 10, lines: 2 }); bottom = t.y + t.h; }
+    return { ...b, bottom, h: bottom - b.y, cy: (b.y + bottom) / 2 };
+  };
+  if (n <= 2) {
+    const cw = XW / n;
+    nodes.forEach((nd, i) => { const b = card(nd, cw * (i + .5), 0, Math.min(118, cw - 34), i); pos[xs(nd.id) || "n" + i] = b; boxes.push(b); });
+  } else {
+    let y = 0;
+    for (let r = 0; r * 2 < n; r++) {
+      const row = nodes.slice(r * 2, r * 2 + 2), made = [];
+      row.forEach((nd, j) => { const col = r % 2 ? 1 - j : j, i = r * 2 + j; const b = card(nd, col ? XW - 94 : 94, y, 100, i); pos[xs(nd.id) || "n" + i] = b; boxes.push(b); made.push(b); });
+      y = Math.max(...made.map(b => b.bottom)) + 62;
+    }
+  }
+  const edges = xArr(sc.frecce, 7);
+  const list = edges.length ? edges : nodes.slice(1).map((nd, i) => ({ da: xs(nodes[i].id) || "n" + i, a: xs(nd.id) || "n" + (i + 1) }));
+  list.forEach((e, i) => {
+    const A = pos[xs(e.da)], B = pos[xs(e.a)]; if (!A || !B || A === B) return;
+    const back = boxes.indexOf(B) < boxes.indexOf(A), same = Math.abs(A.y - B.y) < 10;
+    const bend = back ? .35 : same ? -.12 : .1;
+    const p1 = xEdge(A, B.cx, B.cy, 5), p2 = xEdge(B, A.cx, A.cy, 7);
+    S2.arrow(p1, p2, { c: XLINE, bend });
+    if (xs(e.t)) {
+      const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+      const mx = (p1[0] + p2[0]) / 2 - dy * bend * .5, my = (p1[1] + p2[1]) / 2 + dx * bend * .5;
+      S2.text(mx, same ? my - 14 : my, xs(e.t), { size: 13, weight: 700, color: XP.dec.s, maxW: same ? 84 : 110, lines: 2, halo: true });
+    }
+  });
+  return xRender(S2, xSeed(JSON.stringify(sc) + idx), xs(sc.titolo));
+}
+function eliHTML(s, color){
+  const sc = xArr(s.scene, 6), cast = xArr(s.personaggi, 4).filter(p => xs(p?.nome));
+  const p = [];
+  p.push(`<div class="el-head">${xs(s.titolo) ? `<div class="xg-title">${esc(s.titolo)}</div>` : ""}${xs(s.inUnaFrase) ? `<p class="el-one">${esc(s.inUnaFrase)}</p>` : ""}</div>`);
+  if (xs(s.analogia?.testo)) p.push(`<div class="el-ana"><div class="el-ana-e" aria-hidden="true">${esc(xs(s.analogia.emoji) || "💡")}</div><div><b>Immagina che…</b><p>${esc(s.analogia.testo)}</p></div></div>`);
+  if (cast.length || xs(s.protagonista)) p.push(`<div class="el-cast"><div class="el-k">I personaggi della storia</div><div class="el-chips">${xs(s.protagonista) ? `<span class="el-chip hero">🧭 ${esc(s.protagonista)} <small>viaggia in tutta la storia</small></span>` : ""}${cast.map(c => `<span class="el-chip">${esc(xs(c.emoji))} ${esc(c.nome)}${xs(c.chi) ? ` <small>${esc(c.chi)}</small>` : ""}</span>`).join("")}</div></div>`);
+  sc.forEach((x, i) => p.push(`<section class="el-scene"><div class="el-step"><span>${i + 1}</span>di ${sc.length}</div><h4>${esc(xs(x.titolo))}</h4><div class="xg-sec">${eliScene(x, color, i)}</div>${xs(x.didascalia) ? `<p class="el-cap">${esc(x.didascalia)}</p>` : ""}${xs(x.piuPreciso) ? `<details class="el-more"><summary>🔍 Detto in modo più preciso</summary><p>${esc(x.piuPreciso)}</p></details>` : ""}</section>`));
+  if (xs(s.limite)) p.push(`<div class="el-lim"><b>⚠️ Dove l'esempio non regge</b><p>${esc(s.limite)}</p></div>`);
+  if (s.esempio && xArr(s.esempio.righe, 6).length) p.push(`<div class="el-real"><div class="el-k">Esempio reale</div><h4>${esc(xs(s.esempio.titolo))}</h4><ol>${xArr(s.esempio.righe, 6).map(r => `<li>${esc(xs(r))}</li>`).join("")}</ol></div>`);
+  const gl = xArr(s.glossario, 8).filter(g => xs(g?.parola));
+  if (gl.length) p.push(`<div class="el-gl"><div class="el-k">Parole difficili</div><dl>${gl.map(g => `<dt>${esc(g.parola)}</dt><dd>${esc(xs(g.significato))}</dd>`).join("")}</dl></div>`);
+  const rc = xArr(s.ricapitolando, 4).map(xs).filter(Boolean);
+  if (rc.length) p.push(`<div class="el-recap"><div class="el-k">Ricapitolando</div><ol>${rc.map(r => `<li>${esc(r)}</li>`).join("")}</ol></div>`);
+  if (xs(s.domanda?.q)) p.push(`<details class="el-quiz"><summary><span class="el-k">Hai capito? Prova a rispondere</span>${esc(s.domanda.q)}</summary><p>${esc(xs(s.domanda.a))}</p></details>`);
+  return `<div class="schema xg el" style="--c:${color}">${p.join("")}</div>`;
+}
+
+/* ---------- schemi disegnati a mano, stile Excalidraw (rough.js) ---------- */
+const XW = 400, XHAND = '"Kalam", "Sora", cursive', XSANS = 'Sora, system-ui, sans-serif';
+let XFLAT = false;
+const xAlpha = (c, a) => {
+  c = String(c);
+  if (c[0] === "#") { const h = c.length === 4 ? c.slice(1).split("").map(x => x + x).join("") : c.slice(1, 7); const v = parseInt(h, 16); return `rgba(${v >> 16 & 255},${v >> 8 & 255},${v & 255},${a})`; }
+  if (c.startsWith("hsl(")) return c.replace(/\)$/, ` / ${a})`);
+  return c;
+};
+const XP = {
+  start: { s: "#fdba74", f: "rgba(251,146,60,.34)" }, end: { s: "#6ee7b7", f: "rgba(52,211,153,.32)" },
+  dec: { s: "#fcd34d", f: "rgba(251,191,36,.32)" }, pri: { s: "#93c5fd", f: "rgba(96,165,250,.32)" },
+  warn: { s: "#fca5a5", f: "rgba(248,113,113,.32)" }, pink: { s: "#f9a8d4", f: "rgba(244,114,182,.32)" },
+  teal: { s: "#5eead4", f: "rgba(45,212,191,.30)" }, ghost: { s: "#8c88a3", f: "rgba(140,136,163,.10)" }
+};
+const XSEQ = ["pri", "start", "pink", "teal", "dec", "end", "warn"];
+const XINK = "#f3f0fa", XMUT = "#aaa6bd", XLINE = "#d6d2e6", XTITLE = "#ece6ff";
+let xCtx;
+function xMeasure(t, size, weight = 400){ xCtx ||= document.createElement("canvas").getContext("2d"); xCtx.font = `${weight} ${size}px ${XFLAT ? XSANS : XHAND}`; return xCtx.measureText(t).width; }
+function xWrap(t, size, maxW, maxLines = 3, weight = 400){
+  const words = String(t ?? "").trim().split(/\s+/).filter(Boolean), lines = []; let cur = "";
+  for (const w of words) { const nx = cur ? cur + " " + w : w; if (cur && xMeasure(nx, size, weight) > maxW) { lines.push(cur); cur = w; } else cur = nx; }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] += "…"; }
+  return lines;
+}
+function xEdge(b, tx, ty, gap = 6){
+  const dx = tx - b.cx, dy = ty - b.cy; if (!dx && !dy) return [b.cx, b.cy];
+  const hw = b.w / 2, hh = b.h / 2, ax = Math.abs(dx), ay = Math.abs(dy);
+  let t;
+  if (b.kind === "ell") t = 1 / Math.hypot(dx / hw, dy / hh);
+  else if (b.kind === "dia") t = 1 / (ax / hw + ay / hh);
+  else t = Math.min(ax ? hw / ax : Infinity, ay ? hh / ay : Infinity);
+  const L = Math.hypot(dx, dy);
+  return [b.cx + dx * t + dx / L * gap, b.cy + dy * t + dy / L * gap];
+}
+class XScene {
+  constructor(){ this.el = []; }
+  text(x, y, t, o = {}){
+    const size = (o.size || 15) * (XFLAT && !Array.isArray(t) ? .86 : 1), weight = o.weight || 400, lines = Array.isArray(t) ? t : xWrap(t, size, o.maxW || XW - 24, o.lines || 3, weight), lh = size * 1.22;
+    const w = Math.max(0, ...lines.map(l => xMeasure(l, size, weight))), h = lines.length * lh;
+    const top = o.top ? y : y - h / 2, anchor = o.anchor || "middle";
+    this.el.push({ k: "text", x, top, lines, size, lh, color: o.color || XINK, anchor, weight, halo: o.halo });
+    const x0 = anchor === "middle" ? x - w / 2 : anchor === "end" ? x - w : x;
+    return { x: x0, y: top, w, h, cx: x0 + w / 2, cy: top + h / 2, kind: "rect" };
+  }
+  shape(kind, cx, cy, w, h, pal, o = {}){ this.el.push({ k: kind, cx, cy, w, h, pal, o }); return { x: cx - w / 2, y: cy - h / 2, w, h, cx, cy, kind }; }
+  box(kind, cx, cy, label, pal, o = {}){
+    const size = (o.size || 15) * (XFLAT ? .86 : 1), weight = o.weight || 400, lines = xWrap(label, size, o.maxW || 130, o.lines || 3, weight), lh = size * 1.22;
+    const tw = Math.max(20, ...lines.map(l => xMeasure(l, size, weight)));
+    const px = kind === "ell" ? 24 : kind === "dia" ? 36 : 15, py = kind === "ell" ? 15 : kind === "dia" ? 24 : 10;
+    const w = Math.max(o.minW || 0, tw + px * 2), h = Math.max(o.minH || 0, lines.length * lh + py * 2);
+    if (!o.free) cx = Math.max(w / 2 + 6, Math.min(XW - w / 2 - 6, cx));
+    const b = this.shape(kind, cx, cy, w, h, pal, o);
+    this.text(cx, cy, lines, { size, weight, color: o.color || XINK });
+    return b;
+  }
+  line(pts, o = {}){ this.el.push({ k: "line", pts, c: o.c || XLINE, w: o.w || 1.5, dash: o.dash, curve: o.curve }); }
+  dot(cx, cy, r, c){ this.el.push({ k: "dot", cx, cy, r, c }); }
+  arrow(p1, p2, o = {}){
+    const bend = o.bend || 0, dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    const m = [(p1[0] + p2[0]) / 2 - dy * bend, (p1[1] + p2[1]) / 2 + dx * bend];
+    this.el.push({ k: "arrow", p1, m, p2, bend, c: o.c || XLINE, w: o.w || 1.6, dash: o.dash });
+  }
+  connect(A, B, o = {}){
+    const p1 = xEdge(A, B.cx, B.cy, o.g1 ?? 5), p2 = xEdge(B, A.cx, A.cy, o.g2 ?? 7);
+    this.arrow(p1, p2, o);
+  }
+  bbox(){
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+    for (const e of this.el) {
+      if (e.k === "text") { const w = Math.max(...e.lines.map(l => xMeasure(l, e.size, e.weight))); const xl = e.anchor === "middle" ? e.x - w / 2 : e.anchor === "end" ? e.x - w : e.x; add(xl, e.top); add(xl + w, e.top + e.lines.length * e.lh); }
+      else if (e.k === "line") e.pts.forEach(p => add(...p));
+      else if (e.k === "arrow") { add(...e.p1); add(...e.p2); add(...e.m); }
+      else if (e.k === "dot") { add(e.cx - e.r, e.cy - e.r); add(e.cx + e.r, e.cy + e.r); }
+      else { add(e.cx - e.w / 2, e.cy - e.h / 2); add(e.cx + e.w / 2, e.cy + e.h / 2); }
+    }
+    return { x0, y0, x1, y1 };
+  }
+}
+function xRoundRect(x, y, w, h, r){
+  r = Math.min(r, w / 2, h / 2);
+  return `M${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} L${x + r} ${y + h} Q${x} ${y + h} ${x} ${y + h - r} L${x} ${y + r} Q${x} ${y} ${x + r} ${y}Z`;
+}
+function xFlat(svg, e){
+  const NS = "http://www.w3.org/2000/svg", mk = (t, a) => { const n = document.createElementNS(NS, t); for (const k in a) if (a[k] != null) n.setAttribute(k, a[k]); return n; };
+  const fill = p => e.o?.solid ? p.f : String(p.f).replace(/,\s*[\d.]+\)$/, ",.16)");
+  const dash = e.o?.dash || e.dash ? "6 5" : null;
+  if (e.k === "rect") return mk("rect", { x: e.cx - e.w / 2, y: e.cy - e.h / 2, width: e.w, height: e.h, rx: Math.min(e.o?.r ?? 10, 10), fill: fill(e.pal), stroke: e.pal.s, "stroke-width": e.o?.sw || 1.5, "stroke-dasharray": dash });
+  if (e.k === "ell") return mk("ellipse", { cx: e.cx, cy: e.cy, rx: e.w / 2, ry: e.h / 2, fill: fill(e.pal), stroke: e.pal.s, "stroke-width": e.o?.sw || 1.5, "stroke-dasharray": dash });
+  if (e.k === "dia") return mk("polygon", { points: `${e.cx},${e.cy - e.h / 2} ${e.cx + e.w / 2},${e.cy} ${e.cx},${e.cy + e.h / 2} ${e.cx - e.w / 2},${e.cy}`, fill: fill(e.pal), stroke: e.pal.s, "stroke-width": 1.5 });
+  if (e.k === "line") return mk("polyline", { points: e.pts.map(p => p.join(",")).join(" "), fill: "none", stroke: e.c, "stroke-width": e.w, "stroke-dasharray": dash, "stroke-linecap": "round" });
+  if (e.k === "dot") return mk("circle", { cx: e.cx, cy: e.cy, r: e.r, fill: e.c });
+  if (e.k === "arrow") {
+    const g = mk("g", {}), d = e.bend ? `M${e.p1} Q${e.m} ${e.p2}` : `M${e.p1} L${e.p2}`;
+    g.appendChild(mk("path", { d, fill: "none", stroke: e.c, "stroke-width": 1.6, "stroke-dasharray": dash }));
+    const from = e.bend ? e.m : e.p1, a = Math.atan2(e.p2[1] - from[1], e.p2[0] - from[0]), L = 9, s = .42;
+    g.appendChild(mk("path", { d: `M${e.p2} L${e.p2[0] - L * Math.cos(a - s)},${e.p2[1] - L * Math.sin(a - s)} L${e.p2[0] - L * Math.cos(a + s)},${e.p2[1] - L * Math.sin(a + s)}Z`, fill: e.c }));
+    return g;
+  }
+  return null;
+}
+function xRender(sc, seed, label){
+  const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg"), rc = rough.svg(svg);
+  let k = 0; const base = () => ({ roughness: 1.15, bowing: 1.1, strokeWidth: 1.7, seed: (seed + (k++) * 7919) % 2147483646 + 1 });
+  for (const e of sc.el) {
+    let node;
+    if (XFLAT && e.k !== "text") { node = xFlat(svg, e); if (node) svg.appendChild(node); continue; }
+    const fillOpt = p => ({ stroke: p.s, fill: p.f, fillStyle: e.o?.solid ? "solid" : "hachure", hachureGap: 5.5, fillWeight: 1.15, hachureAngle: -41, ...(e.o?.dash ? { strokeLineDash: [7, 6] } : {}), ...(e.o?.rough != null ? { roughness: e.o.rough } : {}), ...(e.o?.sw ? { strokeWidth: e.o.sw } : {}) });
+    if (e.k === "rect") node = rc.path(xRoundRect(e.cx - e.w / 2, e.cy - e.h / 2, e.w, e.h, e.o?.r ?? 12), { ...base(), ...fillOpt(e.pal) });
+    else if (e.k === "ell") node = rc.ellipse(e.cx, e.cy, e.w, e.h, { ...base(), ...fillOpt(e.pal) });
+    else if (e.k === "dia") node = rc.polygon([[e.cx, e.cy - e.h / 2], [e.cx + e.w / 2, e.cy], [e.cx, e.cy + e.h / 2], [e.cx - e.w / 2, e.cy]], { ...base(), ...fillOpt(e.pal) });
+    else if (e.k === "line") { const o = { ...base(), stroke: e.c, strokeWidth: e.w, roughness: .9, ...(e.dash ? { strokeLineDash: [6, 7] } : {}) }; node = e.curve ? rc.curve(e.pts, o) : rc.linearPath(e.pts, o); }
+    else if (e.k === "dot") node = rc.circle(e.cx, e.cy, e.r * 2, { ...base(), roughness: .6, stroke: e.c, fill: e.c, fillStyle: "solid", strokeWidth: 1 });
+    else if (e.k === "arrow") {
+      const o = { ...base(), stroke: e.c, strokeWidth: e.w, roughness: .9, ...(e.dash ? { strokeLineDash: [6, 7] } : {}) };
+      const g = document.createElementNS(NS, "g");
+      g.appendChild(e.bend ? rc.curve([e.p1, e.m, e.p2], o) : rc.line(...e.p1, ...e.p2, o));
+      const from = e.bend ? e.m : e.p1, a = Math.atan2(e.p2[1] - from[1], e.p2[0] - from[0]), L = 11, s = .45;
+      g.appendChild(rc.linearPath([[e.p2[0] - L * Math.cos(a - s), e.p2[1] - L * Math.sin(a - s)], e.p2, [e.p2[0] - L * Math.cos(a + s), e.p2[1] - L * Math.sin(a + s)]], { ...o, strokeLineDash: undefined, roughness: .6 }));
+      node = g;
+    } else if (e.k === "text") {
+      node = document.createElementNS(NS, "text");
+      node.setAttribute("font-family", XFLAT ? XSANS : XHAND); node.setAttribute("font-size", e.size); node.setAttribute("fill", e.color);
+      node.setAttribute("text-anchor", e.anchor); if (e.weight !== 400) node.setAttribute("font-weight", e.weight);
+      if (e.halo) { node.setAttribute("stroke", "#050407"); node.setAttribute("stroke-width", "5"); node.setAttribute("stroke-linejoin", "round"); node.setAttribute("paint-order", "stroke"); }
+      e.lines.forEach((l, i) => { const t = document.createElementNS(NS, "tspan"); t.setAttribute("x", e.x.toFixed(1)); t.setAttribute("y", (e.top + e.lh * (i + .5)).toFixed(1)); t.setAttribute("dominant-baseline", "central"); t.textContent = l; node.appendChild(t); });
+    }
+    if (node) svg.appendChild(node);
+  }
+  const b = sc.bbox(), pad = 16, x0 = Math.min(0, b.x0 - pad), y0 = b.y0 - pad, w = Math.max(XW, b.x1 + pad) - x0, h = b.y1 - y0 + pad;
+  svg.setAttribute("viewBox", `${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
+  svg.setAttribute("role", "img"); svg.setAttribute("aria-label", label || "Schema");
+  return svg.outerHTML;
+}
+
+/* ---- pattern visivi: ognuno disegna una sezione a partire da y e restituisce la y finale ---- */
+const xs = v => String(v ?? "").trim();
+const xArr = (v, n) => (Array.isArray(v) ? v : []).slice(0, n);
+const xT = x => typeof x === "string" ? x : xs(x?.t ?? x?.etichetta ?? x?.titolo);
+function xBottom(...bs){ return Math.max(...bs.flat().filter(Boolean).map(b => b.y + b.h)); }
+
+const XPAT = {
+  ventaglio(S, d, y, core){
+    const rami = xArr(d.rami, 6).filter(r => xT(r)); const n = rami.length || 1;
+    const rx = 132, ry = n <= 3 ? 92 : 112, cx = XW / 2, cy = y + ry + 30;
+    const hub = S.box("ell", cx, cy, xs(d.centro), core, { size: 17, weight: 700, maxW: 110, lines: 3 });
+    const out = [hub];
+    rami.forEach((r, i) => {
+      const a = n === 2 ? (i ? 0 : Math.PI) : -Math.PI / 2 + i * 2 * Math.PI / n;
+      const pal = XP[XSEQ[i % XSEQ.length]];
+      const b = S.box("rect", cx + Math.cos(a) * rx, cy + Math.sin(a) * ry, xT(r), pal, { size: 14.5, maxW: 96, lines: 2 });
+      S.connect(hub, b, { c: pal.s, bend: .08 * (i % 2 ? 1 : -1) });
+      out.push(b);
+      const nota = xs(r.nota);
+      if (nota) { const up = Math.sin(a) < -.5, nl = xWrap(nota, 12.5, 112, 2), nh = nl.length * 12.5 * 1.22; out.push(S.text(b.cx, up ? b.y - 5 - nh : b.y + b.h + 5, nl, { top: true, size: 12.5, color: XMUT })); }
+    });
+    return xBottom(out);
+  },
+  convergenza(S, d, y, core){
+    const ins = xArr(d.ingressi, 4).map(xT).filter(Boolean), n = ins.length || 1, colW = XW / n;
+    const boxes = ins.map((t, i) => S.box("rect", colW * (i + .5), y + 34, t, XP[XSEQ[i % XSEQ.length]], { size: 14, maxW: Math.min(120, colW - 30), lines: 3 }));
+    const top = xBottom(boxes) + 70;
+    const res = S.box("ell", XW / 2, top + 26, xs(d.risultato), XP.end, { size: 16.5, weight: 700, maxW: 170 });
+    boxes.forEach((b, i) => S.connect(b, res, { c: XP[XSEQ[i % XSEQ.length]].s, bend: (b.cx - XW / 2) / XW * .25 }));
+    const out = [res, ...boxes];
+    if (xs(d.nota)) out.push(S.text(XW / 2, res.y + res.h + 8, xs(d.nota), { top: true, size: 13, color: XMUT, maxW: 300, lines: 2 }));
+    return xBottom(out);
+  },
+  causa(S, d, y, core){
+    const row = (arr, yy, seq) => { const it = xArr(arr, 4).map(xT).filter(Boolean), n = it.length || 1, cw = XW / n; return it.map((t, i) => S.box("rect", cw * (i + .5), yy, t, XP[seq[i % seq.length]], { size: 14, maxW: Math.min(118, cw - 28), lines: 3 })); };
+    S.text(12, y + 6, "perché succede", { anchor: "start", size: 13, color: XMUT });
+    const cs = row(d.cause, y + 50, ["warn", "start", "dec", "pink"]);
+    const mid = S.box("ell", XW / 2, xBottom(cs) + 78, xs(d.centro), core, { size: 17, weight: 700, maxW: 160 });
+    cs.forEach(b => S.connect(b, mid, { c: XP.warn.s, bend: (b.cx - XW / 2) / XW * .22 }));
+    const ly = mid.y + mid.h + 28;
+    S.text(12, ly, "cosa provoca", { anchor: "start", size: 13, color: XMUT });
+    const ef = row(d.effetti, ly + 66, ["end", "teal", "pri", "pink"]);
+    ef.forEach(b => S.connect(mid, b, { c: XP.end.s, bend: -(b.cx - XW / 2) / XW * .22 }));
+    return xBottom(cs, mid, ef);
+  },
+  passi(S, d, y){
+    const ps = xArr(d.passi, 6).filter(p => xT(p)); let yy = y + 4, prev = null; const out = [];
+    ps.forEach((p, i) => {
+      const left = i % 2 === 0, pal = i === 0 ? XP.start : i === ps.length - 1 ? XP.end : XP.pri;
+      const lines = xWrap(`${i + 1}. ${xT(p)}`, 15.5, 150, 2, 700), bh = lines.length * 15.5 * 1.22 + 20;
+      const b = S.box("rect", left ? 112 : XW - 112, yy + bh / 2, `${i + 1}. ${xT(p)}`, pal, { size: 15.5, weight: 700, maxW: 150, lines: 2 });
+      out.push(b);
+      const nota = xs(p.nota);
+      if (nota) out.push(S.text(left ? b.x + b.w + 16 : b.x - 16, b.cy, nota, { anchor: left ? "start" : "end", size: 13.5, color: XMUT, maxW: XW - b.w - 52, lines: 3 }));
+      if (prev) S.connect(prev, b, { c: XLINE, bend: left ? -.18 : .18 });
+      prev = b; yy = xBottom(out) + 40;
+    });
+    return xBottom(out);
+  },
+  ciclo(S, d, y, core){
+    const fs = xArr(d.fasi, 6).map(xT).filter(Boolean), n = fs.length || 1, cx = XW / 2, rx = 128, ry = n <= 4 ? 100 : 118, cy = y + ry + 30;
+    const bs = fs.map((t, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return S.box("rect", cx + Math.cos(a) * rx, cy + Math.sin(a) * ry, t, XP[XSEQ[i % XSEQ.length]], { size: 14.5, maxW: 98, lines: 2 }); });
+    bs.forEach((b, i) => S.connect(b, bs[(i + 1) % n], { c: core.s, bend: -.22, g1: 4, g2: 6 }));
+    if (xs(d.centro)) S.text(cx, cy, xs(d.centro), { size: 15, color: XMUT, maxW: 110, lines: 3 });
+    return xBottom(bs);
+  },
+  timeline(S, d, y){
+    const ev = xArr(d.eventi, 7).filter(e => xT(e)); let yy = y + 12; const out = [], X = 118;
+    ev.forEach((e, i) => {
+      const col = XP[XSEQ[i % XSEQ.length]].s;
+      const lab = S.text(X + 18, yy, xT(e), { top: true, anchor: "start", size: 15.5, weight: 700, maxW: XW - X - 30, lines: 2 });
+      let bot = lab.y + lab.h;
+      if (xs(e.nota)) { const nt = S.text(X + 18, bot + 1, xs(e.nota), { top: true, anchor: "start", size: 13, color: XMUT, maxW: XW - X - 30, lines: 2 }); bot = nt.y + nt.h; }
+      const dy = yy + 15.5 * .61;
+      S.dot(X, dy, 6, col);
+      S.text(X - 16, dy, xs(e.data), { anchor: "end", size: 15, weight: 700, color: col, maxW: X - 24, lines: 2 });
+      out.push({ y: yy, h: bot - yy });
+      yy = bot + 22;
+    });
+    if (ev.length) S.line([[X, y], [X, yy - 10]], { c: XMUT, w: 1.6 });
+    return yy - 10;
+  },
+  albero(S, d, y){
+    const root = S.text(16, y + 2, xs(d.radice), { top: true, anchor: "start", size: 17.5, weight: 700, color: XTITLE, maxW: XW - 30, lines: 2 });
+    let yy = root.y + root.h + 14; const T = 26, figli = xArr(d.figli, 5).filter(f => xT(f)); let lastY = yy;
+    figli.forEach((f, i) => {
+      const col = XP[XSEQ[i % XSEQ.length]].s;
+      const t = S.text(T + 30, yy, xT(f), { top: true, anchor: "start", size: 15.5, weight: 700, color: col, maxW: XW - T - 50, lines: 2 });
+      const ly = t.y + 15.5 * .61 + 1;
+      S.line([[T, ly], [T + 22, ly]], { c: XMUT }); lastY = ly;
+      yy = t.y + t.h + 6;
+      const sub = xArr(f.figli, 4).map(xT).filter(Boolean); let sLast = null;
+      sub.forEach(s => {
+        const st = S.text(T + 66, yy, s, { top: true, anchor: "start", size: 14, color: XINK, maxW: XW - T - 84, lines: 2 });
+        const sy = st.y + 14 * .61 + 1; S.line([[T + 42, sy], [T + 58, sy]], { c: XMUT, w: 1.2 }); sLast = sy;
+        yy = st.y + st.h + 4;
+      });
+      if (sLast) S.line([[T + 42, ly + 9], [T + 42, sLast]], { c: XMUT, w: 1.2 });
+      yy += 12;
+    });
+    S.line([[T, root.y + root.h + 2], [T, lastY]], { c: XMUT, w: 1.6 });
+    return yy - 12;
+  },
+  trasformazione(S, d, y, core){
+    const cy = y + 62, L = 66, R = XW - 66, rnd = mulberry(String(d.processo).length + 7);
+    for (let i = 0; i < 9; i++) S.dot(L - 38 + rnd() * 76, cy - 34 + rnd() * 60, 3.5 + rnd() * 3, [XP.warn.s, XP.start.s, XP.pink.s, XP.dec.s][i % 4]);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) S.shape("rect", R - 26 + c * 26, cy - 26 + r * 22, 15, 13, XP.end, { solid: true, rough: .5, r: 3, sw: 1 });
+    const proc = S.box("rect", XW / 2, cy, xs(d.processo), core, { size: 15.5, weight: 700, maxW: 100, lines: 3 });
+    S.arrow([L + 46, cy], [proc.x - 8, cy], { c: XLINE, bend: .04 });
+    S.arrow([proc.x + proc.w + 6, cy], [R - 44, cy], { c: XLINE, bend: -.04 });
+    const out = [proc];
+    [[L, d.prima, XP.warn.s], [R, d.dopo, XP.end.s]].forEach(([x, o, c]) => {
+      const t = S.text(x, cy + 48, xT(o), { top: true, size: 15, weight: 700, color: c, maxW: 120, lines: 2 }); out.push(t);
+      if (xs(o?.esempio)) out.push(S.text(x, t.y + t.h + 2, xs(o.esempio), { top: true, size: 12.5, color: XMUT, maxW: 120, lines: 3 }));
+    });
+    return xBottom(out);
+  },
+  confronto(S, d, y){
+    const out = [], cols = [[XW * .26, d.a, XP.teal], [XW * .74, d.b, XP.pink]];
+    let maxY = y;
+    cols.forEach(([x, o, pal]) => {
+      const h = S.box("rect", x, y + 24, xT(o), pal, { size: 16, weight: 700, maxW: 140, lines: 2 }); out.push(h);
+      let yy = h.y + h.h + 16;
+      xArr(o?.punti, 4).map(xT).filter(Boolean).forEach(p => {
+        const t = S.text(x - 66, yy, p, { top: true, anchor: "start", size: 14, maxW: 132, lines: 3 });
+        S.dot(x - 76, t.y + 14 * .61, 3.2, pal.s); out.push(t); yy = t.y + t.h + 10;
+      });
+      maxY = Math.max(maxY, yy - 10);
+    });
+    S.line([[XW / 2, y + 6], [XW / 2, maxY]], { c: XMUT, w: 1.2, dash: true });
+    S.text(XW / 2, y + 24, "vs", { size: 15, weight: 700, color: XMUT });
+    return Math.max(maxY, xBottom(out));
+  },
+  nuvola(S, d, y, core){
+    const cx = XW / 2, cy = y + 112;
+    [[0, 0, 300, 170], [-92, -20, 150, 120], [92, -16, 160, 124], [-40, 46, 170, 100], [56, 50, 170, 96]].forEach(([dx, dy, w, h]) => S.shape("ell", cx + dx, cy + dy, w, h, XP.ghost, { dash: true, rough: 1.4, sw: 1.2 }));
+    S.box("ell", cx, cy, xs(d.centro), core, { size: 16.5, weight: 700, maxW: 110 });
+    const idee = xArr(d.idee, 6).map(xT).filter(Boolean), n = idee.length || 1, out = [{ y: cy - 110, h: 230 }];
+    idee.forEach((t, i) => { const a = -Math.PI / 2 + (i + .5) * 2 * Math.PI / n, col = XP[XSEQ[i % XSEQ.length]]; out.push(S.box("rect", cx + Math.cos(a) * 118, cy + Math.sin(a) * 78, t, { s: col.s, f: "rgba(5,4,7,.92)" }, { size: 14, weight: 700, color: col.s, maxW: 96, lines: 2, solid: true, r: 14, rough: .8 })); });
+    return xBottom(out) - 4;
+  },
+  decisione(S, d, y){
+    const q = S.box("dia", XW / 2, y + 62, xs(d.domanda), XP.dec, { size: 14.5, weight: 700, maxW: 130, lines: 3 });
+    const yb = q.y + q.h + 56;
+    const si = S.box("rect", XW * .22, yb, xs(d.si), XP.end, { size: 14, maxW: 130, lines: 3 });
+    const no = S.box("rect", XW * .78, yb, xs(d.no), XP.warn, { size: 14, maxW: 130, lines: 3 });
+    S.connect(q, si, { c: XP.end.s, bend: -.12 }); S.connect(q, no, { c: XP.warn.s, bend: .12 });
+    S.text(XW * .3, q.cy + q.h / 2 + 4, "sì", { size: 14, weight: 700, color: XP.end.s });
+    S.text(XW * .7, q.cy + q.h / 2 + 4, "no", { size: 14, weight: 700, color: XP.warn.s });
+    return xBottom(si, no);
+  }
+};
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const XALIAS = { mappa: "ventaglio", fanout: "ventaglio", flusso: "passi", sequenza: "passi", catena: "trasformazione", gerarchia: "albero", "cause": "causa" };
+const XKICK = { ventaglio: "da un centro", convergenza: "tutto porta a", causa: "cause ed effetti", passi: "come funziona", ciclo: "si ripete", timeline: "nel tempo", albero: "come è fatto", trasformazione: "prima e dopo", confronto: "a confronto", nuvola: "il contesto", decisione: "la scelta" };
+
+/* converte gli schemi salvati con i formati precedenti */
+function xUpgrade(s, n){
+  if (s.v === 2) return s;
+  if (Array.isArray(s.diagrammi)) return { v: 2, titolo: "", chiave: s.chiave, sezioni: s.diagrammi.map(d => {
+    if (d.tipo === "mappa") return { schema: "ventaglio", titolo: d.titolo, centro: d.centro, rami: (d.rami || []).map(r => ({ t: r.etichetta, nota: (r.dettagli || []).join(", ") })) };
+    if (d.tipo === "flusso") return { schema: "passi", titolo: d.titolo, passi: (d.passi || []).map(p => ({ t: p.etichetta, nota: p.nota })) };
+    if (d.tipo === "ciclo") return { schema: "ciclo", titolo: d.titolo, fasi: (d.passi || []).map(p => p.etichetta) };
+    if (d.tipo === "timeline") return { schema: "timeline", titolo: d.titolo, eventi: (d.eventi || []).map(e => ({ data: e.data, t: e.etichetta })) };
+    if (d.tipo === "confronto") return { schema: "confronto", titolo: d.titolo, a: { t: d.a?.titolo, punti: d.a?.punti }, b: { t: d.b?.titolo, punti: d.b?.punti } };
+    if (d.tipo === "causa") return { schema: "causa", titolo: d.titolo, cause: d.cause, centro: d.centro, effetti: d.effetti };
+    return null;
+  }).filter(Boolean) };
+  return { v: 2, titolo: "", chiave: s.chiave, sezioni: [{ schema: "ventaglio", titolo: "", centro: s.centro || n?.titolo, rami: (s.rami || []).map(r => ({ t: r.titolo, nota: (r.punti || [])[0] })) }] };
+}
+function xSeed(str){ let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) % 2000000000 + 1; }
+
+function xDraw(s, color){
+  const core = { s: color, f: xAlpha(color, .36) }, out = [];
+  s.sezioni.forEach((sec, i) => {
+    const kind = XALIAS[sec.schema] || sec.schema, fn = XPAT[kind]; if (!fn) return;
+    const S = new XScene();
+    S.text(10, 0, XKICK[kind] || "", { top: true, anchor: "start", size: 12.5, color: color, weight: 700 });
+    const t = S.text(10, 19, xs(sec.titolo) || "", { top: true, anchor: "start", size: 20, weight: 700, color: XTITLE, maxW: XW - 24, lines: 2 });
+    if (xs(sec.titolo)) S.line([[10, t.y + t.h + 2], [Math.min(XW - 14, 16 + t.w), t.y + t.h + 1]], { c: color, w: 2.2, curve: false });
+    try { fn(S, sec, t.y + t.h + 26, core); } catch (e) { return; }
+    out.push(`<div class="xg-sec">${xRender(S, xSeed(JSON.stringify(sec)), xs(sec.titolo))}</div>`);
+  });
+  if (s.esempio && xArr(s.esempio.righe, 5).length) {
+    const S = new XScene(), righe = xArr(s.esempio.righe, 5).map(xs).filter(Boolean);
+    S.text(10, 0, "esempio reale", { top: true, anchor: "start", size: 12.5, weight: 700, color: "#86efac" });
+    const t = S.text(10, 19, xs(s.esempio.titolo), { top: true, anchor: "start", size: 18, weight: 700, color: XTITLE, maxW: XW - 24, lines: 2 });
+    let yy = t.y + t.h + 26; const top = yy - 12; const tx = [];
+    righe.forEach(r => { const q = S.text(30, yy, r, { top: true, anchor: "start", size: 14.5, color: "#bbf7d0", maxW: XW - 64, lines: 3 }); S.dot(21, q.y + 14.5 * .61, 2.6, "#4ade80"); tx.push(q); yy = q.y + q.h + 8; });
+    S.el.unshift({ k: "rect", cx: XW / 2, cy: (top + yy) / 2, w: XW - 16, h: yy - top + 4, pal: { s: "#3b5a46", f: "#07140d" }, o: { solid: true, rough: .7, r: 10, sw: 1.3 } });
+    out.push(`<div class="xg-sec">${xRender(S, xSeed(s.esempio.titolo + righe[0]), "Esempio reale")}</div>`);
+  }
+  if (xs(s.chiave)) {
+    const S = new XScene();
+    S.text(XW / 2, 0, "da ricordare", { top: true, size: 12.5, weight: 700, color: XP.dec.s });
+    const lines = xWrap(xs(s.chiave), 18, XW - 70, 3, 700), h = lines.length * 18 * 1.22;
+    S.el.push({ k: "rect", cx: XW / 2, cy: 26 + h / 2, w: Math.max(...lines.map(l => xMeasure(l, 18, 700))) + 40, h: h + 20, pal: { s: XP.dec.s, f: "rgba(251,191,36,.22)" }, o: { r: 8 } });
+    S.text(XW / 2, 26 + h / 2, lines, { size: 18, weight: 700 });
+    out.push(`<div class="xg-sec">${xRender(S, xSeed(s.chiave), "Da ricordare")}</div>`);
+  }
+  return out.join("");
+}
+function schemaHTML(s, color, n){
+  if (typeof rough === "undefined") return `<p class="err">Non riesco a caricare la libreria dei disegni. Ricarica la pagina.</p>`;
+  if (!document.fonts?.check?.("15px Kalam")) document.fonts?.load?.("700 15px Kalam").then(() => document.fonts.load("15px Kalam")).then(() => {
+    const box = $("#schema-box"), cur = S.notes.find(x => x.id === S.selected);
+    if (box && cur?.schema && !box.dataset.font) { box.dataset.font = 1; box.innerHTML = schemaHTML(cur.schema, catColor(cur.categoria), cur); }
+  }).catch(() => {});
+  if (s.v === 4) return mitHTML(s, color);
+  if (s.v === 3) return eliHTML(s, color);
+  const v = xUpgrade(s, n);
+  return `<div class="schema xg" style="--c:${color}" title="Tocca per ingrandire">${xs(v.titolo) ? `<div class="xg-title">${esc(v.titolo)}</div>` : ""}${xDraw(v, color)}</div>`;
+}
+document.addEventListener("click", e => {
+  const g = e.target.closest(".xg"); if (g && !g.closest("#xzoom") && e.target.closest("svg")) {
+    const z = document.createElement("div"); z.id = "xzoom"; z.setAttribute("role", "dialog"); z.setAttribute("aria-label", "Schema ingrandito");
+    z.innerHTML = `<button type="button" class="xz-close" aria-label="Chiudi">✕</button><div class="xz-in">${g.outerHTML}</div>`;
+    document.body.appendChild(z); return;
+  }
+  if (e.target.closest(".xz-close") || e.target.id === "xzoom") $("#xzoom")?.remove();
+});
+addEventListener("keydown", e => { if (e.key === "Escape" && $("#xzoom")) { e.stopImmediatePropagation(); $("#xzoom").remove(); } }, true);
+
+async function ask(){
+  const n = S.notes.find(x => x.id === S.selected); const inp = $("#qa-in");
+  const q = inp?.value.trim(); if (!n || !q || !needSample()) return;
+  inp.value = ""; inp.disabled = true;
+  const qa = $("#qa"), item = document.createElement("div");
+  item.className = "qa-item"; item.innerHTML = `<div class="qq">${esc(q)}</div><div class="md"><div class="inline-think"><span class="mini"></span>Sto pensando…</div></div>`;
+  qa.appendChild(item);
+  const out = item.querySelector(".md");
+  S.editing = true;
+  try {
+    const { text } = await S.sample(`Contesto: l'utente sta studiando "${n.titolo}" nel suo archivio personale.\nSintesi: ${n.sintesi}\nSpiegazione già letta: ${String(n.spiegazione || "").slice(0, 2000)}\n\nDomanda: ${q}\n\nRispondi in italiano, in modo chiaro e concreto, in 80-200 parole, in Markdown semplice. Non ripetere ciò che ha già letto.`, { cache: false, onText: ({ text }) => { out.innerHTML = md(text); } });
+    out.innerHTML = md(text);
+    S.editing = false;
+    await patchNote(n.id, { domande: [...(n.domande || []), { q, a: text, at: Date.now() }].slice(-20) });
+  } catch (e) {
+    S.editing = false;
+    out.innerHTML = (e?.text ? md(e.text) : "") + `<p class="err">${esc(errMsg(e))}</p>`;
+  } finally { inp.disabled = false; }
+}
+
+/* ================= TRANSLATE ================= */
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  S.dir = b.dataset.dir; document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+}));
+async function translate(){
+  const text = $("#tr-in").value.trim(); if (!text || !needSample()) return;
+  const btn = $("#tr-go"); btn.disabled = true;
+  $("#tr-out").innerHTML = `<div class="inline-think"><span class="mini"></span>Sto traducendo…</div>`;
+  const dir = S.dir === "en-it" ? "dall'inglese all'italiano" : S.dir === "it-en" ? "dall'italiano all'inglese" : "nell'altra lingua (se il testo è in inglese traduci in italiano, se è in italiano traduci in inglese)";
+  const prompt = `Sei un traduttore e insegnante di inglese per un utente italiano. Traduci ${dir}.
+Testo: """${text}"""
+Il testo può contenere errori di battitura o di ortografia (es. "beatiful", "acommodation", "perchè" scritto male, lettere invertite). Prima capisci quale parola o frase l'utente intendeva, correggila e traduci la versione corretta. Non cambiare il significato né riformulare: correggi solo l'ortografia.
+Rispondi solo con JSON:
+{"corretto": "il testo originale con l'ortografia corretta, identico se era già giusto", "da": "en o it", "a": "it o en", "traduzione": "la traduzione migliore e naturale", "alternative": ["1-3 alternative con sfumature diverse, se esistono"], "categoria": "per una parola singola: sostantivo/verbo/aggettivo/espressione…; per una frase: frase", "pronuncia": "pronuncia della parte in inglese, in forma semplice leggibile da un italiano (es. 'sé-ren-dì-pi-ti'), stringa vuota per frasi lunghe", "nota": "1-3 frasi in italiano su uso, registro, sfumature o false friend", "esempi": [{"originale": "frase d'esempio in inglese", "tradotto": "la stessa in italiano"}, {"originale": "...", "tradotto": "..."}]}`;
+  try {
+    const r = await S.sample.json(prompt, { modelTier: "default" });
+    const fixed = String(r.corretto || "").trim(), corr = fixed && fixed.toLowerCase() !== text.toLowerCase();
+    const tr = { testo: corr ? fixed : text, ...(corr ? { scritto: text } : {}), da: String(r.da || ""), a: String(r.a || ""), traduzione: String(r.traduzione || ""), alternative: (r.alternative || []).map(String).slice(0, 4), categoria: String(r.categoria || ""), pronuncia: String(r.pronuncia || ""), nota: String(r.nota || ""), esempi: (r.esempi || []).slice(0, 3).map(x => ({ originale: String(x.originale || ""), tradotto: String(x.tradotto || "") })), createdAt: Date.now() };
+    renderTr(tr);
+    $("#tr-in").value = "";
+    if (corr) toast(`Corretto: «${text}» → «${fixed}»`);
+    if (S.db) S.db.collection("translations").add(tr).catch(() => {});
+    else { S.trs = [{ id: "local-" + Date.now(), ...tr }, ...S.trs]; renderTrHist(); buildGraph(); renderArchive(); }
+  } catch (e) {
+    $("#tr-out").innerHTML = `<p class="err">${esc(errMsg(e))}</p>`;
+  } finally { btn.disabled = false; }
+}
+function renderTr(t){
+  $("#tr-out").innerHTML = trCard(t); return;
+  $("#tr-out").innerHTML = `<div class="tr-out">
+    <div class="tr-meta">${esc((t.da || "?").toUpperCase())} → ${esc((t.a || "?").toUpperCase())}${t.categoria ? " · " + esc(t.categoria) : ""}</div>
+    <div class="tr-main">${esc(t.traduzione)}</div>
+    ${t.pronuncia ? `<div class="tr-meta">/${esc(t.pronuncia)}/</div>` : ""}
+    ${t.alternative?.length ? `<p><span class="hint">Anche:</span> ${t.alternative.map(esc).join(" · ")}</p>` : ""}
+    ${t.nota ? `<p>${esc(t.nota)}</p>` : ""}
+    ${t.esempi?.length ? `<ul class="tr-ex">${t.esempi.map(x => `<li>${esc(x.originale)}<span>${esc(x.tradotto)}</span></li>`).join("")}</ul>` : ""}
+  </div>`;
+}
+function renderTrHist(){
+  $("#tr-hist-l").hidden = !S.trs.length;
+  $("#tr-search").hidden = S.trs.length < 8;
+  $("#tr-hist-l").textContent = `Tutte le tue traduzioni (${S.trs.length})`;
+  const q = norm($("#tr-search").value);
+  $("#tr-hist").innerHTML = S.trs.map((t, i) => [t, i]).filter(([t]) => !q || norm(t.testo).includes(q) || norm(t.traduzione).includes(q)).map(([t, i]) => `<button type="button" data-i="${i}"><span class="a">${esc(t.testo)}</span><span class="b">${esc(t.traduzione)}</span></button>`).join("");
+}
+$("#tr-search").addEventListener("input", renderTrHist);
+$("#tr-hist").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const t = S.trs[+b.dataset.i]; renderTr(t); });
+$("#tr-go").addEventListener("click", translate);
+$("#tr-in").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); translate(); } });
+
+/* ================= GLOSSARY ================= */
+function renderGlossary(){
+  const q = norm($("#g-search").value);
+  const items = S.notes.filter(n => !q || norm(n.titolo).includes(q) || norm(n.sintesi).includes(q))
+    .sort((a, b) => norm(a.titolo).localeCompare(norm(b.titolo), "it"));
+  if (!items.length) { $("#g-letters").innerHTML = ""; $("#g-list").innerHTML = `<div class="empty">${S.notes.length ? "Nessuna parola trovata." : "Qui troverai, in ordine alfabetico, la definizione di ogni parola che cerchi."}</div>`; return; }
+  const groups = new Map();
+  for (const n of items) { let L = norm(n.titolo).replace(/^[^a-z0-9]+/, "").charAt(0).toUpperCase() || "#"; if (/[0-9]/.test(L)) L = "#"; if (!groups.has(L)) groups.set(L, []); groups.get(L).push(n); }
+  $("#g-letters").innerHTML = [...groups.keys()].map(L => `<button type="button" data-L="${esc(L)}">${esc(L)}</button>`).join("");
+  $("#g-list").innerHTML = [...groups].map(([L, list]) => `<div class="g-L" id="gL-${esc(L)}">${esc(L)}</div>` + list.map(n => `<button type="button" class="g-item" data-id="${esc(n.id)}"><span class="gt"><span class="dot" style="color:${catColor(n.categoria)}"></span>${esc(n.titolo)}<span class="gk">${esc(n.tipo || "")}</span></span><span class="gd">${esc(n.sintesi)}</span></button>`).join("")).join("");
+}
+$("#g-search").addEventListener("input", renderGlossary);
+$("#g-letters").addEventListener("click", e => { const b = e.target.closest("[data-L]"); if (b) document.getElementById("gL-" + b.dataset.L)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); });
+$("#g-list").addEventListener("click", e => { const b = e.target.closest(".g-item"); if (b) openNote(b.dataset.id); });
+
+/* ================= TEST ================= */
+function renderTestHome(){
+  const cats = [...new Set(S.notes.map(n => norm(n.categoria) || "altro"))].sort();
+  for (const c of [...S.tScope]) if (!cats.includes(c) && !(c === "__tr" && S.trs.length)) S.tScope.delete(c);
+  const cnt = c => S.notes.filter(n => (norm(n.categoria) || "altro") === c).length;
+  $("#t-scope").innerHTML = [`<button type="button" class="chip" data-s="tutto" aria-pressed="${!S.tScope.size}">Tutto (${S.notes.length})</button>`]
+    .concat(cats.map(c => `<button type="button" class="chip" data-s="${esc(c)}" style="--c:${catColor(c)}" aria-pressed="${S.tScope.has(c)}">${esc(catName(c))} (${cnt(c)})</button>`))
+    .concat(S.trs.length ? [`<button type="button" class="chip" data-s="__tr" style="--c:#7dd3fc" aria-pressed="${S.tScope.has("__tr")}">Le mie traduzioni (${S.trs.length})</button>`] : []).join("")
+    + `<p class="hint" style="margin:6px 4px 0;width:100%">${S.tScope.has("__tr") ? "Quiz sulle parole che hai tradotto: significato, uso e frasi da completare." : "Puoi selezionare più categorie insieme, oppure fare un quiz sulle tue traduzioni."}</p>`;
+  $("#t-go").disabled = !S.notes.length && !S.trs.length;
+  const sc = [...S.tScope], poolN = sc.includes("__tr") ? S.trs.length : S.notes.filter(n => !sc.length || sc.includes(norm(n.categoria) || "altro")).length;
+  $("#t-all").textContent = `Tutte (${poolN})`;
+  $("#t-hist-l").hidden = !S.tests.length;
+  $("#t-hist").innerHTML = S.tests.slice(0, 6).map((t, idx) => {
+    const pct = t.totale ? Math.round(t.punteggio / t.totale * 100) : 0, col = pct >= 80 ? "var(--ok)" : pct >= 50 ? "#f2b55c" : "var(--danger)";
+    return `<div class="t-h"><span class="sc" style="color:${col}">${t.punteggio}/${t.totale}</span><span class="w">${t.ripasso ? "Ripasso · " : ""}${esc(scopeName(t.ambito))}</span><span class="d">${new Date(t.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>${t.errori?.length ? `<button type="button" class="t-rt" data-rt="${idx}">Riprova ${t.errori.length} ${t.errori.length === 1 ? "sbagliata" : "sbagliate"}</button>` : ""}</div>`;
+  }).join("");
+}
+$("#t-scope").addEventListener("click", e => {
+  const b = e.target.closest("[data-s]"); if (!b) return;
+  const c = b.dataset.s;
+  if (c === "tutto") S.tScope.clear();
+  else if (c === "__tr") { const on = S.tScope.has("__tr"); S.tScope.clear(); if (!on) S.tScope.add("__tr"); }
+  else { S.tScope.delete("__tr"); S.tScope.has(c) ? S.tScope.delete(c) : S.tScope.add(c); }
+  renderTestHome();
+});
+const scopeName = sc => { const a = Array.isArray(sc) ? sc : sc === "tutto" || !sc ? [] : [sc]; return a.length ? a.map(c => c === "__tr" ? "Traduzioni" : catName(c)).join(", ") : "Tutto"; };
+$("#t-num").addEventListener("click", e => { const b = e.target.closest("[data-n]"); if (!b) return; S.tNum = +b.dataset.n; $("#t-num").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+$("#t-go").addEventListener("click", () => startTest());
+
+function retryWrong(qs, ambito){
+  const mixed = shuffle(qs).map(q => { if (q.vf) return { ...q }; const order = shuffle(q.opzioni.map((_, i) => i)); return { ...q, opzioni: order.map(i => q.opzioni[i]), perche: order.map(i => (q.perche || [])[i] || ""), corretta: order.indexOf(q.corretta) }; });
+  S.selected = null; if (isPhone()) closeSheet(); openDetail();
+  S.quiz = { qs: mixed, i: 0, score: 0, wrong: [], ambito: ambito || [], answered: false, ripasso: true };
+  renderQ();
+}
+$("#t-hist").addEventListener("click", e => { const b = e.target.closest("[data-rt]"); if (!b) return; const t = S.tests[+b.dataset.rt]; if (t?.errori?.length) retryWrong(t.errori, t.ambito); });
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+async function startTest(){
+  if (!needSample() || S.busy) return;
+  const scope = [...S.tScope];
+  if (scope.includes("__tr")) return startTrTest();
+  const pool = S.notes.filter(n => !scope.length || scope.includes(norm(n.categoria) || "altro"));
+  if (!pool.length) return;
+  const N = S.tNum || pool.length, chosen = S.tNum ? shuffle(pool).slice(0, Math.min(pool.length, 20)) : shuffle(pool);
+  S.selected = null; renderArchive();
+  if (isPhone()) closeSheet();
+  $("#d-cat").innerHTML = `<span class="dot" style="color:var(--core)"></span>Test`;
+  $("#d-body").innerHTML = `<div class="thinking"><div class="orb"></div><div class="msg">Preparo ${N} domande…</div><div class="sub">Su ${chosen.length} ${chosen.length === 1 ? "voce" : "voci"} del tuo archivio${scope.length ? " · " + esc(scopeName(scope)) : ""}</div></div>`;
+  openDetail();
+  const mk = (chosen, N, all) => { const data = chosen.map(n => `[${n.id}] ${n.titolo} (${catName(n.categoria)}${n.autore ? ", " + n.autore : ""})\nSintesi: ${n.sintesi}\n${String(n.spiegazione || "").slice(0, 700)}\nEsempi: ${(n.esempi || []).slice(0, 2).join(" / ")}`).join("\n\n");
+  return `Sei un insegnante brillante. Crea un test di ${N} domande in italiano per verificare se l'utente ha capito e ricorda le voci del suo archivio personale qui sotto.${all ? " Fai esattamente UNA domanda per ciascuna voce." : ""}
+Mescola i tipi: definizione, applicazione a un caso concreto, riconoscere un esempio, collegare due concetti, vero o falso. Copri più voci diverse possibile. Le opzioni sbagliate devono essere plausibili, non ridicole. Non mettere la risposta nella domanda.
+
+VOCI:
+${data}
+
+Rispondi solo con JSON:
+{"domande": [{"nota": "id della voce tra parentesi quadre", "tipo": "scelta" o "vero_falso", "domanda": "...", "opzioni": ["4 opzioni per scelta; per vero_falso esattamente [\\"Vero\\", \\"Falso\\"]"], "corretta": indice della risposta giusta partendo da 0, "spiegazione": "perché la risposta giusta è giusta, spiegato in modo semplice, 20-40 parole", "perche_errate": ["per OGNI opzione, nello stesso ordine: se è sbagliata, perché è sbagliata in max 15 parole; se è quella giusta, stringa vuota"]}]}`; };
+  S.busy = true;
+  try {
+    const raw = await genBatched(chosen, N, mk, stepMsg);
+    const ids = new Set(S.notes.map(n => n.id));
+    const qs = raw.map(q => {
+      const opz = (Array.isArray(q.opzioni) ? q.opzioni : []).map(String).slice(0, 5);
+      const c = Number(q.corretta);
+      if (!q.domanda || opz.length < 2 || !(c >= 0 && c < opz.length)) return null;
+      const order = q.tipo === "vero_falso" ? opz.map((_, i) => i) : shuffle(opz.map((_, i) => i));
+      const pe = Array.isArray(q.perche_errate) ? q.perche_errate.map(x => String(x ?? "")) : [];
+      return { nota: ids.has(String(q.nota)) ? String(q.nota) : null, domanda: String(q.domanda), opzioni: order.map(i => opz[i]), perche: order.map(i => pe[i] || ""), corretta: order.indexOf(c), spiegazione: String(q.spiegazione || ""), vf: q.tipo === "vero_falso" };
+    }).filter(Boolean).slice(0, N);
+    if (!qs.length) throw { code: "invalid_json" };
+    S.quiz = { qs, i: 0, score: 0, wrong: [], ambito: scope, answered: false };
+    renderQ();
+  } catch (e) {
+    $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Non sono riuscito a preparare il test</div><div class="sub">${esc(errMsg(e))}</div><button class="btn primary" type="button" id="q-retry">Riprova</button></div>`;
+  } finally { S.busy = false; }
+}
+async function genBatched(chosen, N, mk, onStep){
+  const all = !S.tNum, size = 8, batches = [];
+  if (all) for (let i = 0; i < chosen.length; i += size) batches.push(chosen.slice(i, i + size)); else batches.push(chosen);
+  const raw = [];
+  for (let b = 0; b < batches.length; b++) {
+    onStep?.(b, batches.length);
+    const r = await S.sample.json(mk(batches[b], all ? batches[b].length : N, all), { modelTier: "default", cache: false });
+    raw.push(...(Array.isArray(r.domande) ? r.domande : []));
+  }
+  return raw;
+}
+const stepMsg = (b, n) => { const m = document.querySelector("#d-body .thinking .msg"); if (m && n > 1) m.textContent = `Preparo le domande… (${b + 1} di ${n})`; };
+async function startTrTest(){
+  const pool = S.trs.filter(t => t.testo && t.traduzione); if (!pool.length) return;
+  const N = S.tNum || pool.length, chosen = S.tNum ? shuffle(pool).slice(0, Math.min(pool.length, 25)) : shuffle(pool);
+  S.selected = null; renderArchive();
+  if (isPhone()) closeSheet();
+  $("#d-cat").innerHTML = `<span class="dot" style="color:#7dd3fc"></span>Test · Traduzioni`;
+  $("#d-body").innerHTML = `<div class="thinking"><div class="orb"></div><div class="msg">Preparo ${N} domande…</div><div class="sub">Su ${chosen.length} ${chosen.length === 1 ? "parola tradotta" : "parole tradotte"}</div></div>`;
+  openDetail();
+  const mk = (chosen, N, all) => { const data = chosen.map(t => `- "${t.testo}" (${(t.da || "?").toUpperCase()}→${(t.a || "?").toUpperCase()}${t.categoria ? ", " + t.categoria : ""}) = "${t.traduzione}"${t.alternative?.length ? " | anche: " + t.alternative.join(", ") : ""}${t.nota ? " | nota: " + t.nota : ""}${t.esempi?.[0]?.originale ? " | es.: " + t.esempi[0].originale : ""}`).join("\n");
+  return `Sei un insegnante di inglese per un italiano. Crea un quiz di ${N} domande in italiano per verificare se ricorda le parole e frasi che ha tradotto, elencate qui sotto.${all ? " Fai esattamente UNA domanda per ciascuna parola." : ""}
+Mescola questi tipi:
+- "Cosa significa «parola inglese»?" con 4 traduzioni italiane;
+- "Come si dice in inglese «parola italiana»?" con 4 opzioni inglesi;
+- frase inglese con uno spazio vuoto (___) da completare con la parola giusta;
+- vero o falso sull'uso, il registro o un false friend.
+Le opzioni sbagliate devono essere plausibili (parole simili, false friend, altre parole della lista), mai assurde. Usa solo parole della lista come risposte giuste e copri più parole diverse possibile. Non mettere la risposta nella domanda.
+
+PAROLE TRADOTTE:
+${data}
+
+Rispondi solo con JSON:
+{"domande": [{"tipo": "scelta" o "vero_falso", "domanda": "...", "opzioni": ["4 opzioni per scelta; per vero_falso esattamente [\\"Vero\\", \\"Falso\\"]"], "corretta": indice della risposta giusta partendo da 0, "spiegazione": "perché è giusta, con un esempio d'uso breve, 15-35 parole", "perche_errate": ["per OGNI opzione, nello stesso ordine: se è sbagliata, cosa significa davvero o perché non va, max 15 parole; se è giusta, stringa vuota"]}]}`; };
+  S.busy = true;
+  try {
+    const raw = await genBatched(chosen, N, mk, stepMsg);
+    const qs = raw.map(q => {
+      const opz = (Array.isArray(q.opzioni) ? q.opzioni : []).map(String).slice(0, 5);
+      const c = Number(q.corretta);
+      if (!q.domanda || opz.length < 2 || !(c >= 0 && c < opz.length)) return null;
+      const order = q.tipo === "vero_falso" ? opz.map((_, i) => i) : shuffle(opz.map((_, i) => i));
+      const pe = Array.isArray(q.perche_errate) ? q.perche_errate.map(x => String(x ?? "")) : [];
+      return { nota: null, domanda: String(q.domanda), opzioni: order.map(i => opz[i]), perche: order.map(i => pe[i] || ""), corretta: order.indexOf(c), spiegazione: String(q.spiegazione || ""), vf: q.tipo === "vero_falso" };
+    }).filter(Boolean).slice(0, N);
+    if (!qs.length) throw { code: "invalid_json" };
+    S.quiz = { qs, i: 0, score: 0, wrong: [], ambito: ["__tr"], answered: false };
+    renderQ();
+  } catch (e) {
+    $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Non sono riuscito a preparare il test</div><div class="sub">${esc(errMsg(e))}</div><button class="btn primary" type="button" id="q-retry">Riprova</button></div>`;
+  } finally { S.busy = false; }
+}
+function renderQ(){
+  const Q = S.quiz, q = Q.qs[Q.i], note = q.nota && S.notes.find(n => n.id === q.nota);
+  const color = note ? catColor(note.categoria) : "var(--accent)";
+  $("#d-cat").innerHTML = `<span class="dot" style="color:${color}"></span>Test${note ? " · " + esc(catName(note.categoria)) : Q.ambito?.includes?.("__tr") ? " · Traduzioni" : ""}`;
+  $("#d-body").innerHTML = `<div class="quiz">
+    <div class="q-top"><span>${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${Q.qs.length}</span><span style="margin-left:auto">${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}</span></div>
+    <div class="q-bar"><i style="width:${(Q.i / Q.qs.length) * 100}%"></i></div>
+    <div class="q-text">${esc(q.domanda)}</div>
+    <div class="q-opts">${q.opzioni.map((o, i) => `<button type="button" class="q-opt" data-o="${i}"><b>${"ABCDE"[i]}</b><span>${esc(o)}</span></button>`).join("")}</div>
+    <div id="q-after"></div>
+    <div class="q-ask"><h4>Chiedi all'AI</h4><div class="q-chat" id="q-chat"></div><div class="q-sugg" id="q-sugg"></div>
+    <form id="q-ask-f"><input id="q-ask-in" type="text" autocomplete="off" placeholder="Non capisco una parola, dammi un indizio…"><button class="btn primary" type="submit">Chiedi</button></form></div></div>`;
+  Q.answered = false;
+  q.chat = q.chat || [];
+  renderAsk();
+  $("#d-body").scrollTop = 0;
+}
+function answerQ(i){
+  const Q = S.quiz; if (!Q || Q.answered) return;
+  Q.answered = true;
+  const q = Q.qs[Q.i], ok = i === q.corretta;
+  if (ok) Q.score++; else Q.wrong.push(Q.i);
+  document.querySelectorAll(".q-opt").forEach((b, j) => { b.disabled = true; if (j === q.corretta) b.classList.add("ok"); else if (j === i) b.classList.add("ko"); });
+  const note = q.nota && S.notes.find(n => n.id === q.nota);
+  const last = Q.i === Q.qs.length - 1;
+  const why = !ok && q.perche?.[i] ? `<p class="q-why"><b>Perché «${esc(q.opzioni[i])}» non va:</b> ${esc(q.perche[i])}</p>` : "";
+  $("#q-after").innerHTML = `<div class="q-exp"><strong style="color:${ok ? "var(--ok)" : "var(--danger)"}">${ok ? "Giusto" : "Sbagliato"}</strong>${ok ? "" : `<p class="q-why"><b>Risposta giusta:</b> ${esc(q.opzioni[q.corretta])}</p>`}${why}<p class="q-why"><b>Perché:</b> ${esc(q.spiegazione)}</p>${note ? `<br><button class="linkbtn" type="button" data-open-q="${esc(note.id)}">Ripassa «${esc(note.titolo)}»</button>` : ""}</div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" type="button" id="q-next">${last ? "Vedi il risultato" : "Avanti →"}</button></div>`;
+  document.querySelector(".q-bar i").style.width = ((Q.i + 1) / Q.qs.length) * 100 + "%";
+  document.querySelector(".q-top span:last-child").textContent = `${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}`;
+  renderAsk();
+  $("#q-next").focus({ preventScroll: true });
+  $("#q-after").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+}
+function renderAsk(){
+  const Q = S.quiz; if (!Q || !$("#q-chat")) return;
+  const q = Q.qs[Q.i];
+  $("#q-chat").innerHTML = (q.chat || []).map(m => m.r === "u" ? `<div class="me">${esc(m.t)}</div>` : m.wait ? `<div class="ai wait">Sto pensando…</div>` : `<div class="ai">${md(m.t)}</div>`).join("");
+  const sugg = Q.answered ? ["Spiegamelo più semplice", "Fammi un esempio concreto", "Perché le altre sono sbagliate?"] : ["Dammi un indizio", "Cosa vuol dire la domanda?"];
+  $("#q-sugg").innerHTML = (q.chat || []).length > 4 ? "" : sugg.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
+}
+async function askQ(text){
+  const Q = S.quiz; text = String(text || "").trim(); if (!Q || !text) return;
+  const q = Q.qs[Q.i]; q.chat = q.chat || [];
+  if (q.chat.some(m => m.wait)) return;
+  const note = q.nota && S.notes.find(n => n.id === q.nota);
+  const prev = q.chat.map(m => (m.r === "u" ? "Utente: " : "AI: ") + m.t).join("\n");
+  q.chat.push({ r: "u", t: text }, { r: "a", wait: true });
+  renderAsk(); $("#q-ask-in").value = "";
+  const rule = Q.answered
+    ? `L'utente ha già risposto. Risposta giusta: "${q.opzioni[q.corretta]}". Spiegazione: ${q.spiegazione}. Puoi parlare liberamente della soluzione.`
+    : `L'utente NON ha ancora risposto: NON rivelare quale opzione è giusta e non escludere opzioni in modo che la risposta diventi ovvia. Puoi chiarire parole, dare un indizio, ricordare un concetto.`;
+  try {
+    const r = await S.sample.json(`Sei un tutor paziente dentro un quiz. Domanda del quiz: "${q.domanda}"
+Opzioni: ${q.opzioni.map((o, i) => "ABCDE"[i] + ") " + o).join(" · ")}
+${rule}
+${note ? `Argomento: ${note.titolo}. Sintesi: ${note.sintesi}` : ""}
+${prev ? "Conversazione finora:\n" + prev : ""}
+Nuova domanda dell'utente: ${text}
+Rispondi in italiano, in modo semplice e chiaro, massimo 80 parole. Rispondi solo con JSON: {"risposta": "testo (markdown semplice consentito)"}`, { modelTier: "default", cache: false });
+    q.chat[q.chat.length - 1] = { r: "a", t: String(r.risposta || "Non ho una risposta, prova a riformulare.") };
+  } catch (e) {
+    q.chat[q.chat.length - 1] = { r: "a", t: "Non sono riuscito a rispondere: " + errMsg(e) };
+  }
+  if (S.quiz === Q && Q.qs[Q.i] === q) { renderAsk(); $("#q-chat").lastElementChild?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); }
+}
+$("#d-body").addEventListener("submit", e => { if (e.target.id === "q-ask-f") { e.preventDefault(); askQ($("#q-ask-in").value); } });
+function endQ(){
+  const Q = S.quiz, tot = Q.qs.length, pct = Math.round(Q.score / tot * 100);
+  const col = pct >= 80 ? "#5eead4" : pct >= 50 ? "#f2b55c" : "#fb7185";
+  const verdict = pct === 100 ? "Perfetto, lo sai a memoria." : pct >= 80 ? "Ottimo, lo hai capito bene." : pct >= 50 ? "Buona base, qualcosa da ripassare." : "Vale la pena ripassare.";
+  const wrongNotes = [...new Map(Q.wrong.map(i => Q.qs[i].nota).filter(Boolean).map(id => [id, S.notes.find(n => n.id === id)])).values()].filter(Boolean);
+  const C = 2 * Math.PI * 62;
+  $("#d-cat").innerHTML = `<span class="dot" style="color:${col}"></span>Risultato`;
+  $("#d-body").innerHTML = `<div class="q-end">
+    <svg class="q-ring" viewBox="0 0 150 150"><circle cx="75" cy="75" r="62" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/><circle cx="75" cy="75" r="62" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(C * pct / 100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 8px ${col})"/><text x="75" y="72" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="300" fill="#fff" font-family="Sora, sans-serif">${Q.score}/${tot}</text><text x="75" y="100" text-anchor="middle" font-size="11" fill="#9890b3" font-family="Sora, sans-serif">${pct}%</text></svg>
+    <div class="q-verdict">${verdict}</div>
+    ${Q.wrong.length ? `<div class="row" style="justify-content:center;margin-top:6px"><button class="btn primary" type="button" id="q-wrong">Riprova le ${Q.wrong.length} ${Q.wrong.length === 1 ? "sbagliata" : "sbagliate"}</button></div>` : ""}
+    ${wrongNotes.length ? `<div class="q-review d-sec"><h3>Da ripassare</h3><div class="links">${wrongNotes.map(n => `<button type="button" class="chip known" style="--c:${catColor(n.categoria)}" data-open="${esc(n.id)}">● ${esc(n.titolo)}</button>`).join("")}</div></div>` : ""}
+    <div class="row" style="justify-content:center;margin-top:12px"><button class="btn ${Q.wrong.length ? "" : "primary"}" type="button" id="q-again">Nuovo test</button></div></div>`;
+  S.lastWrong = { qs: Q.wrong.map(i => { const { chat, ...x } = Q.qs[i]; return x; }), ambito: Q.ambito };
+  const rec = { createdAt: Date.now(), punteggio: Q.score, totale: tot, ambito: Q.ambito, sbagliate: wrongNotes.map(n => n.id), errori: JSON.parse(JSON.stringify(S.lastWrong.qs.map(({ chat, ...x }) => x))), ...(Q.ripasso ? { ripasso: true } : {}) };
+  if (S.db) S.db.collection("tests").add(rec).catch(() => {}); else { S.tests = [rec, ...S.tests]; renderTestHome(); }
+  S.quiz = null;
+}
+$("#d-body").addEventListener("click", e => {
+  const o = e.target.closest(".q-opt"); if (o) { answerQ(+o.dataset.o); return; }
+  const sg = e.target.closest("[data-ask]"); if (sg && S.quiz) { askQ(sg.dataset.ask); return; }
+  if (e.target.closest("#q-next")) { const Q = S.quiz; if (Q.i === Q.qs.length - 1) endQ(); else { Q.i++; renderQ(); } return; }
+  if (e.target.closest("#q-again") || e.target.closest("#q-retry")) { startTest(); return; }
+  if (e.target.closest("#q-wrong") && S.lastWrong?.qs.length) { retryWrong(S.lastWrong.qs, S.lastWrong.ambito); return; }
+  const r = e.target.closest("[data-open-q]"); if (r) { S.quiz = null; openNote(r.dataset.openQ); }
+});
+addEventListener("keydown", e => {
+  if (!S.quiz || !$("#detail").classList.contains("open") || /input|textarea/i.test(document.activeElement?.tagName)) return;
+  const k = e.key.toUpperCase(), idx = "ABCDE".indexOf(k);
+  if (!S.quiz.answered && idx >= 0 && idx < S.quiz.qs[S.quiz.i].opzioni.length) answerQ(idx);
+  else if (!S.quiz.answered && /^[1-5]$/.test(e.key)) answerQ(+e.key - 1);
+});
+
+/* ================= CHROME ================= */
+function setTab(tab){
+  S.tab = tab;
+  if (document.body.classList.contains("sheet")) document.body.dataset.tab = tab;
+  for (const t of ["archivio", "glossario", "traduci", "test"]) { $("#tab-" + t).setAttribute("aria-selected", t === tab); $("#v-" + t).hidden = t !== tab; }
+}
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+function openSheet(which){
+  document.body.dataset.tab = which;
+  if (which !== "nuovo") setTab(which);
+  document.body.classList.add("sheet");
+  if ($("#detail").classList.contains("open")) closeDetail();
+  document.querySelectorAll("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.go === which));
+  if (which === "nuovo") setTimeout(() => $("#q").focus(), 350);
+}
+function closeSheet(){
+  document.body.classList.remove("sheet"); document.body.dataset.tab = "";
+  document.querySelectorAll("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.go === "grafo"));
+}
+document.querySelectorAll("#nav button").forEach(b => b.addEventListener("click", () => {
+  const g = b.dataset.go;
+  if (g === "grafo") { closeSheet(); return; }
+  if (document.body.classList.contains("sheet") && document.body.dataset.tab === g) closeSheet(); else openSheet(g);
+}));
+
+
+/* ---------- immagini e schemi dal web ---------- */
+const enc = encodeURIComponent;
+const WEBL = {
+  gimg: q => `https://www.google.com/search?tbm=isch&q=${enc(q)}`,
+  commons: q => `https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=${enc(q)}`,
+  wiki: t => `https://it.wikipedia.org/wiki/${enc(String(t).replace(/ /g, "_"))}`,
+  pin: q => `https://www.pinterest.com/search/pins/?q=${enc(q)}`
+};
+function webHTML(n){
+  const w = n.web || {}, qi = w.query_it || n.titolo, qe = w.query_en || qi;
+  const a = (href, label, sub) => `<a class="wl" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><b>${esc(label)}</b><small>${esc(sub)}</small></a>`;
+  const links = [
+    a(WEBL.gimg(qi), "Foto e immagini", "Google Immagini"),
+    a(WEBL.commons(qe), "Immagini libere", "Wikimedia Commons"),
+    w.wikipedia ? a(WEBL.wiki(w.wikipedia), "Voce con illustrazioni", "Wikipedia") : "",
+    a(WEBL.gimg((w.schema_query || ("schema " + qi))), "Schemi e infografiche", "Google Immagini"),
+    a(WEBL.gimg("diagram " + qe), "Diagrammi in inglese", "più risultati"),
+    a(WEBL.pin((w.schema_query_en || ("infographic " + qe))), "Infografiche", "Pinterest")
+  ].join("");
+  const noti = (w.schemi_noti || []).slice(0, 4);
+  return `<div class="wl-grid">${links}</div>${noti.length ? `<div class="wn"><div class="el-k" style="margin:14px 0 8px">Schemi famosi già fatti da altri</div>${noti.map(x => `<a class="wn-i" href="${esc(WEBL.gimg(x.cerca || x.titolo))}" target="_blank" rel="noopener noreferrer"><b>${esc(x.titolo)}</b>${x.fonte ? `<small>${esc(x.fonte)}</small>` : ""}${x.perche ? `<span>${esc(x.perche)}</span>` : ""}</a>`).join("")}</div>` : ""}`;
+}
+async function genWeb(){
+  const n = S.notes.find(x => x.id === S.selected); if (!n || !needSample()) return;
+  const btn = $("#mk-web"), box = $("#web-box"); btn.disabled = true;
+  box.innerHTML = `<div class="inline-think"><span class="mini"></span>Preparo le ricerche…</div>`;
+  try {
+    const r = await S.sample.json(`L'utente vuole trovare sul web immagini e schemi già fatti su "${n.titolo}" (${catName(n.categoria)}). Sintesi: ${n.sintesi}
+Dai:
+- "query_it" e "query_en": le parole migliori per trovare un'immagine di questa cosa (2-5 parole);
+- "schema_query" e "schema_query_en": le parole migliori per trovare schemi, diagrammi o infografiche che la spiegano;
+- "wikipedia": il titolo esatto della voce di Wikipedia in italiano, solo se sei sicuro che esista, altrimenti "";
+- "schemi_noti": 0-4 schemi, diagrammi o immagini FAMOSI e realmente esistenti che spiegano questo argomento (per esempio «Figura 1 del paper Attention Is All You Need», «la piramide di Maslow», «il ciclo di Krebs nei libri di biologia»), con "titolo", "fonte" (autore, rivista o sito), "perche" (max 12 parole) e "cerca" (query per trovarlo). Solo se sei certo che esistano: altrimenti lista vuota. Non inventare.
+Rispondi solo con JSON: {"query_it","query_en","schema_query","schema_query_en","wikipedia","schemi_noti":[]}`, { modelTier: "default", cache: false });
+    const str = v => String(v ?? "").trim();
+    const web = { query_it: str(r.query_it), query_en: str(r.query_en), schema_query: str(r.schema_query), schema_query_en: str(r.schema_query_en), wikipedia: str(r.wikipedia),
+      schemi_noti: (Array.isArray(r.schemi_noti) ? r.schemi_noti : []).slice(0, 4).map(x => ({ titolo: str(x.titolo), fonte: str(x.fonte), perche: str(x.perche), cerca: str(x.cerca) })).filter(x => x.titolo) };
+    await patchNote(n.id, { web });
+    if (S.selected === n.id) { box.innerHTML = webHTML({ ...n, web }); btn.textContent = "Cerca di nuovo"; btn.classList.remove("primary"); }
+  } catch (e) { box.innerHTML = (n.web ? webHTML(n) : "") + `<p class="err">${esc(errMsg(e))}</p>`; }
+  finally { if (btn.isConnected) btn.disabled = false; }
+}
+S.gal = new Map();
+async function loadGallery(id){
+  if (!S.db || id.startsWith("local-")) return;
+  let list = S.gal.get(id);
+  if (!list) { try { const q = await S.db.collection(`galleria/${id}/img`).orderBy("createdAt", "asc").get(); list = q.docs.map(d => ({ id: d.id, data: d.data().data })); S.gal.set(id, list); } catch { list = []; } }
+  const g = S.selected === id ? $("#gal") : null; if (!g) return;
+  g.innerHTML = list.map(x => `<figure><img src="${x.data}" alt=""><button type="button" data-delimg="${esc(x.id)}" aria-label="Rimuovi immagine">✕</button></figure>`).join("");
+}
+async function addImg(file){
+  const n = S.notes.find(x => x.id === S.selected); if (!n || !file || !S.db || n.id.startsWith("local-")) return;
+  try {
+    const c = await shrink(file, 900); let data = c.toDataURL("image/jpeg", .78); if (data.length > 220000) data = c.toDataURL("image/jpeg", .55);
+    const ref = await S.db.collection(`galleria/${n.id}/img`).add({ data, createdAt: Date.now() });
+    S.gal.set(n.id, [...(S.gal.get(n.id) || []), { id: ref.id, data }]); loadGallery(n.id); toast("Immagine salvata nella voce");
+  } catch { toast("Non sono riuscito a salvare l'immagine"); }
+}
+async function delImg(imgId){
+  const id = S.selected; if (!id || !confirm("Rimuovere questa immagine dalla voce?")) return;
+  try { await S.db.doc(`galleria/${id}/img/${imgId}`).delete(); S.gal.set(id, (S.gal.get(id) || []).filter(x => x.id !== imgId)); loadGallery(id); } catch { toast("Non sono riuscito a rimuoverla"); }
+}
+document.addEventListener("change", e => { if (e.target.id === "add-img-in") { const f = e.target.files?.[0]; e.target.value = ""; addImg(f); } });
+
+async function loadPhoto(id){
+  const fig = () => S.selected === id ? $("#d-photo") : null;
+  let src = S.photos.get(id);
+  if (!src && S.db && !id.startsWith("local-")) {
+    try { const d = await S.db.doc("foto/" + id).get(); src = d.exists ? d.data()?.data : ""; if (src) S.photos.set(id, src); } catch { src = ""; }
+  }
+  const f = fig(); if (!f) return;
+  f.innerHTML = src ? `<img src="${src}" alt="La foto di questa voce">` : `<span class="ph-wait">Foto non disponibile</span>`;
+}
+async function shrink(file, max, q){
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(async () => {
+    const url = URL.createObjectURL(file); const im = new Image(); im.src = url; await im.decode(); URL.revokeObjectURL(url); return im;
+  });
+  const w0 = bmp.width, h0 = bmp.height, k = Math.min(1, max / Math.max(w0, h0));
+  const c = document.createElement("canvas"); c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return c;
+}
+async function explorePhoto(file){
+  if (!file || S.busy) return;
+  if (!/^image\//.test(file.type) && !/\.(heic|heif)$/i.test(file.name)) { toast("Scegli un'immagine"); return; }
+  try {
+    const big = await shrink(file, 1568);
+    const blob = await new Promise(r => big.toBlob(r, "image/jpeg", .86));
+    if (S.imgLim?.maxInputBytes && blob.size > S.imgLim.maxInputBytes) { toast("La foto è troppo grande"); return; }
+    const small = await shrink(file, 720);
+    let thumb = small.toDataURL("image/jpeg", .74);
+    if (thumb.length > 180000) thumb = small.toDataURL("image/jpeg", .55);
+    const note = q.value.trim(); q.value = ""; $("#go").disabled = true;
+    explore(note, { blob, thumb });
+  } catch { toast("Non riesco ad aprire questa immagine. Prova con una JPG o PNG."); }
+}
+$("#photo").addEventListener("click", () => $("#photo-in").click());
+$("#photo-in").addEventListener("change", e => { const f = e.target.files?.[0]; e.target.value = ""; explorePhoto(f); });
+document.addEventListener("paste", e => { const it0 = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/")); if (it0 && S.selected && $("#detail").classList.contains("open") && !e.target.closest?.("#compose")) { e.preventDefault(); addImg(it0.getAsFile()); return; } if (!S.imgLim) return; const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/")); if (it) { e.preventDefault(); explorePhoto(it.getAsFile()); } });
+$("#compose").addEventListener("dragover", e => { if (S.imgLim) e.preventDefault(); });
+$("#compose").addEventListener("drop", e => { const f = e.dataTransfer?.files?.[0]; if (f && S.imgLim) { e.preventDefault(); explorePhoto(f); } });
+
+const q = $("#q");
+q.addEventListener("input", () => { $("#go").disabled = !q.value.trim() || S.busy; q.style.height = "auto"; q.style.height = Math.min(180, q.scrollHeight) + "px"; });
+q.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); explore(q.value); } });
+$("#compose").addEventListener("submit", e => { e.preventDefault(); explore(q.value); });
+$("#sugg").addEventListener("click", e => { const c = e.target.closest("[data-q]"); if (c) { q.value = c.dataset.q; explore(c.dataset.q); } });
+
+$("#h-all").addEventListener("click", e => {
+  G.all = !G.all; const b = e.currentTarget; b.setAttribute("aria-pressed", G.all);
+  b.textContent = G.all ? "◉ Solo categorie" : "✦ Mostra tutto";
+  if (!G.all) G.expanded.clear();
+  buildGraph(); setTimeout(() => fit(), 500);
+});
+$("#h-fit").addEventListener("click", () => fit());
+$("#hide-side").addEventListener("click", () => { document.body.classList.add("side-hidden"); setTimeout(() => fit(), 60); });
+$("#show-side").addEventListener("click", () => { document.body.classList.remove("side-hidden"); setTimeout(() => fit(), 60); });
+
+addEventListener("resize", () => { resize(); });
+
+resize(); makeStars(); renderSugg(); setTab("archivio");
+try { S.mode = localStorage.getItem("ac-mode") || "full"; } catch { S.mode = "full"; }
+const [cx0, cy0] = viewCenter(); T = d3.zoomIdentity.translate(cx0, cy0); d3.select(canvas).call(zoom.transform, T);
+ingest([]);
+requestAnimationFrame(draw);
+initData();
+})();
+</script>
+
+</body>
+</html>
