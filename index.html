@@ -496,6 +496,7 @@ body.side-hidden #show-side{opacity:1;pointer-events:auto;transform:none}
 
 <div id="hud">
   <button id="h-all" aria-pressed="false" title="Mostra tutte le categorie, sottocategorie, voci e collegamenti">✦ Mostra tutto</button>
+  <button id="h-less" title="Chiudi tutto e lascia solo le categorie">◌ Riduci tutto</button>
   <button id="h-fit" title="Inquadra tutto">⤢</button>
 </div>
 
@@ -1140,27 +1141,38 @@ function draw(t){
     ctx.globalAlpha = dim ? .2 : 1;
     if (q && !match && n.kind !== "core") ctx.globalAlpha = .2;
     const gl = n.cat === "__gl" || n.kind === "word";
-    if (gl) {
-      ctx.fillStyle = n.color;
-      if (n.kind === "cat") {
-        const R2 = r * 1.5, rot = reduced ? 0 : time * .4;
-        ctx.save(); ctx.translate(n.x, n.y);
-        ctx.lineWidth = 1 / k; ctx.strokeStyle = n.color;
-        ctx.setLineDash([3 / k, 4 / k]); ctx.rotate(rot); ctx.beginPath(); ctx.arc(0, 0, R2 * 2.1, 0, 6.283); ctx.stroke();
-        ctx.rotate(-rot * 2); ctx.globalAlpha *= .6; ctx.beginPath(); ctx.arc(0, 0, R2 * 2.8, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
-        ctx.globalAlpha = dim ? .2 : 1; ctx.rotate(rot + Math.PI / 4);
-        ctx.beginPath(); ctx.rect(-R2 * .75, -R2 * .75, R2 * 1.5, R2 * 1.5); ctx.fill();
+    if (gl && n.kind === "cat") {
+      // pianeta con anelli, come un piccolo Saturno dorato
+      const R2 = r * 1.25, tilt = -0.42, spin = reduced ? 0 : time * .25;
+      const ring = (front) => {
+        ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(tilt);
+        for (const [rx, w, a] of [[R2 * 2.3, 1.6, .55], [R2 * 2.75, 1, .3]]) {
+          ctx.globalAlpha = (dim ? .15 : a); ctx.strokeStyle = n.color; ctx.lineWidth = w / k;
+          ctx.beginPath(); ctx.ellipse(0, 0, rx, rx * .32, 0, front ? 0 : Math.PI, front ? Math.PI : 2 * Math.PI); ctx.stroke();
+        }
         ctx.restore();
-        ctx.fillStyle = "#1a1300"; ctx.font = `700 ${R2 * .78}px Sora, system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.globalCompositeOperation = "source-over"; ctx.fillText("A–Z", n.x, n.y + .5); ctx.globalCompositeOperation = "lighter";
-      } else if (n.kind === "sub") {
-        const h = r * 1.9;
-        ctx.beginPath(); ctx.roundRect(n.x - h, n.y - h, h * 2, h * 2, h * .45); ctx.fill();
-        ctx.fillStyle = "#1a1300"; ctx.font = `700 ${h * 1.25}px Sora, system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.globalCompositeOperation = "source-over"; ctx.fillText(n.label, n.x, n.y + .3); ctx.globalCompositeOperation = "lighter";
-      } else {
-        ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.rect(-r * .8, -r * .8, r * 1.6, r * 1.6); ctx.fill(); ctx.restore();
+      };
+      ring(false);
+      const pg = ctx.createRadialGradient(n.x - R2 * .4, n.y - R2 * .4, R2 * .1, n.x, n.y, R2);
+      pg.addColorStop(0, "#fff6d6"); pg.addColorStop(.45, n.color); pg.addColorStop(1, "#7a5a10");
+      ctx.globalAlpha = dim ? .2 : 1; ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(n.x, n.y, R2, 0, 6.283); ctx.fill();
+      ring(true);
+      // due lune in orbita
+      for (const [d, sp, rr] of [[R2 * 3.4, .5, .22], [R2 * 4.1, -.32, .16]]) {
+        const a = spin * sp * 4 + d;
+        ctx.globalAlpha = dim ? .2 : .9; ctx.fillStyle = "#fff3cf";
+        ctx.beginPath(); ctx.arc(n.x + Math.cos(a) * d, n.y + Math.sin(a) * d * .55, R2 * rr, 0, 6.283); ctx.fill();
       }
+      continue;
+    }
+    if (gl && n.kind === "sub") {
+      // lettera = piccolo pianeta con la lettera incisa
+      const h = r * 1.7;
+      const pg = ctx.createRadialGradient(n.x - h * .35, n.y - h * .35, h * .1, n.x, n.y, h);
+      pg.addColorStop(0, "#fff6d6"); pg.addColorStop(.5, n.color); pg.addColorStop(1, "#8a6512");
+      ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(n.x, n.y, h, 0, 6.283); ctx.fill();
+      ctx.fillStyle = "#2a1d00"; ctx.font = `700 ${h * 1.05}px Sora, system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.globalCompositeOperation = "source-over"; ctx.fillText(n.label, n.x, n.y + .3); ctx.globalCompositeOperation = "lighter";
       continue;
     }
     ctx.fillStyle = n.kind === "ghost" ? "#d7ccf5" : n.color;
@@ -2638,9 +2650,11 @@ $("#compose").addEventListener("submit", e => { e.preventDefault(); explore(q.va
 $("#sugg").addEventListener("click", e => { const c = e.target.closest("[data-q]"); if (c) { q.value = c.dataset.q; explore(c.dataset.q); } });
 
 $("#h-all").addEventListener("click", e => {
-  G.all = !G.all; const b = e.currentTarget; b.setAttribute("aria-pressed", G.all);
-  b.textContent = G.all ? "◉ Solo categorie" : "✦ Mostra tutto";
-  if (!G.all) G.expanded.clear();
+  G.all = true; e.currentTarget.setAttribute("aria-pressed", true);
+  buildGraph(); setTimeout(() => fit(), 500);
+});
+$("#h-less").addEventListener("click", () => {
+  G.all = false; $("#h-all").setAttribute("aria-pressed", false); G.expanded.clear();
   buildGraph(); setTimeout(() => fit(), 500);
 });
 $("#h-fit").addEventListener("click", () => fit());
