@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Conoscenza">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Ale Conoscenza</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -738,15 +742,22 @@ function pairLink(){
   const b = b64enc(JSON.stringify(d)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   return (location.protocol === "https:" ? location.origin + location.pathname : SITE) + PAIR + b;
 }
-function readPair(){
-  if (!location.hash.startsWith(PAIR)) return false;
+/* Il link resta nell'indirizzo: così "Aggiungi alla schermata Home" (che su iPhone ha una memoria sua) riceve le impostazioni.
+   Si applica solo se il dispositivo non è ancora configurato o se il link è nuovo. */
+function applyPair(raw){
+  const h = String(raw || ""), i = h.indexOf(PAIR); if (i < 0) return false;
+  const code = h.slice(i + PAIR.length).trim();
+  if (!code) return false;
+  if (LS("pairCode") === code && LS("groq")) return false;
   try {
-    const b = location.hash.slice(PAIR.length).replace(/-/g, "+").replace(/_/g, "/");
+    const b = code.replace(/-/g, "+").replace(/_/g, "/");
     const d = JSON.parse(b64dec(b + "=".repeat((4 - b.length % 4) % 4)));
     for (const k of ["groq", "openrouter", "gh", "repo"]) if (d[k]) LSset(k, String(d[k]));
+    LSset("pairCode", code);
     return true;
-  } catch { return false; } finally { history.replaceState(null, "", location.pathname + location.search); }
+  } catch { return false; }
 }
+const readPair = () => applyPair(location.hash);
 const PAIRED = readPair();
 function loadQR(){ return window.qrcode ? Promise.resolve() : new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 
@@ -796,6 +807,7 @@ function settings(){
   <label>Token GitHub</label><input id="pc-gh" type="password" autocomplete="off" placeholder="github_pat_..." value="">
   <div class="row"><button class="pri" id="pc-sync" type="button">Salva e sincronizza</button><button id="pc-pair" type="button">Collega telefono</button></div>
   <div class="st" id="pc-sync-st"></div>
+  <label>Hai un link di collegamento?</label><div class="row" style="margin-top:0;flex-wrap:nowrap"><input id="pc-paste" type="text" autocomplete="off" placeholder="Incolla qui il link copiato dal PC"><button id="pc-paste-go" type="button">Collega</button></div>
   <div id="pc-qr" hidden style="margin-top:10px;text-align:center"><div id="pc-qr-img" style="display:inline-block;background:#fff;padding:10px;border-radius:12px"></div><p style="margin-top:8px">Inquadra il QR con la fotocamera del telefono e apri il link: il telefono riceve chiave Groq e sincronizzazione da solo. Non condividere questo QR con altri.</p><button id="pc-copy" type="button">Copia il link</button></div>
   <label style="margin-top:22px">Archivio</label>
   <p>Le voci sono salvate in questo browser. Puoi anche farne una copia in un file, o importarne una.</p>
@@ -806,6 +818,7 @@ function settings(){
   $("pc-groq").value = c.groq; $("pc-or").value = c.openrouter; $("pc-oll").value = c.ollama; $("pc-ollm").value = c.ollamaModel; $("pc-repo").value = c.repo; $("pc-gh").value = c.gh;
   setSync(SYNC.status || (c.gh ? "" : "Non attiva"), SYNC.err);
   $("pc-sync").onclick = () => { LSset("repo", $("pc-repo").value.trim().replace(/^https:\/\/github\.com\//, "").replace(/\/$/, "")); LSset("gh", $("pc-gh").value.trim()); clearTimeout(SYNC.timer); sync(); };
+  $("pc-paste-go").onclick = () => { const v = $("pc-paste").value.trim(); localStorage.removeItem?.("pc_pairCode"); if (applyPair(v)) { $("pc-paste").value = ""; const c2 = CFG(); $("pc-groq").value = c2.groq; $("pc-or").value = c2.openrouter; $("pc-repo").value = c2.repo; $("pc-gh").value = c2.gh; $("pc-sync-st").textContent = "Collegato. Sincronizzo…"; LIVE.clear(); sync(); } else $("pc-sync-st").textContent = "Link non valido: copialo di nuovo dal PC (⚙ → Collega telefono → Copia il link)."; };
   $("pc-pair").onclick = async () => {
     const box = $("pc-qr"); if (!box.hidden) { box.hidden = true; return; }
     if (!CFG().groq) { $("pc-sync-st").textContent = "Prima inserisci la chiave Groq."; return; }
@@ -833,7 +846,7 @@ addEventListener("DOMContentLoaded", () => {
   const g = document.createElement("button"); g.id = "pc-gear"; g.type = "button"; g.title = "Impostazioni AI e archivio"; g.setAttribute("aria-label", "Impostazioni AI e archivio"); g.textContent = "⚙"; g.onclick = settings; const hs = document.getElementById("hide-side"); if (hs) hs.before(g); else { g.style.cssText = "position:fixed;right:14px;bottom:14px;z-index:60"; document.body.appendChild(g); }
   const st2 = document.createElement("style"); st2.textContent = '#pc-gear[data-sync="ok"]{box-shadow:inset 0 -2px 0 #5eead4}#pc-gear[data-sync="err"]{box-shadow:inset 0 -2px 0 #fb7185}'; document.head.appendChild(st2);
   if (CFG().gh) scheduleSync(300);
-  if (PAIRED) { settings(); const el = document.getElementById("pc-st"); if (el) el.textContent = "Dispositivo collegato: chiave e sincronizzazione importate."; }
+  if (PAIRED) { settings(); const el = document.getElementById("pc-st"); if (el) el.textContent = "Dispositivo collegato. Su iPhone, se vuoi l'icona: tocca Condividi → Aggiungi alla schermata Home adesso, da questa pagina."; }
   else if (!providers().length) setTimeout(settings, 600);
 });
 window.claude = { use: async n => n === "sample" ? sample : n === "db" ? db : null, __standalone: true };
