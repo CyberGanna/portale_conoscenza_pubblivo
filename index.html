@@ -690,7 +690,11 @@ async function sync(){
       let sha = null, remote = { docs: {}, t: {}, del: {} };
       const g = await gh(FILE);
       if (g.status === 401 || g.status === 403) throw new Error("token GitHub non valido o senza permesso sulla repository");
-      if (g.status === 404) { const rr = await gh(""); if (rr.status === 404) throw new Error("repository " + c.repo + " non trovata"); }
+      if (g.status === 404) {
+        const rr = await fetch(`https://api.github.com/repos/${c.repo}?t=${Date.now()}`, { cache: "no-store", headers: { Authorization: "Bearer " + c.gh, Accept: "application/vnd.github+json" } });
+        if (rr.status === 404) throw new Error(`non vedo la repository ${c.repo}: controlla il nome (Proprietario/nome) e che il token abbia accesso proprio a questa repository`);
+        if (rr.status === 401) throw new Error("token GitHub non valido o scaduto");
+      }
       else if (!g.ok) throw new Error("GitHub " + g.status);
       else {
         const j = await g.json(); sha = j.sha;
