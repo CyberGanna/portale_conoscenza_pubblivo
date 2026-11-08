@@ -157,6 +157,12 @@ button{cursor:pointer}
 .md p{margin:.7em 0}.md strong{color:var(--ink)}.md h1,.md h2,.md h3{font-family:var(--f-display);font-weight:500;color:var(--ink);font-size:17px;margin:1.1em 0 .3em}
 .md ul,.md ol{padding-left:1.2em}.md li{margin:.25em 0}
 .md code{font-family:var(--f-mono);font-size:.9em;background:rgba(167,139,250,.12);padding:1px 5px;border-radius:5px}
+.md-tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.9em 0;border:1px solid rgba(185,155,255,.28);border-radius:10px}
+.md table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.45}
+.md th,.md td{border:1px solid rgba(185,155,255,.2);padding:7px 9px;text-align:left;vertical-align:top;min-width:84px;overflow-wrap:break-word;hyphens:auto}
+.md tr>:first-child{border-left:0}.md tr>:last-child{border-right:0}.md thead tr:first-child>*{border-top:0}.md tbody tr:last-child>*{border-bottom:0}
+.md th{background:rgba(185,155,255,.12);color:var(--ink);font-weight:600}
+.md tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
 .md blockquote{margin:.8em 0;padding-left:12px;border-left:2px solid var(--line);color:var(--muted)}
 .d-sec{margin-top:24px}
 .d-sec h3{font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:10px}
@@ -869,7 +875,7 @@ window.claude = { use: async n => n === "sample" ? sample : n === "db" ? db : nu
 "use strict";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const md = s => { try { return DOMPurify.sanitize(marked.parse(String(s || ""))); } catch { return "<p>" + esc(s) + "</p>"; } };
+const md = s => { try { return DOMPurify.sanitize(marked.parse(String(s || ""))).replace(/<table>/g, '<div class="md-tw"><table>').replace(/<\/table>/g, "</table></div>"); } catch { return "<p>" + esc(s) + "</p>"; } };
 const norm = s => String(s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
 const isPhone = () => matchMedia("(max-width:860px)").matches;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
