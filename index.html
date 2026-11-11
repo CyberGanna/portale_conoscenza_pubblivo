@@ -134,8 +134,15 @@ button{cursor:pointer}
 .tr-ex{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
 .tr-ex li{font-size:13px;border-left:2px solid rgba(167,139,250,.4);padding-left:10px}
 .tr-ex li span{display:block;color:var(--muted)}
-.tr-hist button{display:flex;width:100%;gap:8px;border:0;background:transparent;padding:6px 8px;border-radius:8px;text-align:left;font-size:13px}
-.tr-hist button:hover{background:rgba(167,139,250,.08)}
+.say{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border-radius:50%;border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.1);color:#d9ccff;padding:0;cursor:pointer;vertical-align:middle;transition:background .15s}
+.say:hover{background:rgba(167,139,250,.22)}.say svg{width:15px;height:15px}
+.say.on{background:rgba(167,139,250,.35);color:#fff}
+.say.sm{width:26px;height:26px}.say.sm svg{width:13px;height:13px}
+.trh-row{display:flex;align-items:center;gap:4px}
+.q-say{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
+.q-say .w{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:#d9ccff;border:1px solid rgba(167,139,250,.25);border-radius:999px;padding:3px 10px 3px 3px}
+.tr-hist .trh-row>button[data-i]{display:flex;flex:1;min-width:0;gap:8px;border:0;background:transparent;padding:6px 8px;border-radius:8px;text-align:left;font-size:13px}
+.tr-hist .trh-row>button[data-i]:hover{background:rgba(167,139,250,.08)}
 .tr-hist .a{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-hist .b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -1418,16 +1425,47 @@ function closeDetail(){ const d = $("#detail"); d.classList.remove("open"); d.se
 $("#d-close").addEventListener("click", closeDetail);
 addEventListener("keydown", e => { if (e.key === "Escape" && $("#detail").classList.contains("open")) closeDetail(); });
 
+/* ---------- pronuncia (sintesi vocale gratuita del browser) ---------- */
+const SAY_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>`;
+const canSay = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+const langOf = l => String(l || "").toLowerCase().startsWith("it") ? "it" : "en";
+function sayBtn(text, lang, sm){
+  if (!canSay || !text) return "";
+  const l = langOf(lang);
+  return `<button type="button" class="say${sm ? " sm" : ""}" data-say="${esc(text)}" data-lang="${l}" title="Ascolta la pronuncia" aria-label="Ascolta «${esc(text)}» in ${l === "it" ? "italiano" : "inglese"}">${SAY_ICON}</button>`;
+}
+function pickVoice(l){
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(l));
+  const pref = l === "en" ? [/en.us/i, /en.gb/i] : [/it.it/i];
+  const good = v => /premium|enhanced|natural|neural|google|siri|samantha|daniel|alice|federica|luca/i.test(v.name);
+  for (const re of pref) { const m = vs.filter(v => re.test(v.lang)); if (m.length) return m.find(good) || m.find(v => v.localService) || m[0]; }
+  return vs.find(good) || vs[0] || null;
+}
+function say(text, lang, btn){
+  if (!canSay || !text) return;
+  const l = langOf(lang);
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(text).replace(/[«»"]/g, ""));
+  u.lang = l === "it" ? "it-IT" : "en-US";
+  const v = pickVoice(l); if (v) u.voice = v;
+  u.rate = l === "en" ? 0.85 : 0.95;
+  document.querySelectorAll(".say.on").forEach(b => b.classList.remove("on"));
+  if (btn) { btn.classList.add("on"); u.onend = u.onerror = () => btn.classList.remove("on"); }
+  speechSynthesis.speak(u);
+}
+if (canSay) { try { speechSynthesis.getVoices(); } catch {} }
+document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if (!b) return; e.preventDefault(); e.stopPropagation(); say(b.dataset.say, b.dataset.lang, b); }, true);
+
 function trDir(t){ return (t.da || "").toLowerCase().startsWith("it") ? "it-en" : "en-it"; }
 function trCard(t){
   return `<div class="tr-out">
-    ${t.testo ? `<div class="tr-src">${esc(t.testo)}${t.scritto ? `<span class="tr-fix">avevi scritto «${esc(t.scritto)}»</span>` : ""}</div>` : ""}
+    ${t.testo ? `<div class="tr-src">${sayBtn(t.testo, t.da, true)}${esc(t.testo)}${t.scritto ? `<span class="tr-fix">avevi scritto «${esc(t.scritto)}»</span>` : ""}</div>` : ""}
     <div class="tr-meta">${esc((t.da || "?").toUpperCase())} → ${esc((t.a || "?").toUpperCase())}${t.categoria ? " · " + esc(t.categoria) : ""}</div>
-    <div class="tr-main">${esc(t.traduzione)}</div>
+    <div class="tr-main" style="display:flex;align-items:center;gap:10px">${sayBtn(t.traduzione, t.a)}<span>${esc(t.traduzione)}</span></div>
     ${t.pronuncia ? `<div class="tr-meta">/${esc(t.pronuncia)}/</div>` : ""}
     ${t.alternative?.length ? `<p><span class="hint">Anche:</span> ${t.alternative.map(esc).join(" · ")}</p>` : ""}
     ${t.nota ? `<p>${esc(t.nota)}</p>` : ""}
-    ${t.esempi?.length ? `<ul class="tr-ex">${t.esempi.map(x => `<li>${esc(x.originale)}<span>${esc(x.tradotto)}</span></li>`).join("")}</ul>` : ""}
+    ${t.esempi?.length ? `<ul class="tr-ex">${t.esempi.map(x => `<li><span style="display:flex;gap:8px;align-items:flex-start;color:inherit">${sayBtn(x.originale, t.da, true)}<span style="color:inherit">${esc(x.originale)}</span></span><span>${esc(x.tradotto)}</span></li>`).join("")}</ul>` : ""}
   </div>`;
 }
 function openTr(id){
@@ -2298,10 +2336,10 @@ function renderTrHist(){
   $("#tr-search").hidden = S.trs.length < 8;
   $("#tr-hist-l").textContent = `Tutte le tue traduzioni (${S.trs.length})`;
   const q = norm($("#tr-search").value);
-  $("#tr-hist").innerHTML = S.trs.map((t, i) => [t, i]).filter(([t]) => !q || norm(t.testo).includes(q) || norm(t.traduzione).includes(q)).map(([t, i]) => `<button type="button" data-i="${i}"><span class="a">${esc(t.testo)}</span><span class="b">${esc(t.traduzione)}</span></button>`).join("");
+  $("#tr-hist").innerHTML = S.trs.map((t, i) => [t, i]).filter(([t]) => !q || norm(t.testo).includes(q) || norm(t.traduzione).includes(q)).map(([t, i]) => `<div class="trh-row"><button type="button" data-i="${i}"><span class="a">${esc(t.testo)}</span><span class="b">${esc(t.traduzione)}</span></button>${sayBtn(langOf(t.da) === "en" ? t.testo : t.traduzione, "en", true)}</div>`).join("");
 }
 $("#tr-search").addEventListener("input", renderTrHist);
-$("#tr-hist").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const t = S.trs[+b.dataset.i]; renderTr(t); });
+$("#tr-hist").addEventListener("click", e => { const b = e.target.closest("button[data-i]"); if (!b) return; const t = S.trs[+b.dataset.i]; renderTr(t); });
 $("#tr-go").addEventListener("click", translate);
 $("#tr-in").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); translate(); } });
 
@@ -2450,6 +2488,17 @@ Rispondi solo con JSON:
     $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Non sono riuscito a preparare il test</div><div class="sub">${esc(errMsg(e))}</div><button class="btn primary" type="button" id="q-retry">Riprova</button></div>`;
   } finally { S.busy = false; }
 }
+function quizWords(text){
+  const t = " " + norm(text) + " ", out = [];
+  for (const x of S.trs) {
+    const en = langOf(x.da) === "en" ? x.testo : x.traduzione;
+    if (!en || en.length > 40) continue;
+    const k = norm(en);
+    if (k && t.includes(k) && new RegExp("[^a-z0-9]" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[^a-z0-9]").test(t) && !out.some(o => norm(o) === k)) out.push(en);
+  }
+  return out.slice(0, 4);
+}
+function sayRow(words){ return words.length ? `<div class="q-say">${words.map(w => `<span class="w">${sayBtn(w, "en", true)}${esc(w)}</span>`).join("")}</div>` : ""; }
 function renderQ(){
   const Q = S.quiz, q = Q.qs[Q.i], note = q.nota && S.notes.find(n => n.id === q.nota);
   const color = note ? catColor(note.categoria) : "var(--accent)";
@@ -2458,6 +2507,7 @@ function renderQ(){
     <div class="q-top"><span>${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${Q.qs.length}</span><span style="margin-left:auto">${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}</span></div>
     <div class="q-bar"><i style="width:${(Q.i / Q.qs.length) * 100}%"></i></div>
     <div class="q-text">${esc(q.domanda)}</div>
+    ${canSay && Q.ambito?.includes?.("__tr") ? sayRow(quizWords(q.domanda)) : ""}
     <div class="q-opts">${q.opzioni.map((o, i) => `<button type="button" class="q-opt" data-o="${i}"><b>${"ABCDE"[i]}</b><span>${esc(o)}</span></button>`).join("")}</div>
     <div id="q-after"></div>
     <div class="q-ask"><h4>Chiedi all'AI</h4><div class="q-chat" id="q-chat"></div><div class="q-sugg" id="q-sugg"></div>
@@ -2476,7 +2526,7 @@ function answerQ(i){
   const note = q.nota && S.notes.find(n => n.id === q.nota);
   const last = Q.i === Q.qs.length - 1;
   const why = !ok && q.perche?.[i] ? `<p class="q-why"><b>Perché «${esc(q.opzioni[i])}» non va:</b> ${esc(q.perche[i])}</p>` : "";
-  $("#q-after").innerHTML = `<div class="q-exp"><strong style="color:${ok ? "var(--ok)" : "var(--danger)"}">${ok ? "Giusto" : "Sbagliato"}</strong>${ok ? "" : `<p class="q-why"><b>Risposta giusta:</b> ${esc(q.opzioni[q.corretta])}</p>`}${why}<p class="q-why"><b>Perché:</b> ${esc(q.spiegazione)}</p>${note ? `<br><button class="linkbtn" type="button" data-open-q="${esc(note.id)}">Ripassa «${esc(note.titolo)}»</button>` : ""}</div>
+  $("#q-after").innerHTML = `<div class="q-exp"><strong style="color:${ok ? "var(--ok)" : "var(--danger)"}">${ok ? "Giusto" : "Sbagliato"}</strong>${ok ? "" : `<p class="q-why"><b>Risposta giusta:</b> ${esc(q.opzioni[q.corretta])}</p>`}${why}<p class="q-why"><b>Perché:</b> ${esc(q.spiegazione)}</p>${canSay && Q.ambito?.includes?.("__tr") ? (w => w.length ? `<p class="q-why" style="margin-bottom:0"><b>Ascolta:</b></p>${sayRow(w)}` : "")(quizWords(q.domanda + " " + q.opzioni[q.corretta] + " " + q.spiegazione)) : ""}${note ? `<br><button class="linkbtn" type="button" data-open-q="${esc(note.id)}">Ripassa «${esc(note.titolo)}»</button>` : ""}</div>
     <div class="row" style="margin-top:14px"><button class="btn primary" type="button" id="q-next">${last ? "Vedi il risultato" : "Avanti →"}</button></div>`;
   document.querySelector(".q-bar i").style.width = ((Q.i + 1) / Q.qs.length) * 100 + "%";
   document.querySelector(".q-top span:last-child").textContent = `${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}`;
