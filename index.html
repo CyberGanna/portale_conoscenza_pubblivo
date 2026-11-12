@@ -503,7 +503,7 @@ body.side-hidden #show-side{opacity:1;pointer-events:auto;transform:none}
 </aside>
 
 <section id="detail" class="glass" aria-label="Dettaglio voce" aria-hidden="true">
-  <div class="d-head"><span class="d-cat" id="d-cat"></span><button class="iconbtn" id="d-close" aria-label="Chiudi">✕</button></div>
+  <div class="d-head"><span class="d-cat" id="d-cat"></span><button class="iconbtn" id="d-del" type="button" hidden title="Elimina" aria-label="Elimina questa voce"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button><button class="iconbtn" id="d-close" aria-label="Chiudi">✕</button></div>
   <div class="d-body" id="d-body"></div>
 </section>
 
@@ -1363,6 +1363,20 @@ Se nessuna voce è un verbo coniugato rispondi {"verbi": []}.`;
 }
 setTimeout(lemmaFix, 12000);
 
+// Richiesta di Karim (12 nov 2026): eliminare la voce legata al Tesoro. Solo fino al 19 nov e solo se c'è un'unica voce che corrisponde.
+async function delTesoroOnce(){
+  try { if (localStorage.getItem("pc_delTesoro") || Date.now() > Date.UTC(2026, 10, 19) || !S.db || !S.notes.length) return; } catch { return; }
+  const hit = s => /tesoro|treasury/.test(norm(s));
+  const ns = S.notes.filter(n => hit(n.titolo)), ts = S.trs.filter(t => hit(t.testo) || hit(t.traduzione));
+  if (ns.length + ts.length !== 1) return;
+  try {
+    if (ns.length) { await deleteNote(ns[0].id); toast(`Ho eliminato la voce «${ns[0].titolo}»`); }
+    else { await S.db.doc("translations/" + ts[0].id).delete(); toast(`Ho eliminato la traduzione «${ts[0].testo}»`); }
+    localStorage.setItem("pc_delTesoro", "1");
+  } catch {}
+}
+setTimeout(delTesoroOnce, 15000);
+
 async function saveNote(data){
   if (S.db) { const ref = await S.db.collection("notes").add(data); return ref.id; }
   const id = "local-" + Date.now(); ingest([{ id, ...data }, ...S.notes]); return id;
@@ -1423,6 +1437,19 @@ $("#search").addEventListener("input", e => { S.queryRaw = e.target.value.trim()
 function openDetail(){ const d = $("#detail"); d.classList.add("open"); d.setAttribute("aria-hidden", "false"); document.body.classList.add("detail-open"); }
 function closeDetail(){ const d = $("#detail"); d.classList.remove("open"); d.setAttribute("aria-hidden", "true"); document.body.classList.remove("detail-open"); S.selected = null; S.selTr = null; setHover(null); renderArchive(); }
 $("#d-close").addEventListener("click", closeDetail);
+// cestino in alto: elimina la voce o la traduzione aperta
+new MutationObserver(() => { $("#d-del").hidden = !(S.selected || S.selTr) || !$("#detail").classList.contains("open"); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+$("#d-del").addEventListener("click", async () => {
+  if (S.selected) {
+    const n = S.notes.find(x => x.id === S.selected); if (!n || !confirm(`Eliminare la voce «${n.titolo}»? Non si può annullare.`)) return;
+    const id = n.id; closeDetail();
+    try { await deleteNote(id); toast("Voce eliminata"); } catch { toast("Non sono riuscito a eliminarla. Riprova."); }
+  } else if (S.selTr) {
+    const t = S.trs.find(x => x.id === S.selTr); if (!t || !confirm(`Eliminare la traduzione «${t.testo}»? Non si può annullare.`)) return;
+    const id = t.id; closeDetail();
+    try { if (S.db && !id.startsWith("local-")) await S.db.doc("translations/" + id).delete(); else { S.trs = S.trs.filter(x => x.id !== id); renderTrHist(); buildGraph(); renderArchive(); } toast("Traduzione eliminata"); } catch { toast("Non sono riuscito a eliminarla. Riprova."); }
+  }
+});
 addEventListener("keydown", e => { if (e.key === "Escape" && $("#detail").classList.contains("open")) closeDetail(); });
 
 /* ---------- pronuncia (sintesi vocale gratuita del browser) ---------- */
