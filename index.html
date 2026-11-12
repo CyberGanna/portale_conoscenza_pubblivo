@@ -373,6 +373,17 @@ button{cursor:pointer}
 .q-score{font-size:15px;color:var(--muted)}
 .q-verdict{font-size:22px;font-weight:300;letter-spacing:-.02em}
 .q-review{text-align:left;width:100%;margin-top:10px}
+#d-del[hidden]{display:none}
+.q-save{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:11px;letter-spacing:.06em;text-transform:none;cursor:pointer}
+.q-save svg{width:14px;height:14px}
+.q-save:hover{color:var(--ink);border-color:rgba(242,181,92,.5)}
+.q-save.on{color:#f6c86f;border-color:rgba(242,181,92,.6);background:rgba(242,181,92,.1)}
+.q-save.on svg{fill:currentColor}
+.q-saved{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.q-saved .it{border:1px solid rgba(242,181,92,.25);border-radius:12px;padding:12px 14px;background:rgba(242,181,92,.04)}
+.q-saved .qq{font-size:14px;color:var(--ink);margin-bottom:6px}
+.q-saved .ra{font-size:13px;margin:0 0 4px}.q-saved .ra b{color:#f6c86f;font-weight:600}
+.q-saved .ex{font-size:13px;color:var(--muted);margin:0;line-height:1.55}
 
 /* thinking */
 .thinking{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:60px 10px}
@@ -1438,8 +1449,9 @@ function openDetail(){ const d = $("#detail"); d.classList.add("open"); d.setAtt
 function closeDetail(){ const d = $("#detail"); d.classList.remove("open"); d.setAttribute("aria-hidden", "true"); document.body.classList.remove("detail-open"); S.selected = null; S.selTr = null; setHover(null); renderArchive(); }
 $("#d-close").addEventListener("click", closeDetail);
 // cestino in alto: elimina la voce o la traduzione aperta
-new MutationObserver(() => { $("#d-del").hidden = !(S.selected || S.selTr) || !$("#detail").classList.contains("open"); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+new MutationObserver(() => { $("#d-del").hidden = !(S.selected || S.selTr) || !$("#detail").classList.contains("open") || !!document.querySelector("#d-body .quiz, #d-body .q-end, #d-body .thinking"); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
 $("#d-del").addEventListener("click", async () => {
+  if ($("#d-del").hidden) return;
   if (S.selected) {
     const n = S.notes.find(x => x.id === S.selected); if (!n || !confirm(`Eliminare la voce «${n.titolo}»? Non si può annullare.`)) return;
     const id = n.id; closeDetail();
@@ -2531,7 +2543,7 @@ function renderQ(){
   const color = note ? catColor(note.categoria) : "var(--accent)";
   $("#d-cat").innerHTML = `<span class="dot" style="color:${color}"></span>Test${note ? " · " + esc(catName(note.categoria)) : Q.ambito?.includes?.("__tr") ? " · Traduzioni" : ""}`;
   $("#d-body").innerHTML = `<div class="quiz">
-    <div class="q-top"><span>${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${Q.qs.length}</span><span style="margin-left:auto">${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}</span></div>
+    <div class="q-top"><span>${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${Q.qs.length}</span><button type="button" class="q-save ${Q.saved?.includes(Q.i) ? "on" : ""}" id="q-save" aria-pressed="${!!Q.saved?.includes(Q.i)}" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>${Q.saved?.includes(Q.i) ? "Salvata" : "Salva per rivedere"}</button><span>${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}</span></div>
     <div class="q-bar"><i style="width:${(Q.i / Q.qs.length) * 100}%"></i></div>
     <div class="q-text">${esc(q.domanda)}</div>
     ${canSay && Q.ambito?.includes?.("__tr") ? sayRow(quizWords(q.domanda)) : ""}
@@ -2600,21 +2612,32 @@ function endQ(){
   const verdict = pct === 100 ? "Perfetto, lo sai a memoria." : pct >= 80 ? "Ottimo, lo hai capito bene." : pct >= 50 ? "Buona base, qualcosa da ripassare." : "Vale la pena ripassare.";
   const wrongNotes = [...new Map(Q.wrong.map(i => Q.qs[i].nota).filter(Boolean).map(id => [id, S.notes.find(n => n.id === id)])).values()].filter(Boolean);
   const C = 2 * Math.PI * 62;
+  const isTr = Q.ambito?.includes?.("__tr");
+  const savedQs = (Q.saved || []).slice().sort((a, b) => a - b).map(i => Q.qs[i]).filter(Boolean);
+  const savedHTML = savedQs.length ? `<div class="q-review d-sec"><h3>Salvate per rivedere (${savedQs.length})</h3><div class="q-saved">${savedQs.map(q => {
+    const nn = q.nota && S.notes.find(n => n.id === q.nota);
+    return `<div class="it"><div class="qq">${esc(q.domanda)}</div><p class="ra"><b>Risposta:</b> ${esc(q.opzioni[q.corretta])}</p>${q.spiegazione ? `<p class="ex">${esc(q.spiegazione)}</p>` : ""}${canSay && isTr ? sayRow(quizWords(q.domanda + " " + q.opzioni[q.corretta] + " " + (q.spiegazione || ""))) : ""}${nn ? `<div style="margin-top:8px"><button type="button" class="chip known" style="--c:${catColor(nn.categoria)}" data-open="${esc(nn.id)}">● ${esc(nn.titolo)}</button></div>` : ""}</div>`;
+  }).join("")}</div><div class="row" style="margin-top:10px"><button class="btn" type="button" id="q-saved-go">Rifai solo le salvate</button></div></div>` : "";
+  S.lastSaved = { qs: savedQs.map(({ chat, ...x }) => x), ambito: Q.ambito };
   $("#d-cat").innerHTML = `<span class="dot" style="color:${col}"></span>Risultato`;
   $("#d-body").innerHTML = `<div class="q-end">
     <svg class="q-ring" viewBox="0 0 150 150"><circle cx="75" cy="75" r="62" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/><circle cx="75" cy="75" r="62" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(C * pct / 100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 8px ${col})"/><text x="75" y="72" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="300" fill="#fff" font-family="Sora, sans-serif">${Q.score}/${tot}</text><text x="75" y="100" text-anchor="middle" font-size="11" fill="#9890b3" font-family="Sora, sans-serif">${pct}%</text></svg>
     <div class="q-verdict">${verdict}</div>
     ${Q.wrong.length ? `<div class="row" style="justify-content:center;margin-top:6px"><button class="btn primary" type="button" id="q-wrong">Riprova le ${Q.wrong.length} ${Q.wrong.length === 1 ? "sbagliata" : "sbagliate"}</button></div>` : ""}
+    ${savedHTML}
     ${wrongNotes.length ? `<div class="q-review d-sec"><h3>Da ripassare</h3><div class="links">${wrongNotes.map(n => `<button type="button" class="chip known" style="--c:${catColor(n.categoria)}" data-open="${esc(n.id)}">● ${esc(n.titolo)}</button>`).join("")}</div></div>` : ""}
     <div class="row" style="justify-content:center;margin-top:12px"><button class="btn ${Q.wrong.length ? "" : "primary"}" type="button" id="q-again">Nuovo test</button></div></div>`;
   S.lastWrong = { qs: Q.wrong.map(i => { const { chat, ...x } = Q.qs[i]; return x; }), ambito: Q.ambito };
-  const rec = { createdAt: Date.now(), punteggio: Q.score, totale: tot, ambito: Q.ambito, sbagliate: wrongNotes.map(n => n.id), errori: JSON.parse(JSON.stringify(S.lastWrong.qs.map(({ chat, ...x }) => x))), ...(Q.ripasso ? { ripasso: true } : {}) };
+  const rec = { createdAt: Date.now(), punteggio: Q.score, totale: tot, ambito: Q.ambito, sbagliate: wrongNotes.map(n => n.id), errori: JSON.parse(JSON.stringify(S.lastWrong.qs.map(({ chat, ...x }) => x))), ...(savedQs.length ? { salvate: JSON.parse(JSON.stringify(S.lastSaved.qs)) } : {}), ...(Q.ripasso ? { ripasso: true } : {}) };
   if (S.db) S.db.collection("tests").add(rec).catch(() => {}); else { S.tests = [rec, ...S.tests]; renderTestHome(); }
   S.quiz = null;
 }
 $("#d-body").addEventListener("click", e => {
   const o = e.target.closest(".q-opt"); if (o) { answerQ(+o.dataset.o); return; }
   const sg = e.target.closest("[data-ask]"); if (sg && S.quiz) { askQ(sg.dataset.ask); return; }
+  const sv = e.target.closest("#q-save");
+  if (sv && S.quiz) { const Q = S.quiz; Q.saved = Q.saved || []; const k = Q.saved.indexOf(Q.i); if (k >= 0) Q.saved.splice(k, 1); else Q.saved.push(Q.i); const on = k < 0; sv.classList.toggle("on", on); sv.setAttribute("aria-pressed", on); sv.lastChild.textContent = on ? "Salvata" : "Salva per rivedere"; if (on) toast("Salvata: la ritrovi alla fine del test"); return; }
+  if (e.target.closest("#q-saved-go") && S.lastSaved?.qs.length) { retryWrong(S.lastSaved.qs, S.lastSaved.ambito); return; }
   if (e.target.closest("#q-next")) { const Q = S.quiz; if (Q.i === Q.qs.length - 1) endQ(); else { Q.i++; renderQ(); } return; }
   if (e.target.closest("#q-again") || e.target.closest("#q-retry")) { startTest(); return; }
   if (e.target.closest("#q-wrong") && S.lastWrong?.qs.length) { retryWrong(S.lastWrong.qs, S.lastWrong.ambito); return; }
