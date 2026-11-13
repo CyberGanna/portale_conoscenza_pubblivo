@@ -164,6 +164,10 @@ a.wl{color:#fbbf24;text-decoration:none;border-bottom:1px dashed rgba(251,191,36
 .rm-done .t b{text-decoration:line-through;color:var(--muted)}
 .al-r .t{flex:1 0 auto} .al-r .t b{white-space:nowrap}
 .sc-help summary{cursor:pointer;font-size:14px} .gc-row .btn{flex:0 0 auto}
+.gc-cols{display:flex;flex-wrap:wrap;gap:8px} .gc-col{width:28px;height:28px;border-radius:50%;border:2px solid transparent;outline:1px solid rgba(255,255,255,.12)} .gc-col.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);cursor:pointer} .rows button.ev-r:first-child{border-top:0} .ev-ic{border:0}
+@media (max-width:560px){.gc-dt{display:none}}
+.btn.danger{background:rgba(244,63,94,.18);border-color:var(--red);color:#fda4af}
 .gc-day{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
 .minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
 .view{display:flex;flex-direction:column;gap:18px}
@@ -966,6 +970,8 @@ function brTodayCard(){
    poi basta un tocco su "Collega" (o si rinnova da solo se la sessione Google è aperta). */
 const GC_SCOPE = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly";
 const GC_REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
+const GC_COL = { "": ["Colore del calendario", ""], 7: ["Pavone", "#039be5"], 9: ["Mirtillo", "#3f51b5"], 1: ["Lavanda", "#7986cb"], 3: ["Vinaccia", "#8e24aa"], 4: ["Fenicottero", "#e67c73"],
+  11: ["Pomodoro", "#d50000"], 6: ["Mandarino", "#f4511e"], 5: ["Banana", "#f6bf26"], 2: ["Salvia", "#33b679"], 10: ["Basilico", "#0b8043"], 8: ["Grafite", "#616161"] };
 const GC = { ev: null, err: "", busy: false, at: 0, form: false };
 const gcId = () => (S.gcal && S.gcal.id) || "";
 let GTOK = null; try { GTOK = JSON.parse(localStorage.getItem(KEY + "-gtok") || "null"); } catch {}
@@ -1005,7 +1011,7 @@ async function gcLoad(force){
     const cals = (await gcApi("users/me/calendarList?minAccessRole=reader")).items || [{ id: "primary", backgroundColor: "#2f7bff", summary: "" }];
     for (const c of cals.filter(c => c.selected !== false).slice(0, 8)){
       const j = await gcApi(`calendars/${encodeURIComponent(c.id)}/events?singleEvents=true&orderBy=startTime&maxResults=500&timeMin=${from.toISOString()}&timeMax=${to.toISOString()}`);
-      for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: c.backgroundColor || "#2f7bff", calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" || c.accessRole === "writer" });
+      for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: (e.colorId && GC_COL[e.colorId]?.[1]) || c.backgroundColor || "#2f7bff", colorId: e.colorId || "", note: e.description || "", rec: !!e.recurringEventId, calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" || c.accessRole === "writer" });
     }
     GC.ev = items.sort((a, b) => evStart(a) - evStart(b)); GC.at = Date.now();
     try { localStorage.setItem(KEY + "-gcal", JSON.stringify(GC.ev)); } catch {}
@@ -1017,7 +1023,9 @@ const evOn = d => (GC.ev || []).filter(e => { const s = evStart(e), en = evEnd(e
 const evTime = e => evAllDay(e) ? "Tutto il giorno" : hhmm(evStart(e)) + "–" + hhmm(evEnd(e));
 function evRows(list, empty){
   if (!list.length) return `<div class="muted" style="font-size:13px;padding:6px 0">${empty}</div>`;
-  return `<div class="rows">${list.map(e => `<a class="r" href="${esc(e.link || "#")}" target="_blank" rel="noopener"><div class="ic" style="color:${esc(e.col)}">${ico("cal")}</div><div class="t"><b>${esc(e.t)}</b><small>${evTime(e)}${e.where ? " · " + esc(e.where) : ""}</small></div></a>`).join("")}</div>`;
+  return `<div class="rows">${list.map(e => { const inner = `<div class="ic ev-ic" style="background:${esc(e.col)}22;color:${esc(e.col)}">${ico("cal")}</div><div class="t"><b>${esc(e.t)}</b><small>${evTime(e)}${e.where ? " · " + esc(e.where) : ""}</small></div>`;
+    return e.own && gcOk() ? `<button class="r ev-r" onclick="gcEdit(decodeURIComponent('${jq(e.cal)}'),decodeURIComponent('${jq(e.id)}'))">${inner}<span class="muted" style="font-size:12px">Modifica</span></button>`
+      : `<a class="r" href="${esc(e.link || "#")}" target="_blank" rel="noopener">${inner}</a>`; }).join("")}</div>`;
 }
 function gcConnectBox(){
   if (!gcId()) return `<div class="soon">${ico("cal")}<span>Per collegare <b>Google Calendar</b> serve il tuo Client ID di Google (gratis, 5 minuti). Quando ce l'hai incollalo in <a href="#impostazioni" onclick="event.preventDefault();go('impostazioni')" style="color:var(--blue-2)">Impostazioni</a>.</span></div>`;
@@ -1029,16 +1037,24 @@ function gcCalView(){
   const sel = calSel ? new Date(calSel) : new Date();
   const dayEv = evOn(sel), week = [];
   for (let i = 0; i < 7; i++){ const d = new Date(); d.setDate(d.getDate() + i); const L = evOn(d); if (L.length) week.push([d, L]); }
-  const form = GC.form ? `<div class="glass c" id="gc-form"><div class="hd"><div><h3>Nuovo evento</h3><small>Va nel tuo Google Calendar e lo vedi anche sull'iPhone</small></div></div>
-      <div class="gc-f"><input class="input" id="gc-t" placeholder="Titolo"><input class="input" id="gc-d" type="date" value="${dayKey(sel)}">
-        <label class="gc-chk"><input type="checkbox" id="gc-all" onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
-        <div id="gc-times" class="gc-row"><input class="input" id="gc-s" type="time" value="09:00"><input class="input" id="gc-e" type="time" value="10:00"></div>
-        <input class="input" id="gc-w" placeholder="Luogo (facoltativo)">
-        <div class="gc-row"><button class="btn" onclick="GC.form=false;reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">Salva evento</button></div></div></div>` : "";
+  const E = GC.form && GC.form.id ? (GC.ev || []).find(x => x.id === GC.form.id && x.cal === GC.form.cal) : null;
+  const eS = E ? evStart(E) : null, eE = E ? evEnd(E) : null, allD = E && evAllDay(E);
+  if (allD) eE.setDate(eE.getDate() - 1);
+  const hm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const cid = E ? E.colorId : (GC.form && GC.form.color) || "";
+  const form = GC.form ? `<div class="glass c" id="gc-form"><div class="hd"><div><h3>${E ? "Modifica evento" : "Nuovo evento"}</h3><small>${E ? (E.rec ? "Evento ripetuto: modifichi solo questa volta" : "Le modifiche vanno anche nel tuo Google Calendar") : "Va nel tuo Google Calendar e lo vedi anche sull'iPhone"}</small></div>${E && E.link ? `<a class="lnk" href="${esc(E.link)}" target="_blank" rel="noopener">Apri in Google</a>` : ""}</div>
+      <div class="gc-f"><input class="input" id="gc-t" placeholder="Titolo" value="${E ? esc(E.t) : ""}">
+        <div class="gc-row"><input class="input" id="gc-d" type="date" value="${dayKey(eS || sel)}">${E && allD && dayKey(eE) !== dayKey(eS) ? `<input class="input" id="gc-d2" type="date" value="${dayKey(eE)}">` : `<input type="hidden" id="gc-d2" value="">`}</div>
+        <label class="gc-chk"><input type="checkbox" id="gc-all" ${allD ? "checked" : ""} onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
+        <div id="gc-times" class="gc-row" style="${allD ? "display:none" : ""}"><input class="input" id="gc-s" type="time" value="${E && !allD ? hm(eS) : "09:00"}"><input class="input" id="gc-e" type="time" value="${E && !allD ? hm(eE) : "10:00"}"></div>
+        <input class="input" id="gc-w" placeholder="Luogo (facoltativo)" value="${E ? esc(E.where) : ""}">
+        <div><div class="muted" style="font-size:12px;margin-bottom:6px">Colore: <b id="gc-cn">${GC_COL[cid]?.[0] || "Colore del calendario"}</b></div>
+          <div class="gc-cols" id="gc-cols">${Object.entries(GC_COL).map(([k, [n, h]]) => `<button type="button" class="gc-col ${k === String(cid) ? "on" : ""}" data-k="${k}" title="${n}" style="background:${h || "linear-gradient(135deg,#2f7bff,#a78bfa)"}" onclick="document.querySelectorAll('.gc-col').forEach(b=>b.classList.toggle('on',b===this));document.getElementById('gc-cn').textContent=this.title"></button>`).join("")}</div></div>
+        <div class="gc-row">${E ? `<button class="btn gc-del" onclick="gcDel(this)">${ico("trash")}<span class="gc-dt"> Elimina</span></button>` : ""}<span class="sp" style="flex:1"></span><button class="btn" onclick="GC.form=false;reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">${E ? "Salva modifiche" : "Salva evento"}</button></div></div></div>` : "";
   return `${!gcOk() ? gcConnectBox() : ""}
     ${GC.err ? `<div class="soon">${ico("cal")}<span>Google Calendar non risponde: ${esc(GC.err)}</span></div>` : ""}
     <div class="nw-bar"><span class="muted" style="font-size:13px">${GC.busy ? "Aggiorno…" : GC.ev ? (GC.ev.length + " eventi in calendario") : ""}</span><span class="sp"></span>
-      ${gcOk() ? `<button class="btn blue" onclick="GC.form=true;reView()">${ico("plus")} Evento</button><button class="btn" onclick="gcLoad(true)" title="Aggiorna">↻</button>` : ""}</div>
+      ${gcOk() ? `<button class="btn blue" onclick="GC.form={color:''};reView()">${ico("plus")} Evento</button><button class="btn" onclick="gcLoad(true)" title="Aggiorna">↻</button>` : ""}</div>
     ${form}
     <div class="gc-grid">
       <div class="glass c">
@@ -1053,16 +1069,28 @@ function gcCalView(){
     ${GC.ev ? `<div class="glass c"><div class="hd"><div><h3>Prossimi 7 giorni</h3></div></div>${week.length ? week.map(([d, L]) => `<div class="gc-day">${cap(GIORNI[d.getDay()])} ${d.getDate()}</div>${evRows(L, "")}`).join("") : '<div class="muted" style="font-size:13px">Settimana libera.</div>'}</div>` : ""}`;
 }
 async function gcAdd(){
-  const t = $("#gc-t").value.trim(), d = $("#gc-d").value, all = $("#gc-all").checked, w = $("#gc-w").value.trim();
+  const t = $("#gc-t").value.trim(), d = $("#gc-d").value, d2 = $("#gc-d2").value, all = $("#gc-all").checked, w = $("#gc-w").value.trim();
+  const color = document.querySelector(".gc-col.on")?.dataset.k || "", edit = GC.form && GC.form.id ? GC.form : null;
   if (!t || !d) return toast("Scrivi titolo e data");
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   let body;
-  if (all){ const e = new Date(d + "T00:00:00"); e.setDate(e.getDate() + 1); body = { start: { date: d }, end: { date: dayKey(e) } }; }
+  if (all){ const e = new Date((d2 && d2 >= d ? d2 : d) + "T00:00:00"); e.setDate(e.getDate() + 1); body = { start: { date: d, dateTime: null }, end: { date: dayKey(e), dateTime: null } }; }
   else { const s = $("#gc-s").value || "09:00", en = $("#gc-e").value || s; let endD = d; if (en <= s){ const x = new Date(d + "T00:00:00"); x.setDate(x.getDate() + 1); endD = dayKey(x); }
-    body = { start: { dateTime: `${d}T${s}:00`, timeZone: tz }, end: { dateTime: `${endD}T${en}:00`, timeZone: tz } }; }
-  body.summary = t; if (w) body.location = w;
-  try { toast("Salvo…"); await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify(body) }); GC.form = false; calSel = d + "T12:00:00"; toast("Evento aggiunto"); await gcLoad(true); reView(); }
+    body = { start: { dateTime: `${d}T${s}:00`, timeZone: tz, date: null }, end: { dateTime: `${endD}T${en}:00`, timeZone: tz, date: null } }; }
+  body.summary = t; body.location = w; body.colorId = color || null;
+  if (!edit){ for (const x of [body.start, body.end]) for (const k of Object.keys(x)) if (x[k] === null) delete x[k]; if (!w) delete body.location; if (!color) delete body.colorId; }
+  try { toast("Salvo…");
+    if (edit) await gcApi(`calendars/${encodeURIComponent(edit.cal)}/events/${encodeURIComponent(edit.id)}`, { method: "PATCH", body: JSON.stringify(body) });
+    else await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify(body) });
+    GC.form = false; calSel = d + "T12:00:00"; toast(edit ? "Evento modificato" : "Evento aggiunto"); await gcLoad(true); reView(); }
   catch (e){ if (e.message === "scaduto") { toast("Permesso scaduto: ricollego"); gcLogin(false); } else toast("Errore: " + e.message); }
+}
+function gcEdit(cal, id){ GC.form = { cal, id }; if (cur !== "calendario") go("calendario"); else reView(); requestAnimationFrame(() => document.getElementById("gc-form")?.scrollIntoView({ behavior: "smooth", block: "start" })); }
+async function gcDel(btn){
+  if (!btn.dataset.ok){ btn.dataset.ok = 1; btn.innerHTML = "Sicuro?"; btn.classList.add("danger"); setTimeout(() => { if (btn.isConnected){ delete btn.dataset.ok; btn.innerHTML = ico("trash") + '<span class="gc-dt"> Elimina</span>'; btn.classList.remove("danger"); } }, 4000); return; }
+  const f = GC.form; if (!f || !f.id) return;
+  try { toast("Elimino…"); await gcApi(`calendars/${encodeURIComponent(f.cal)}/events/${encodeURIComponent(f.id)}`, { method: "DELETE" }); GC.form = false; toast("Evento eliminato"); await gcLoad(true); reView(); }
+  catch (e){ toast("Errore: " + e.message); }
 }
 function gcTodayCard(){
   const now = new Date(), L = evOn(now).filter(e => evAllDay(e) || evEnd(e) > now), tm = new Date(); tm.setDate(tm.getDate() + 1); const L2 = evOn(tm);
@@ -1284,7 +1312,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "13";
+const APP_V = "14";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
