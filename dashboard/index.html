@@ -553,8 +553,8 @@ const VIEWS = {
   notizie(){
     const all = S.news.countries.includes("mondo");
     const L = newsList(), nf = (S.news.cats.length < NEWS_CATS.length ? 1 : 0) + (all ? 0 : 1);
-    return head("Notizie", NEWS ? `Aggiornate alle ${hhmm(new Date(NEWS.updated))} · ${L.length} notizie con le tue scelte` : "Le più importanti del momento") + `
-    <div class="nw-bar"><div class="seg"><button class="${newsSort === "top" ? "on" : ""}" onclick="newsSort='top';newsLimit=30;reView()">Più importanti</button><button class="${newsSort === "new" ? "on" : ""}" onclick="newsSort='new';newsLimit=30;reView()">Più recenti</button></div>
+    return head("Notizie", NEWS ? `${["Oggi", "Ieri", "L'altro ieri"][newsDay]} · ${L.length} notizie con le tue scelte · aggiornate alle ${hhmm(new Date(NEWS.updated))}` : "Le più importanti del momento") + `
+    <div class="nw-bar"><div class="seg">${["Oggi", "Ieri", "L'altro ieri"].map((t, k) => `<button class="${newsDay === k ? "on" : ""}" onclick="newsDay=${k};newsLimit=30;reView()">${t}</button>`).join("")}</div><div class="seg"><button class="${newsSort === "top" ? "on" : ""}" onclick="newsSort='top';newsLimit=30;reView()">Più importanti</button><button class="${newsSort === "new" ? "on" : ""}" onclick="newsSort='new';newsLimit=30;reView()">Più recenti</button></div>
       <span class="sp"></span><button class="btn" onclick="newsFilters=!newsFilters;reView()">${ico("sliders")} Filtri${nf ? " (" + nf + ")" : ""}</button></div>
     ${newsFilters ? newsFilterBox(all) : ""}
     ${newsBody(L)}`;
@@ -612,7 +612,7 @@ function reView(){ go(cur); }
 
 /* ---------------- notizie: news/news.json, rifatto ogni ora da GitHub Actions ---------------- */
 const NEWS_URL = "https://raw.githubusercontent.com/CyberGanna/portale_conoscenza_pubblivo/notizie/news.json";
-let NEWS = null, newsErr = false, newsSort = "top", newsFilters = false, newsLimit = 30;
+let NEWS = null, newsErr = false, newsDay = 0, newsSort = "top", newsFilters = false, newsLimit = 30;
 const SUMS = {};
 try { NEWS = JSON.parse(localStorage.getItem(KEY + "-news") || "null"); } catch {}
 async function loadNews(){
@@ -621,7 +621,7 @@ async function loadNews(){
     if (!r.ok) throw 0;
     const d = await r.json(); newsErr = false;
     if (NEWS && NEWS.updated === d.updated) return;
-    NEWS = d; try { localStorage.setItem(KEY + "-news", JSON.stringify(d)); } catch { try { localStorage.removeItem(KEY + "-news"); } catch {} }
+    NEWS = d; for (const k in SUMS) delete SUMS[k]; try { localStorage.setItem(KEY + "-news", JSON.stringify(d)); } catch { try { localStorage.removeItem(KEY + "-news"); } catch {} }
   } catch { newsErr = true; if (NEWS) return; }
   if (cur === "oggi" || cur === "notizie") refresh();
 }
@@ -630,9 +630,10 @@ function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); return m < 2 ? 
 function newsList(){
   if (!NEWS) return [];
   const all = S.news.countries.includes("mondo");
-  const L = NEWS.items.filter(x => x.cats.some(c => S.news.cats.includes(c)) && (all || x.cc.some(c => S.news.countries.includes(c))));
+  const day = NEWS.days ? NEWS.days[newsDay] || NEWS.days[0] : null;
+  const L = NEWS.items.filter(x => (!day || x.day === day || !x.day && newsDay === 0) && x.cats.some(c => S.news.cats.includes(c)) && (all || x.cc.some(c => S.news.countries.includes(c))));
   // importanti = riprese da più testate, ma una notizia ferma da ore scende
-  const score = x => x.n * Math.pow(0.5, Math.max(0, Date.now() - x.d) / 3600e3 / 18);
+  const score = x => newsDay ? x.n : x.n * Math.pow(0.5, Math.max(0, Date.now() - x.d) / 3600e3 / 18);
   return newsSort === "new" ? L.sort((a, b) => b.d - a.d) : L.sort((a, b) => score(b) - score(a));
 }
 function newsFilterBox(all){ return VIEWS._notizieFiltri(all); }
@@ -656,7 +657,7 @@ function newsBody(L){
     ${L.length > newsLimit ? `<div style="text-align:center;margin-top:14px"><button class="btn" onclick="newsLimit+=30;reView()">Mostra altre (${L.length - newsLimit})</button></div>` : ""}`;
 }
 function newsMini(n){
-  const L = newsList().slice(0, n);
+  const d0 = newsDay; newsDay = 0; const L = newsList().slice(0, n); newsDay = d0;
   if (!L.length) return newsEmpty();
   return `<div class="rows nw-mini">${L.map(x => `<a class="r" href="${esc(x.u)}" target="_blank" rel="noopener"><div class="ic" style="color:var(--red)">${ico("news")}</div><div class="t"><b>${esc(x.t)}</b><small>${x.n} ${x.n === 1 ? "testata" : "testate"} · ${ago(x.d)}</small></div></a>`).join("")}</div>`;
 }
