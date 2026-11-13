@@ -156,6 +156,11 @@ a.wl{color:#fbbf24;text-decoration:none;border-bottom:1px dashed rgba(251,191,36
 .minical .h{font-size:10.5px;color:var(--faint);padding-bottom:4px}
 .minical span{padding:7px 0;border-radius:9px}
 .minical span.x{color:var(--faint)}
+.minical span{position:relative} .minical .dots{position:absolute;left:0;right:0;bottom:1px;display:flex;justify-content:center;gap:2px} .minical .dots b{width:4px;height:4px;border-radius:50%}
+.minical span.pick{cursor:pointer} .minical span.pick:hover{background:rgba(255,255,255,.06)} .minical span.sel{outline:1px solid var(--blue)}
+.gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;max-width:980px} @media (max-width:899px){.gc-grid{grid-template-columns:1fr}}
+.gc-f{display:flex;flex-direction:column;gap:10px} .gc-row{display:flex;gap:10px} .gc-row>*{flex:1} .gc-chk{display:flex;align-items:center;gap:8px;font-size:13px}
+.gc-day{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
 .minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
 .view{display:flex;flex-direction:column;gap:18px}
 .view .c,.view .soon{max-width:980px}
@@ -515,6 +520,7 @@ function DASH(){
     <div class="glass c span6">
       <div class="hd"><div><h3>Calendario</h3><small>${cap(MESI[now.getMonth()])} ${now.getFullYear()}</small></div><button class="lnk" onclick="go('calendario')">Apri</button></div>
       ${miniCal(now.getFullYear(), now.getMonth())}
+      ${gcTodayCard()}
     </div>
     <div class="glass c span6">
       <div class="hd"><div><h3>Collegamenti rapidi</h3><small>Le altre tue cose</small></div><button class="lnk" onclick="go('collegamenti',{add:true})">+ Aggiungi</button></div>
@@ -525,11 +531,14 @@ function DASH(){
 function linkRows(max = 99){
   return S.links.slice(0, max).map(l => `<a class="r" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><div class="ic" style="color:var(--green)">${ico(l.i || "link")}</div><div class="t"><b>${esc(l.n)}</b><small>${esc(l.u.replace(/^https?:\/\//, ""))}</small></div><span class="faint">${ico("ext", "width:15px;height:15px")}</span></a>`).join("") || `<div class="muted">Nessun collegamento.</div>`;
 }
-function miniCal(y, m){
+function miniCal(y, m, pick){
   const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), off = (first.getDay() + 6) % 7, prev = new Date(y, m, 0).getDate(), today = new Date();
   let cells = ["L", "M", "M", "G", "V", "S", "D"].map(d => `<div class="h">${d}</div>`).join("");
   for (let i = 0; i < off; i++) cells += `<span class="x">${prev - off + 1 + i}</span>`;
-  for (let d = 1; d <= days; d++){ const t = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d; cells += `<span class="${t ? "today" : ""}">${d}</span>`; }
+  const selK = typeof calSel === "string" ? calSel.slice(0, 10) : "";
+  for (let d = 1; d <= days; d++){ const t = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d, dt = new Date(y, m, d), k = dayKey(dt), ev = typeof GC !== "undefined" && GC.ev ? evOn(dt) : [];
+    const dots = ev.length ? `<i class="dots">${ev.slice(0, 3).map(e => `<b style="background:${esc(e.col)}"></b>`).join("")}</i>` : "";
+    cells += pick ? `<span class="${t ? "today" : ""} ${k === selK ? "sel" : ""} pick" onclick="calSel='${k}T12:00:00';reView()">${d}${dots}</span>` : `<span class="${t ? "today" : ""}">${d}${dots}</span>`; }
   const tail = (7 - (off + days) % 7) % 7; for (let i = 1; i <= tail; i++) cells += `<span class="x">${i}</span>`;
   return `<div class="minical">${cells}</div>`;
 }
@@ -558,15 +567,7 @@ const VIEWS = {
         return `<div class="r"><span class="d">${i === 0 ? "Oggi" : cap(GIORNI[new Date(t).getDay()].slice(0, 3))}</span><span class="e">${WMO(d.weather_code[i])[0]}</span><span class="mn">${Math.round(mn)}°</span><span class="rng"><i style="left:${(mn - lo) / (hi - lo || 1) * 100}%;right:${100 - (mx - lo) / (hi - lo || 1) * 100}%"></i></span><span class="mx">${Math.round(mx)}°</span></div>`; }).join("")}</div></div>`;
   },
   calendario(){
-    return head("Calendario", "Il collegamento a Google Calendar arriva nella fase 5") + `
-    <div class="glass c">
-      <div class="hd" style="align-items:center"><button class="round" onclick="calM--;if(calM<0){calM=11;calY--}reView()">${ico("back")}</button>
-        <h3 style="font-size:16px">${cap(MESI[calM])} ${calY}</h3>
-        <button class="round" onclick="calM++;if(calM>11){calM=0;calY++}reView()" style="transform:scaleX(-1)">${ico("back")}</button></div>
-      ${miniCal(calY, calM)}
-      <div style="text-align:center;margin-top:12px"><button class="btn" onclick="calY=new Date().getFullYear();calM=new Date().getMonth();reView()">Oggi</button></div>
-    </div>
-    <div class="soon">${ico("cal")}<span>Nella fase 5 colleghiamo il tuo Google Calendar: vedrai qui gli impegni e potrai aggiungerne di nuovi. Lo stesso calendario si vede anche nell'app Calendario dell'iPhone.</span></div>`;
+    return head("Calendario", gcOk() ? "Google Calendar collegato" : "Google Calendar") + gcCalView();
   },
   notizie(){
     const all = S.news.countries.includes("mondo");
@@ -609,6 +610,9 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
+    <div class="glass c"><div class="hd"><div><h3>Google Calendar</h3><small>${gcOk() ? "Collegato" : gcId() ? "Client ID inserito" : "Incolla qui il tuo Client ID di Google"}</small></div><span class="muted">${ico("cal")}</span></div>
+      <div class="br-row"><input class="input" id="gc-id" placeholder="…apps.googleusercontent.com" value="${esc(gcId())}"><button class="btn blue" onclick="const v=document.getElementById('gc-id').value.trim();S.gcal={id:v};save();toast(v?'Salvato':'Tolto');reView()">Salva</button></div>
+      ${gcId() ? `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="gcLogin(false)">${gcOk() ? "Ricollega" : "Collega adesso"}</button>${gcOk() ? `<button class="btn" onclick="GTOK=null;try{localStorage.removeItem(KEY+'-gtok')}catch{};reView()">Scollega</button>` : ""}</div>` : ""}</div>
     <div class="glass c"><div class="hd"><div><h3>Suoni</h3><small>Musica di sottofondo generata dal vivo</small></div><span class="muted">${ico("music")}</span></div>
       <div class="switch"><div><b>Musica rilassante</b><small>Musica originale di sottofondo</small></div><button class="tg ${S.sound.music ? "on" : ""}" onclick="toggleMusic()"></button></div>
       <div class="switch"><div><b>Stile della musica</b><small>${S.sound.style === "beat" ? "Beat chill, come il video" : "Calmo, accordi lenti"}</small></div><div class="seg"><button class="${S.sound.style === "beat" ? "on" : ""}" onclick="setStyle('beat')">Beat</button><button class="${S.sound.style === "calmo" ? "on" : ""}" onclick="setStyle('calmo')">Calmo</button></div></div>
@@ -722,7 +726,7 @@ function useGeo(){
   if (!navigator.geolocation) return toast("Posizione non disponibile");
   navigator.geolocation.getCurrentPosition(p => setCity({ name: "La mia posizione", country: "", lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => toast("Permesso posizione negato"));
 }
-function after(id, root, opt){ if (id === "cervello"){ if (BR.tab === "grafo") requestAnimationFrame(brGraph); brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
+function after(id, root, opt){ if (id === "calendario"){ gcLoad(false); if (GC.form) setTimeout(() => root.querySelector("#gc-t")?.focus(), 200); } if (id === "cervello"){ if (BR.tab === "grafo") requestAnimationFrame(brGraph); brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
 
 /* ---------------- SECONDO CERVELLO ----------------
    Archivio in stile Obsidian: file Markdown nella cartella cervello/ della repository privata
@@ -965,6 +969,114 @@ function brTodayCard(){
   return `<div class="glass c span4"><div class="hd"><div><h3>Diario di oggi</h3><small>${(BR.files || []).length} note nel Cervello</small></div><button class="lnk" onclick="go('cervello')">Apri</button></div><div class="rows">${body}</div></div>`;
 }
 
+/* ---------------- GOOGLE CALENDAR ----------------
+   Accesso con l'account Google di Ale (OAuth nel browser, gratis). Il permesso dura un'ora,
+   poi basta un tocco su "Collega" (o si rinnova da solo se la sessione Google è aperta). */
+const GC_SCOPE = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly";
+const GC_REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
+const GC = { ev: null, err: "", busy: false, at: 0, form: false };
+const gcId = () => (S.gcal && S.gcal.id) || "";
+let GTOK = null; try { GTOK = JSON.parse(localStorage.getItem(KEY + "-gtok") || "null"); } catch {}
+try { GC.ev = JSON.parse(localStorage.getItem(KEY + "-gcal") || "null"); } catch {}
+const gcOk = () => GTOK && GTOK.exp > Date.now() + 60e3;
+(function gcReturn(){
+  // ritorno dalla pagina di Google: il token arriva nel frammento #access_token=...
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("state") === "gcal" && h.get("access_token")){
+    GTOK = { t: h.get("access_token"), exp: Date.now() + (+h.get("expires_in") || 3600) * 1000 };
+    try { localStorage.setItem(KEY + "-gtok", JSON.stringify(GTOK)); } catch {}
+    history.replaceState(null, "", location.pathname + "#calendario");
+  } else if (h.get("state") === "gcal" && h.get("error")) history.replaceState(null, "", location.pathname + "#calendario");
+})();
+function gcLogin(silent){
+  if (!gcId()) return go("impostazioni");
+  const q = new URLSearchParams({ client_id: gcId(), redirect_uri: GC_REDIRECT, response_type: "token", scope: GC_SCOPE, state: "gcal", include_granted_scopes: "true", ...(silent ? { prompt: "none" } : {}) });
+  location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q;
+}
+async function gcApi(path, opt = {}){
+  const r = await fetch("https://www.googleapis.com/calendar/v3/" + path, { ...opt, headers: { Authorization: "Bearer " + GTOK.t, "Content-Type": "application/json", ...(opt.headers || {}) } });
+  if (r.status === 401){ GTOK = null; try { localStorage.removeItem(KEY + "-gtok"); } catch {} throw new Error("scaduto"); }
+  if (!r.ok) throw new Error("Google " + r.status);
+  return r.status === 204 ? null : r.json();
+}
+const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const evStart = e => new Date(e.start.dateTime || e.start.date + "T00:00:00");
+const evEnd = e => new Date(e.end.dateTime || e.end.date + "T00:00:00");
+const evAllDay = e => !e.start.dateTime;
+async function gcLoad(force){
+  if (!gcId() || !gcOk() || GC.busy || (!force && Date.now() - GC.at < 5 * 6e4)) return;
+  GC.busy = true; GC.err = "";
+  try {
+    const from = new Date(); from.setDate(1); from.setMonth(from.getMonth() - 1); from.setHours(0, 0, 0, 0);
+    const to = new Date(from); to.setMonth(to.getMonth() + 4);
+    const items = [];
+    const cals = (await gcApi("users/me/calendarList?minAccessRole=reader")).items || [{ id: "primary", backgroundColor: "#2f7bff", summary: "" }];
+    for (const c of cals.filter(c => c.selected !== false).slice(0, 8)){
+      const j = await gcApi(`calendars/${encodeURIComponent(c.id)}/events?singleEvents=true&orderBy=startTime&maxResults=500&timeMin=${from.toISOString()}&timeMax=${to.toISOString()}`);
+      for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: c.backgroundColor || "#2f7bff", calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" || c.accessRole === "writer" });
+    }
+    GC.ev = items.sort((a, b) => evStart(a) - evStart(b)); GC.at = Date.now();
+    try { localStorage.setItem(KEY + "-gcal", JSON.stringify(GC.ev)); } catch {}
+  } catch (e){ GC.err = e.message === "scaduto" ? "" : e.message; }
+  GC.busy = false;
+  if (cur === "calendario" && !GC.form) reView(); else if (cur === "oggi") refresh();
+}
+const evOn = d => (GC.ev || []).filter(e => { const s = evStart(e), en = evEnd(e), a = new Date(d.getFullYear(), d.getMonth(), d.getDate()), b = new Date(a); b.setDate(b.getDate() + 1); return s < b && (en > a || +s === +a); });
+const evTime = e => evAllDay(e) ? "Tutto il giorno" : hhmm(evStart(e)) + "–" + hhmm(evEnd(e));
+function evRows(list, empty){
+  if (!list.length) return `<div class="muted" style="font-size:13px;padding:6px 0">${empty}</div>`;
+  return `<div class="rows">${list.map(e => `<a class="r" href="${esc(e.link || "#")}" target="_blank" rel="noopener"><div class="ic" style="color:${esc(e.col)}">${ico("cal")}</div><div class="t"><b>${esc(e.t)}</b><small>${evTime(e)}${e.where ? " · " + esc(e.where) : ""}</small></div></a>`).join("")}</div>`;
+}
+function gcConnectBox(){
+  if (!gcId()) return `<div class="soon">${ico("cal")}<span>Per collegare <b>Google Calendar</b> serve il tuo Client ID di Google (gratis, 5 minuti). Quando ce l'hai incollalo in <a href="#impostazioni" onclick="event.preventDefault();go('impostazioni')" style="color:var(--blue-2)">Impostazioni</a>.</span></div>`;
+  return `<div class="glass c"><div class="hd"><div><h3>Collega Google Calendar</h3><small>${GC.ev ? "Il permesso è scaduto: un tocco e si rinnova" : "Ti chiede una volta il permesso con il tuo account Google"}</small></div></div>
+    <button class="btn blue" onclick="gcLogin(false)">${ico("cal")} Collega Google Calendar</button></div>`;
+}
+let calSel = null;
+function gcCalView(){
+  const sel = calSel ? new Date(calSel) : new Date();
+  const dayEv = evOn(sel), week = [];
+  for (let i = 0; i < 7; i++){ const d = new Date(); d.setDate(d.getDate() + i); const L = evOn(d); if (L.length) week.push([d, L]); }
+  const form = GC.form ? `<div class="glass c" id="gc-form"><div class="hd"><div><h3>Nuovo evento</h3><small>Va nel tuo Google Calendar e lo vedi anche sull'iPhone</small></div></div>
+      <div class="gc-f"><input class="input" id="gc-t" placeholder="Titolo"><input class="input" id="gc-d" type="date" value="${dayKey(sel)}">
+        <label class="gc-chk"><input type="checkbox" id="gc-all" onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
+        <div id="gc-times" class="gc-row"><input class="input" id="gc-s" type="time" value="09:00"><input class="input" id="gc-e" type="time" value="10:00"></div>
+        <input class="input" id="gc-w" placeholder="Luogo (facoltativo)">
+        <div class="gc-row"><button class="btn" onclick="GC.form=false;reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">Salva evento</button></div></div></div>` : "";
+  return `${!gcOk() ? gcConnectBox() : ""}
+    ${GC.err ? `<div class="soon">${ico("cal")}<span>Google Calendar non risponde: ${esc(GC.err)}</span></div>` : ""}
+    <div class="nw-bar"><span class="muted" style="font-size:13px">${GC.busy ? "Aggiorno…" : GC.ev ? (GC.ev.length + " eventi in calendario") : ""}</span><span class="sp"></span>
+      ${gcOk() ? `<button class="btn blue" onclick="GC.form=true;reView()">${ico("plus")} Evento</button><button class="btn" onclick="gcLoad(true)" title="Aggiorna">↻</button>` : ""}</div>
+    ${form}
+    <div class="gc-grid">
+      <div class="glass c">
+        <div class="hd" style="align-items:center"><button class="round" onclick="calM--;if(calM<0){calM=11;calY--}reView()">${ico("back")}</button>
+          <h3 style="font-size:16px">${cap(MESI[calM])} ${calY}</h3>
+          <button class="round" onclick="calM++;if(calM>11){calM=0;calY++}reView()" style="transform:scaleX(-1)">${ico("back")}</button></div>
+        ${miniCal(calY, calM, true)}
+        <div style="text-align:center;margin-top:12px"><button class="btn" onclick="calY=new Date().getFullYear();calM=new Date().getMonth();calSel=null;reView()">Oggi</button></div>
+      </div>
+      <div class="glass c"><div class="hd"><div><h3>${cap(dateLong(sel))}</h3><small>${dayEv.length ? dayEv.length + " impegni" : "Giorno libero"}</small></div></div>${evRows(dayEv, GC.ev ? "Nessun impegno." : "Collega il calendario per vedere gli impegni.")}</div>
+    </div>
+    ${GC.ev ? `<div class="glass c"><div class="hd"><div><h3>Prossimi 7 giorni</h3></div></div>${week.length ? week.map(([d, L]) => `<div class="gc-day">${cap(GIORNI[d.getDay()])} ${d.getDate()}</div>${evRows(L, "")}`).join("") : '<div class="muted" style="font-size:13px">Settimana libera.</div>'}</div>` : ""}`;
+}
+async function gcAdd(){
+  const t = $("#gc-t").value.trim(), d = $("#gc-d").value, all = $("#gc-all").checked, w = $("#gc-w").value.trim();
+  if (!t || !d) return toast("Scrivi titolo e data");
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let body;
+  if (all){ const e = new Date(d + "T00:00:00"); e.setDate(e.getDate() + 1); body = { start: { date: d }, end: { date: dayKey(e) } }; }
+  else { const s = $("#gc-s").value || "09:00", en = $("#gc-e").value || s; let endD = d; if (en <= s){ const x = new Date(d + "T00:00:00"); x.setDate(x.getDate() + 1); endD = dayKey(x); }
+    body = { start: { dateTime: `${d}T${s}:00`, timeZone: tz }, end: { dateTime: `${endD}T${en}:00`, timeZone: tz } }; }
+  body.summary = t; if (w) body.location = w;
+  try { toast("Salvo…"); await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify(body) }); GC.form = false; calSel = d + "T12:00:00"; toast("Evento aggiunto"); await gcLoad(true); reView(); }
+  catch (e){ if (e.message === "scaduto") { toast("Permesso scaduto: ricollego"); gcLogin(false); } else toast("Errore: " + e.message); }
+}
+function gcTodayCard(){
+  const now = new Date(), L = evOn(now).filter(e => evAllDay(e) || evEnd(e) > now), tm = new Date(); tm.setDate(tm.getDate() + 1); const L2 = evOn(tm);
+  return gcId() && (gcOk() || GC.ev) ? `<div style="margin-top:12px">${evRows(L.slice(0, 3), "Niente in programma per oggi.")}${L2.length ? `<div class="gc-day">Domani</div>${evRows(L2.slice(0, 2), "")}` : ""}</div>` : "";
+}
+
 /* ---------------- TELEFONO: home con griglia di icone ---------------- */
 function appIcon(a, withLab = true){
   const now = new Date();
@@ -1023,7 +1135,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "10";
+const APP_V = "11";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
@@ -1050,7 +1162,8 @@ setTimeout(() => checkAppUpdate(false), 3000);
 const start = (location.hash || "").slice(1);
 refresh();
 if (start && appById(start)) go(start);
-loadWeather(); loadNotes(); loadNews(); brLoad(false);
+loadWeather(); loadNotes(); loadNews(); brLoad(false); gcLoad(true);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) gcLoad(false); });
 setInterval(loadNews, 15 * 6e4);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) loadNews(); });
 </script>
