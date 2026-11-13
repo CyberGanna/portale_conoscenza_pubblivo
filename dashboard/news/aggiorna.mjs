@@ -134,7 +134,11 @@ export const CC_RX = {
   tr: R(String.raw`\b(Turkey|T[uü]rkiye|Turkish|Turchia|turc[oaih]\w*|Ankara|Istanbul|Erdogan|Erdo[gğ]an)\b`),
 };
 
+const SPORT = R(String.raw`\b(football|soccer|calcio|Serie A|Premier League|Champions League|Europa League|Nations League|World Cup|Mondiali|Euro 2028|rugby|Springboks|Six Nations|cricket|NBA|NFL|NHL|MLB|tennis|ATP|WTA|Sinner|Formula 1|F1|MotoGP|Gran Premio|golf|Olympic\w*|Olimpiadi|Turkey Trot|match|partita|kick-off|calcio d'inizio|goal|gol|striker|coach|allenatore|quarterback|playoff\w*|semifinal\w*|semifinale|finale|Juventus|Inter|Milan|Napoli|Roma|Lazio|Real Madrid|Barcelona|Bayern|Liverpool|Arsenal|Chelsea)\b`);
+const SPORT_STRONG = R(String.raw`\b(Nations League|Champions League|Serie A|Premier League|World Cup|Mondiali|rugby|Springboks|cricket|NBA|NFL|tennis|ATP|WTA|Formula 1|MotoGP|Turkey Trot|kick-off|how to watch|live stream|streaming live|Matchday)\b`);
 export function classify(text, feed){
+  // lo sport finisce in "Altro" (non è politica né tecnologia)
+  if (SPORT_STRONG.test(text) || (SPORT.test(text) && /\b(vs\.?|v\.|contro)\b/i.test(text))) return { cats: ["altro"], cc: [] };
   const cats = Object.keys(CAT_RX).filter(k => CAT_RX[k].test(text));
   if (!cats.length) cats.push(feed.cat || "altro");
   else if (feed.cat && !cats.includes(feed.cat) && feed.cat !== "esteri") cats.push(feed.cat);
@@ -183,17 +187,23 @@ export function parseFeed(xml, feed){
 const STOP = new Set(("the a an and or of to in on for with at by from as is are was were be been has have had will would after before over under into about says said new more than this that its it his her their they he she we you not no but also amid how why what who when where which just up out off may could can could than del della delle dei degli dello di da in con per tra fra su sul sulla nel nella nei negli alla alle agli allo il lo la i gli le un uno una e ed o che non come dopo prima anche più sono è stato stata stati essere ha hanno era al ai si se ma del per questo questa quello quella oggi ieri video foto ecco cosa chi dove quando perché news live update updates").split(" "));
 const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 export const tokens = t => new Set(norm(t).split(/[^a-z0-9]+/).filter(w => w.length >= 4 && !STOP.has(w)).map(w => w.length > 6 ? w.slice(0, 6) : w));
+// parole rare pesano di più: "Russia" o "Ukraine" da sole non bastano a dire che è lo stesso fatto
+let IDF = new Map();
+const w8 = w => IDF.get(w) ?? 1;
 function similar(a, b){
-  let n = 0; for (const w of a) if (b.has(w)) n++;
-  const m = Math.min(a.size, b.size);
-  return n >= 3 && n / m >= 0.5 || n >= 2 && m <= 3 && n / m >= 0.66;
+  let n = 0, sh = 0, wa = 0, wb = 0;
+  for (const w of a){ wa += w8(w); if (b.has(w)){ n++; sh += w8(w); } }
+  for (const w of b) wb += w8(w);
+  return n >= 3 && sh / Math.min(wa, wb) >= 0.55;
 }
 
 export function cluster(items){
   items.sort((a, b) => b.d - a.d);
+  for (const it of items) it.k = tokens(it.t);
+  const df = new Map(); for (const it of items) for (const w of it.k) df.set(w, (df.get(w) || 0) + 1);
+  IDF = new Map([...df].map(([w, c]) => [w, Math.log((items.length + 1) / c)]));
   const groups = [];
   for (const it of items){
-    it.k = tokens(it.t);
     let g = groups.find(g => g.k.size && it.k.size && similar(g.k, it.k));
     if (!g){ g = { items: [], k: it.k }; groups.push(g); }
     g.items.push(it);
@@ -203,8 +213,13 @@ export function cluster(items){
     for (const it of g.items) if (!seen.has(norm(it.src))){ seen.add(norm(it.src)); srcs.push([it.src, it.u]); }
     // titolo: la versione con descrizione più ricca, preferendo una testata diretta a Google News
     const lead = [...g.items].sort((a, b) => (b.s.length > 40) - (a.s.length > 40) || (a.feed.n === "Google News") - (b.feed.n === "Google News") || a.d - b.d)[0];
-    const cats = new Set(), cc = new Set();
-    for (const it of g.items){ const c = classify(it.t + " " + it.s, it.feed); c.cats.forEach(x => cats.add(x)); c.cc.forEach(x => cc.add(x)); }
+    // categoria e paese "a maggioranza", così un titolo fuori tema non sporca tutto il gruppo
+    const vc = {}, vp = {};
+    for (const it of g.items){ const c = classify(it.t + " " + it.s, it.feed); c.cats.forEach(x => vc[x] = (vc[x] || 0) + 1); c.cc.forEach(x => vp[x] = (vp[x] || 0) + 1); }
+    const N = g.items.length;
+    const cats = new Set(Object.keys(vc).filter(k => vc[k] >= Math.max(1, N * 0.34)));
+    const cc = new Set(Object.keys(vp).filter(k => vp[k] >= Math.max(1, N * 0.25)));
+    if (!cats.size) cats.add(Object.keys(vc).sort((a, b) => vc[b] - vc[a])[0] || "altro");
     if (cats.size > 1) cats.delete("altro");
     const first = Math.min(...g.items.map(i => i.d)), last = Math.max(...g.items.map(i => i.d));
     const alt = [...new Set(g.items.map(i => i.t))].filter(t => t !== lead.t).slice(0, 4);
