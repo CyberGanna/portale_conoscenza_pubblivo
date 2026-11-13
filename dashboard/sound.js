@@ -1,6 +1,6 @@
 /* Mia Dashboard: suoni rilassanti generati dal vivo (nessun file audio, nessun copyright).
    - Musica: generata dal vivo (stile "beat" o "calmo").
-   - Tocchi: due suoni scelti da Karim (sounds/nav.mp3 per i tasti laterali e le icone, sounds/tap.mp3 per tutti gli altri). */
+ */
 const Sound = (() => {
   let ctx = null, master, musicBus, uiBus, verb, timer = null, nextBar = 0, bar = 0, noiseSrc = null;
   const st = { music: false, ui: true, vol: 0.6, style: "beat" };
@@ -138,25 +138,11 @@ const Sound = (() => {
     if (noiseSrc){ noiseSrc.stop(t + 1.6); noiseSrc = null; }
   }
 
-  /* ---------- suoni dei tocchi: i due suoni scelti da Karim ---------- */
-  const SFX = { nav: "sounds/nav.mp3", tap: "sounds/tap.mp3" }, buf = {};
-  function loadSfx(){
-    Object.entries(SFX).forEach(([k, u]) => { if (buf[k]) return; buf[k] = "loading";
-      fetch(u).then(r => r.arrayBuffer()).then(a => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej))).then(b => { buf[k] = b; }).catch(() => { buf[k] = null; }); });
-  }
-  function sfx(k){
-    const b = buf[k]; if (!b || b === "loading") return;
-    const src = ctx.createBufferSource(); src.buffer = b; const g = ctx.createGain(); g.gain.value = 0.9;
-    src.connect(g).connect(master); src.start();
-  }
-
   return {
     st,
     load(s){ Object.assign(st, s || {}); },
-    async unlock(){ await init(); loadSfx(); if (st.music) startMusic(); },
-    play(name){ if (!st.ui) return; init().then(() => { loadSfx(); sfx(name); }).catch(() => {}); },
+    async unlock(){ await init(); if (st.music) startMusic(); },
     async setMusic(on){ st.music = on; await init(); on ? startMusic() : stopMusic(); },
-    setUi(on){ st.ui = on; },
     async setStyle(s){ st.style = s; if (timer){ stopMusic(); await new Promise(r => setTimeout(r, 1700)); if (st.music) startMusic(); } },
     setVol(v){ st.vol = v; if (master) master.gain.setTargetAtTime(v, ctx.currentTime, 0.05); },
     get playing(){ return !!timer; },
