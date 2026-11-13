@@ -1100,6 +1100,7 @@ async function gcLoad(force){
       for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: (e.colorId && GC_COL[e.colorId]?.[1]) || c.backgroundColor || "#2f7bff", colorId: e.colorId || "", note: e.description || "", rec: !!e.recurringEventId, calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" || c.accessRole === "writer" });
     }
     GC.ev = items.sort((a, b) => evStart(a) - evStart(b)); GC.at = Date.now();
+    remPushPending();
     try { localStorage.setItem(KEY + "-gcal", JSON.stringify(GC.ev)); } catch {}
   } catch (e){ GC.err = e.message === "scaduto" ? "" : e.message; }
   GC.busy = false;
@@ -1271,6 +1272,14 @@ async function remGoogle(r){
   const j = await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify({ summary: "🔔 " + r.t, description: "Promemoria dalla Mia Dashboard", start: { dateTime: f(s), timeZone: tz }, end: { dateTime: f(e), timeZone: tz }, reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 0 }] }, colorId: "6" }) });
   return j && j.id;
 }
+// promemoria salvati quando Google non era collegato: appena torna il permesso li mando su Google Calendar
+let remPushing = false;
+async function remPushPending(){
+  if (remPushing || !gcOk()) return; remPushing = true; let n = 0;
+  try { for (const r of S.rem || []) if (!r.gid && !r.done && remAt(r) > Date.now()) { try { r.gid = await remGoogle(r); if (r.gid) n++; } catch { break; } } }
+  finally { remPushing = false; }
+  if (n){ save(); toast(n === 1 ? "1 promemoria mandato a Google Calendar" : n + " promemoria mandati a Google Calendar"); setTimeout(() => gcLoad(true), 500); if (cur === "promemoria") reView(); }
+}
 async function remAdd(){
   const t = $("#rm-t").value.trim(), d = $("#rm-d").value, h = $("#rm-h").value;
   if (!t || !d || !h) return toast("Scrivi cosa, il giorno e l'ora");
@@ -1289,7 +1298,7 @@ function remDone(id){ const r = S.rem.find(x => x.id === id); if (r){ r.done = !
 function remRows(list){
   return `<div class="rows">${list.map(r => { const late = !r.done && remAt(r) < new Date();
     return `<div class="r ${r.done ? "rm-done" : ""}"><button class="rm-chk ${r.done ? "on" : ""}" onclick="remDone('${r.id}')" title="Fatto">${r.done ? "✓" : ""}</button>
-      <div class="t"><b>${esc(r.t)}</b><small style="${late ? "color:var(--red)" : ""}">${remFmt(r)}${r.gid ? " · in Google Calendar" : ""}</small></div>
+      <div class="t"><b>${esc(r.t)}</b><small style="${late ? "color:var(--red)" : ""}">${remFmt(r)}${r.gid ? " · in Google Calendar" : r.done ? "" : " · <span style=\"color:var(--orange)\">solo qui: ricollega Google</span>"}</small></div>
       <button class="round" onclick="remDel('${r.id}')" title="Elimina">${ico("trash")}</button></div>`; }).join("")}</div>`;
 }
 function remView(){
@@ -1439,7 +1448,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "15";
+const APP_V = "16";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
