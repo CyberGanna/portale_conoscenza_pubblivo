@@ -1,6 +1,6 @@
 /* Mia Dashboard: suoni rilassanti generati dal vivo (nessun file audio, nessun copyright).
-   - Musica: accordi caldi e lenti, basso morbido, note sparse come gocce, un filo di "vinile".
-   - Tocchi: piccolo "pop" morbido; aprire e chiudere una sezione: soffio con campanella. */
+   - Musica: generata dal vivo (stile "beat" o "calmo").
+   - Tocchi: due suoni scelti da Karim (sounds/nav.mp3 per i tasti laterali e le icone, sounds/tap.mp3 per tutti gli altri). */
 const Sound = (() => {
   let ctx = null, master, musicBus, uiBus, verb, timer = null, nextBar = 0, bar = 0, noiseSrc = null;
   const st = { music: false, ui: true, vol: 0.6, style: "beat" };
@@ -138,31 +138,23 @@ const Sound = (() => {
     if (noiseSrc){ noiseSrc.stop(t + 1.6); noiseSrc = null; }
   }
 
-  /* ---------- suoni dei tocchi ---------- */
-  function tone(f, t, { type = "sine", v = 0.12, a = 0.005, d = 0.18, f2 } = {}){
-    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0005, t + d);
-    o.connect(g).connect(uiBus); o.start(t); o.stop(t + d + 0.05);
+  /* ---------- suoni dei tocchi: i due suoni scelti da Karim ---------- */
+  const SFX = { nav: "sounds/nav.mp3", tap: "sounds/tap.mp3" }, buf = {};
+  function loadSfx(){
+    Object.entries(SFX).forEach(([k, u]) => { if (buf[k]) return; buf[k] = "loading";
+      fetch(u).then(r => r.arrayBuffer()).then(a => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej))).then(b => { buf[k] = b; }).catch(() => { buf[k] = null; }); });
   }
-  function whoosh(t, up = true, v = 0.05){
-    const n = ctx.createBufferSource(); n.buffer = noiseBuf(1); const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.2;
-    bp.frequency.setValueAtTime(up ? 400 : 2200, t); bp.frequency.exponentialRampToValueAtTime(up ? 2200 : 400, t + 0.32);
-    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.1); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.38);
-    n.connect(bp).connect(g).connect(uiBus); n.start(t); n.stop(t + 0.4);
+  function sfx(k){
+    const b = buf[k]; if (!b || b === "loading") return;
+    const src = ctx.createBufferSource(); src.buffer = b; const g = ctx.createGain(); g.gain.value = 0.9;
+    src.connect(g).connect(master); src.start();
   }
-  const ui = {
-    tap(){ const t = ctx.currentTime; tone(620, t, { v: 0.09, d: 0.09, f2: 520 }); tone(1240, t, { v: 0.025, d: 0.06 }); },
-    open(){ const t = ctx.currentTime; whoosh(t, true); tone(hz(76), t + 0.06, { v: 0.06, d: 0.9 }); tone(hz(83), t + 0.12, { v: 0.04, d: 1.1 }); },
-    close(){ const t = ctx.currentTime; whoosh(t, false, 0.04); tone(hz(71), t + 0.04, { v: 0.05, d: 0.6 }); },
-    toggle(){ const t = ctx.currentTime; tone(880, t, { v: 0.06, d: 0.08 }); tone(1320, t + 0.06, { v: 0.05, d: 0.14 }); },
-    hello(){ const t = ctx.currentTime; [72, 76, 79, 84].forEach((m, i) => tone(hz(m), t + i * 0.11, { v: 0.05, d: 1.4 })); },
-  };
 
   return {
     st,
     load(s){ Object.assign(st, s || {}); },
-    async unlock(){ await init(); if (st.music) startMusic(); },
-    play(name){ if (!st.ui) return; init().then(() => ui[name] && ui[name]()).catch(() => {}); },
+    async unlock(){ await init(); loadSfx(); if (st.music) startMusic(); },
+    play(name){ if (!st.ui) return; init().then(() => { loadSfx(); sfx(name); }).catch(() => {}); },
     async setMusic(on){ st.music = on; await init(); on ? startMusic() : stopMusic(); },
     setUi(on){ st.ui = on; },
     async setStyle(s){ st.style = s; if (timer){ stopMusic(); await new Promise(r => setTimeout(r, 1700)); if (st.music) startMusic(); } },
