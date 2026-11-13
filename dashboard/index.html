@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mia Dashboard</title>
+<meta name="theme-color" content="#050608">
+<meta name="description" content="La dashboard personale di Karim: meteo, calendario, notizie, conoscenza e collegamenti.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050608; --glass:rgba(20,24,33,.62); --glass-2:rgba(28,33,45,.7); --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
+  --ink:#eef1f7; --muted:#97a0b3; --faint:#5d6578; --blue:#2f7bff; --blue-2:#5b9bff; --green:#34d399; --orange:#f59e0b; --red:#f43f5e; --teal:#22d3ee; --violet:#a78bfa;
+  --r:22px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:Sora,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+a{color:inherit;text-decoration:none}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* sfere di luce sullo sfondo */
+.orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orbs i{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55}
+.orbs .o1{width:420px;height:420px;right:6%;top:-140px;background:radial-gradient(circle at 40% 40%,#f2b84b,#b8640f 60%,transparent 72%)}
+.orbs .o2{width:520px;height:520px;left:-200px;bottom:-160px;background:radial-gradient(circle,#1d4fd8,#0b2a7a 55%,transparent 72%)}
+.orbs .o3{width:360px;height:360px;right:-120px;bottom:-60px;background:radial-gradient(circle,#19c3d6,#0b6b80 55%,transparent 72%);opacity:.45}
+.orbs .o4{width:300px;height:300px;left:42%;bottom:-170px;background:radial-gradient(circle,#2fd47c,#0e6b3d 55%,transparent 72%);opacity:.35}
+
+.glass{background:linear-gradient(180deg,rgba(32,38,52,.55),rgba(14,17,24,.72));border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 20px 50px rgba(0,0,0,.35)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 16px;font-weight:500;font-size:13px}
+.pill.blue{background:var(--blue);color:#fff;box-shadow:0 6px 24px rgba(47,123,255,.45)}
+.pill.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.round{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:7px;background:rgba(52,211,153,.14);color:var(--green);font-weight:600}
+.tag.blue{background:rgba(47,123,255,.16);color:var(--blue-2)} .tag.orange{background:rgba(245,158,11,.16);color:#fbbf24}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);font-size:13px;transition:.15s}
+.chip.on{background:rgba(47,123,255,.2);border-color:var(--blue);color:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--line-2);font-size:13px;font-weight:500}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.input{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);outline:none}
+.input:focus{border-color:var(--blue)}
+.soon{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:rgba(47,123,255,.1);border:1px solid rgba(47,123,255,.3);font-size:13px;line-height:1.5;color:#c9d8ff}
+
+/* ================= PC ================= */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:250px 1fr;gap:22px;padding:22px;min-height:100vh}
+.side{position:sticky;top:22px;height:calc(100vh - 44px);display:flex;flex-direction:column;padding:16px 12px}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 6px 14px}
+.logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#3b8bff,#1747c9);box-shadow:0 6px 18px rgba(47,123,255,.5);font-weight:700}
+.brand b{display:block;font-size:15px} .brand small{font-size:11px;color:var(--muted)}
+.search{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--muted);margin-bottom:8px}
+.search input{flex:1;min-width:0;background:none;border:0;outline:none;font-size:13px}
+.search kbd{font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);font-family:inherit}
+.nav-h{font-size:10px;letter-spacing:.12em;color:var(--faint);font-weight:600;padding:14px 10px 6px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:11px;color:#c8cedb;font-size:13.5px;margin:1px 0}
+.nav a:hover{background:rgba(255,255,255,.05)}
+.nav a.on{background:linear-gradient(90deg,#2f7bff,#2563eb);color:#fff;box-shadow:0 6px 20px rgba(47,123,255,.35)}
+.nav a .n{margin-left:auto;font-size:10px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;background:rgba(47,123,255,.25);color:var(--blue-2)}
+.nav a.on .n{background:rgba(255,255,255,.25);color:#fff}
+.side .grow{flex:1}
+.me{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e8ecf5;color:#111;font-size:12px;font-weight:700}
+.me b{font-size:13px;display:block} .me small{font-size:11px;color:var(--muted)}
+
+.main{min-width:0;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:6px 4px 0}
+.top h1{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.sub{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-top:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.top .acts{display:flex;gap:10px;align-items:center;position:relative}
+.menu{position:absolute;right:0;top:46px;z-index:20;min-width:220px;padding:6px;display:none}
+.menu.open{display:block}
+.menu button{display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-align:left;font-size:13px}
+.menu button:hover{background:rgba(255,255,255,.06)}
+
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px}
+.c{padding:20px;min-width:0}
+.c h3{font-size:14px;font-weight:600}
+.c .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+.c .hd small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:400}
+.c .hd a,.c .hd button.lnk{font-size:12px;color:var(--blue-2)}
+.span8{grid-column:span 8}.span4{grid-column:span 4}.span6{grid-column:span 6}.span3{grid-column:span 3}.span12{grid-column:span 12}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line);margin:-20px -20px 18px}
+.stat{padding:18px 20px;border-right:1px solid var(--line);min-width:0}
+.stat:last-child{border-right:0}
+.stat .l{font-size:11.5px;color:var(--muted)}
+.stat .v{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:6px 0 8px;white-space:nowrap}
+.stat .s{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.seg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
+.seg button{padding:5px 12px;border-radius:999px;font-size:11.5px;color:var(--muted)}
+.seg button.on{background:rgba(255,255,255,.12);color:#fff}
+.chart{width:100%;height:240px;display:block}
+.chart text{fill:var(--faint);font-size:10.5px;font-family:Sora,sans-serif}
+.ring{position:relative;width:132px;height:132px;flex:none}
+.ring .lbl{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .lbl b{font-size:24px;font-weight:600;display:block}
+.ring .lbl small{font-size:11px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:9px 14px;font-size:12.5px;align-content:center}
+.kv span:nth-child(odd){color:var(--muted)} .kv span:nth-child(even){text-align:right;font-weight:500}
+.bars{display:flex;align-items:flex-end;gap:5px;height:70px;margin:14px 0}
+.bars i{flex:1;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,var(--blue-2),#1d4fd8);min-height:6px;opacity:.9}
+.bars i.now{background:linear-gradient(180deg,#fbbf24,#d97706)}
+.rows .r{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.rows .r:first-child{border-top:0}
+.rows .r .t{flex:1;min-width:0}
+.rows .r .t b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rows .r .t small{font-size:11.5px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.minical{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px}
+.minical .h{font-size:10.5px;color:var(--faint);padding-bottom:4px}
+.minical span{padding:7px 0;border-radius:9px}
+.minical span.x{color:var(--faint)}
+.minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
+.view{display:flex;flex-direction:column;gap:18px}
+.view .c,.view .soon{max-width:980px}
+
+/* ================= TELEFONO ================= */
+.phone,.sheet{display:none}
+@media (max-width:899px){
+  .app{display:none}
+  .phone{display:block;position:relative;z-index:1;min-height:100vh;padding:calc(var(--safe-t) + 18px) 20px calc(var(--safe-b) + 120px)}
+  .orbs .o1{width:300px;height:300px;right:-90px;top:-90px}
+  .orbs .o2{width:380px;height:380px;left:-180px;bottom:20%}
+  .ph-date{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
+  .ph-hello{font-size:13px;text-align:center;margin-top:2px}
+  .wid{margin:16px 0 22px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:24px}
+  .wid .big{font-size:44px;font-weight:300;letter-spacing:-.03em;line-height:1}
+  .wid .city{font-size:13px;font-weight:600}
+  .wid .desc{font-size:12px;color:var(--muted);margin-top:4px}
+  .wid .right{text-align:right;font-size:12px;color:var(--muted)}
+  .wid .emo{font-size:30px;line-height:1;margin-bottom:6px}
+  .apps{display:grid;grid-template-columns:repeat(4,1fr);gap:22px 10px}
+  .app-i{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;color:#e6e9f0;text-align:center;-webkit-tap-highlight-color:transparent}
+  .app-i .sq{position:relative;width:62px;height:62px;border-radius:16px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 8px 18px rgba(0,0,0,.35)}
+  .app-i .sq svg.i{width:28px;height:28px;stroke-width:2}
+  .app-i:active .sq{transform:scale(.92)}
+  .app-i .badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);font-size:11px;font-weight:600;display:grid;place-items:center;border:2px solid var(--bg)}
+  .cal-i{background:#fff!important;color:#111!important;display:flex!important;flex-direction:column;gap:0;align-items:center;justify-content:center}
+  .cal-i small{font-size:9px;font-weight:700;color:var(--red);letter-spacing:.04em}
+  .cal-i b{font-size:26px;font-weight:400;line-height:1}
+  .dock{position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + 10px);z-index:5;display:flex;justify-content:space-around;padding:12px 10px;border-radius:30px}
+  .dock .app-i span.lab{display:none}
+  .sheet{display:block;position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 40px)}
+  .sheet.open{transform:none}
+  .sheet .bar{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 0 14px;background:linear-gradient(var(--bg) 70%,transparent)}
+  .sheet .bar button{color:var(--blue-2);font-size:15px;display:flex;align-items:center;gap:2px;justify-self:start}
+  .sheet .bar h2{font-size:15px;font-weight:600}
+  .sheet .c{padding:16px}
+  .stats{grid-template-columns:1fr 1fr 1fr}
+  .stat{padding:14px 12px}.stat .v{font-size:22px}
+  .chart{height:170px}
+}
+@media (min-width:900px) and (max-width:1250px){
+  .span8,.span4,.span6{grid-column:span 12}.span3{grid-column:span 6}
+}
+.hours{display:flex;gap:14px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none}
+.hours::-webkit-scrollbar{display:none}
+.hours div{flex:none;text-align:center;font-size:12px;display:flex;flex-direction:column;gap:6px}
+.hours div b{font-weight:500}
+.days .r .rng{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);position:relative}
+.days .r .rng i{position:absolute;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,#5b9bff,#fbbf24)}
+.days .r .d{width:44px;font-size:13px}
+.days .r .e{width:26px;text-align:center}
+.days .r .mn,.days .r .mx{width:32px;font-size:12.5px;text-align:right}
+.days .r .mn{color:var(--muted)}
+.lnk-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.lnk-row:first-child{border-top:0}
+.lnk-row .t{flex:1;min-width:0}
+.lnk-row .t b{display:block;font-size:13px;font-weight:500}
+.lnk-row .t small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.form{display:grid;gap:10px}
+.form label{font-size:12px;color:var(--muted)}
+.results button{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;font-size:13px}
+.results button:hover{background:rgba(255,255,255,.06)}
+.steps{display:grid;gap:8px;font-size:13px;line-height:1.5;color:#cfd5e2;padding-left:18px}
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 100px);transform:translate(-50%,20px);opacity:0;z-index:60;padding:10px 16px;border-radius:12px;background:#1d2433;border:1px solid var(--line-2);font-size:13px;transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="orbs" aria-hidden="true"><i class="o1"></i><i class="o2"></i><i class="o3"></i><i class="o4"></i></div>
+
+<!-- ============ PC ============ -->
+<div class="app">
+  <aside class="side glass">
+    <div class="brand"><div class="logo">K</div><div><b>Mia Dashboard</b><small>Karim · personale</small></div></div>
+    <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
+    <nav class="nav" id="nav"></nav>
+    <div class="grow"></div>
+    <div class="me"><div class="av" id="me-av">K</div><div><b id="me-name">Karim</b><small>Dati salvati su questo dispositivo</small></div></div>
+  </aside>
+  <main class="main">
+    <header class="top">
+      <div><h1 id="hello">Buongiorno</h1><div class="sub"><span class="dot"></span><span id="sub"></span></div></div>
+      <div class="acts">
+        <button class="round" title="Cerca" onclick="document.getElementById('q').focus()"><svg class="i"><use href="#i-search"/></svg></button>
+        <button class="round" title="Promemoria" onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg></button>
+        <button class="pill blue" id="new-btn"><svg class="i"><use href="#i-plus"/></svg>Nuovo</button>
+        <div class="menu glass" id="new-menu">
+          <button onclick="go('collegamenti',{add:true})"><svg class="i"><use href="#i-link"/></svg>Nuovo collegamento</button>
+          <button onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg>Nuovo promemoria <span class="tag blue" style="margin-left:auto">fase 4</span></button>
+          <button onclick="go('impostazioni')"><svg class="i"><use href="#i-sliders"/></svg>Cambia città del meteo</button>
+        </div>
+      </div>
+    </header>
+    <section id="pc-body"></section>
+  </main>
+</div>
+
+<!-- ============ TELEFONO ============ -->
+<div class="phone">
+  <div class="ph-date" id="ph-date"></div>
+  <div class="ph-hello" id="ph-hello"></div>
+  <button class="wid glass" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
+  <div class="apps" id="ph-apps"></div>
+  <div class="dock glass" id="ph-dock"></div>
+</div>
+<div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- icone -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24"><path d="M4 5h13v14a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v10a2 2 0 0 1-2 2"/><path d="M8 9h5M8 13h5M8 17h3"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="13" r="2.6"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 8.3l2 2.8M16.2 7.6l-2.4 3.4M10.3 15l-2.8 2.6M14 14.9l2.4 1.8"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M9 2.5v1.4M9 14.1v1.4M2.5 9h1.4M3.9 3.9l1 1M13.1 4.9l1-1"/><path d="M17.5 20H9a4.5 4.5 0 1 1 3.9-6.8 4 4 0 0 1 4.6 6.8z"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/></symbol>
+  <symbol id="i-git" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-11.5 7.5"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M4 4 2 6M20 4l2 2"/></symbol>
+</svg>
+
+<script>
+"use strict";
+/* ---------------- dati e impostazioni (solo su questo dispositivo) ---------------- */
+const KEY = "mia-dashboard-v1";
+const DEF = {
+  name: "Karim",
+  city: { name: "Lugano", country: "Svizzera", lat: 46.0037, lon: 8.9511 },
+  news: { cats: ["politica", "economia", "ai", "tecnologia", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
+  links: [
+    { n: "Portale conoscenza", u: "../", i: "brain" },
+    { n: "karimvarini.com", u: "https://karimvarini.com", i: "globe" },
+    { n: "OmniRoute (solo sul PC)", u: "http://localhost:20128", i: "server" },
+    { n: "GitHub", u: "https://github.com/CyberGanna", i: "git" },
+  ],
+};
+let S = load();
+function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return structuredClone(DEF); } }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ico = (n, st = "") => `<svg class="i" style="${st}"><use href="#i-${n}"/></svg>`;
+const toast = t => { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2200); };
+
+const NEWS_CATS = [
+  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["tecnologia", "Tecnologia"],
+  ["hacker", "Attacchi hacker"], ["esteri", "Esteri e geopolitica"], ["clima", "COP31 e clima"], ["altro", "Altro"],
+];
+const COUNTRIES = [
+  ["mondo", "Tutto il mondo"], ["us", "USA"], ["it", "Italia"], ["ch", "Svizzera"], ["eu", "Unione Europea"], ["uk", "Regno Unito"],
+  ["de", "Germania"], ["es", "Spagna"], ["fr", "Francia"], ["ru", "Russia"], ["ua", "Ucraina"], ["cn", "Cina"], ["il", "Israele"],
+  ["me", "Medio Oriente"], ["in", "India"], ["jp", "Giappone"], ["br", "Brasile"], ["tr", "Turchia"],
+];
+
+/* ---------------- app (stesse sezioni su PC e telefono) ---------------- */
+const APPS = [
+  { id: "oggi", t: "Dashboard", i: "grid", g: "linear-gradient(135deg,#3b8bff,#1747c9)", pcOnly: true },
+  { id: "calendario", t: "Calendario", i: "cal", g: "#fff" },
+  { id: "notizie", t: "Notizie", i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)" },
+  { id: "conoscenza", t: "Conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)" },
+  { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)" },
+  { id: "promemoria", t: "Promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)" },
+  { id: "sveglie", t: "Sveglie", i: "alarm", g: "linear-gradient(135deg,#334155,#0f172a)" },
+  { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#34d399,#047857)" },
+  { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#94a3b8,#475569)" },
+];
+const NAV = [["OGGI", ["oggi", "calendario", "promemoria", "sveglie"]], ["INFORMAZIONE", ["notizie", "meteo", "conoscenza"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const appById = id => APPS.find(a => a.id === id);
+let cur = "oggi";
+const isPhone = () => matchMedia("(max-width:899px)").matches;
+
+function go(id, opt = {}){
+  $("#new-menu").classList.remove("open");
+  cur = id; renderStatic();
+  if (isPhone()){
+    if (id === "oggi") return closeSheet();
+    $("#sheet-t").textContent = appById(id).t;
+    $("#sheet-body").innerHTML = VIEWS[id](opt);
+    $("#sheet").classList.add("open"); $("#sheet").scrollTop = 0;
+    history.replaceState(null, "", "#" + id);
+    after(id, $("#sheet-body"), opt);
+  } else {
+    renderNav();
+    const body = $("#pc-body");
+    body.innerHTML = id === "oggi" ? DASH() : `<div class="view">${VIEWS[id](opt)}</div>`;
+    history.replaceState(null, "", id === "oggi" ? location.pathname : "#" + id);
+    after(id, body, opt);
+    window.scrollTo(0, 0);
+  }
+}
+function closeSheet(){ $("#sheet").classList.remove("open"); cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
+
+function renderNav(){
+  $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
+    const n = id === "conoscenza" && notes.length ? `<span class="n">${notes.length}</span>` : id === "collegamenti" ? `<span class="n">${S.links.length}</span>` : "";
+    return `<a href="#${id}" class="${cur === id ? "on" : ""}" onclick="event.preventDefault();go('${id}')">${ico(a.i)}${a.t}${n}</a>`; }).join("")).join("");
+}
+
+/* ---------------- tempo ---------------- */
+const GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const dateLong = d => `${cap(GIORNI[d.getDay()])} ${d.getDate()} ${MESI[d.getMonth()]}`;
+const hhmm = d => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+const greet = () => { const h = new Date().getHours(); return h < 5 ? "Buonanotte" : h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera"; };
+function weekNo(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y) / 864e5 + 1) / 7); }
+
+/* ---------------- meteo (Open-Meteo, gratis, senza chiave) ---------------- */
+const WMO = c => c === 0 ? ["☀️", "Sereno"] : c <= 2 ? ["🌤️", "Poco nuvoloso"] : c === 3 ? ["☁️", "Nuvoloso"] : c <= 48 ? ["🌫️", "Nebbia"] : c <= 57 ? ["🌦️", "Pioviggine"] : c <= 67 ? ["🌧️", "Pioggia"] : c <= 77 ? ["🌨️", "Neve"] : c <= 82 ? ["🌧️", "Rovesci"] : c <= 86 ? ["🌨️", "Rovesci di neve"] : ["⛈️", "Temporale"];
+let W = null; try { W = JSON.parse(localStorage.getItem(KEY + "-meteo") || "null"); } catch {}
+async function loadWeather(){
+  const { lat, lon } = S.city;
+  const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=7`;
+  try { const r = await fetch(u); if (!r.ok) throw 0; W = await r.json(); W._city = S.city.name; W._at = Date.now(); localStorage.setItem(KEY + "-meteo", JSON.stringify(W)); }
+  catch { if (!W) return; }
+  refresh();
+}
+const wOk = () => W && W._city === S.city.name;
+function nextHours(n = 24){
+  if (!wOk()) return [];
+  const now = Date.now(), h = W.hourly, out = [];
+  for (let i = 0; i < h.time.length && out.length < n; i++){ const t = new Date(h.time[i]); if (t.getTime() + 36e5 > now) out.push({ t, temp: h.temperature_2m[i], code: h.weather_code[i], rain: h.precipitation_probability[i] }); }
+  return out;
+}
+
+/* ---------------- conoscenza: legge le note del portale (stesso sito, sola lettura) ---------------- */
+let notes = [];
+async function loadNotes(){
+  try {
+    if (indexedDB.databases){ const list = await indexedDB.databases(); if (!list.some(d => d.name === "portale-conoscenza")) return; }
+    const db = await new Promise((res, rej) => { const r = indexedDB.open("portale-conoscenza"); r.onupgradeneeded = () => r.transaction.abort(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    if (!db.objectStoreNames.contains("docs")){ db.close(); return; }
+    const all = await new Promise((res, rej) => { const out = [], rq = db.transaction("docs").objectStore("docs").openCursor(); rq.onsuccess = () => { const c = rq.result; if (c){ const k = String(c.key); if (/^notes\/[^/]+$/.test(k) && c.value) out.push(c.value); c.continue(); } else res(out); }; rq.onerror = () => rej(rq.error); });
+    db.close();
+    notes = all.filter(n => n.titolo).sort((a, b) => ts(b.createdAt) - ts(a.createdAt));
+    refresh();
+  } catch {}
+}
+const ts = v => typeof v === "number" ? v : v?.seconds ? v.seconds * 1000 : Date.parse(v) || 0;
+
+/* ---------------- grafico ad area morbido ---------------- */
+function areaChart(pts, { w = 760, h = 240, unit = "°" } = {}){
+  if (pts.length < 2) return `<div class="muted" style="padding:40px 0;text-align:center">Carico il meteo…</div>`;
+  const pad = { l: 34, r: 10, t: 14, b: 26 };
+  const vals = pts.map(p => p.v), lo = Math.floor(Math.min(...vals) - 1), hi = Math.ceil(Math.max(...vals) + 1);
+  const X = i => pad.l + i / (pts.length - 1) * (w - pad.l - pad.r), Y = v => pad.t + (hi - v) / (hi - lo || 1) * (h - pad.t - pad.b);
+  const P = pts.map((p, i) => [X(i), Y(p.v)]);
+  let d = `M${P[0][0]},${P[0][1]}`;
+  for (let i = 0; i < P.length - 1; i++){ const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+    d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`; }
+  const steps = 4, grid = Array.from({ length: steps + 1 }, (_, i) => lo + (hi - lo) * i / steps);
+  const every = Math.ceil(pts.length / 7);
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2f7bff" stop-opacity=".45"/><stop offset="1" stop-color="#2f7bff" stop-opacity="0"/></linearGradient>
+    <filter id="gl"><feGaussianBlur stdDeviation="4"/></filter></defs>
+    ${grid.map(v => `<line x1="${pad.l}" x2="${w - pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.06)"/><text x="4" y="${Y(v) + 4}">${Math.round(v)}${unit}</text>`).join("")}
+    <path d="${d} L${X(P.length - 1)},${h - pad.b} L${pad.l},${h - pad.b}Z" fill="url(#ga)"/>
+    <path d="${d}" fill="none" stroke="#5b9bff" stroke-width="5" opacity=".5" filter="url(#gl)"/>
+    <path d="${d}" fill="none" stroke="#5b9bff" stroke-width="2.2"/>
+    <circle cx="${P[0][0]}" cy="${P[0][1]}" r="4.5" fill="#fbbf24" stroke="#050608" stroke-width="2"/>
+    ${pts.map((p, i) => i % every === 0 ? `<text x="${X(i)}" y="${h - 6}" text-anchor="middle">${p.l}</text>` : "").join("")}
+  </svg>`;
+}
+
+/* ---------------- DASHBOARD PC ---------------- */
+let chartMode = "24h";
+function DASH(){
+  const now = new Date(), c = wOk() ? W.current : null, dly = wOk() ? W.daily : null;
+  const [emo, desc] = c ? WMO(c.weather_code) : ["", "…"];
+  const start = new Date(now.getFullYear(), 0, 1), end = new Date(now.getFullYear() + 1, 0, 1);
+  const pct = (now - start) / (end - start), left = Math.ceil((end - now) / 864e5);
+  const R = 54, C = 2 * Math.PI * R;
+  const hrs = nextHours(24);
+  const dayBars = dly ? dly.temperature_2m_max : [];
+  const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
+  return `<div class="grid">
+    <div class="glass c span8">
+      <div class="stats">
+        <div class="stat"><div class="l">Adesso · ${esc(S.city.name)}</div><div class="v" id="clock">${hhmm(now)}</div><div class="s"><span class="tag blue">Settimana ${weekNo(now)}</span>${dateLong(now)}</div></div>
+        <div class="stat"><div class="l">Meteo adesso</div><div class="v">${c ? Math.round(c.temperature_2m) + "°" : "–"} <span style="font-size:22px">${emo}</span></div><div class="s"><span class="tag">${desc}</span>${c ? "percepiti " + Math.round(c.apparent_temperature) + "°" : ""}</div></div>
+        <div class="stat"><div class="l">Oggi</div><div class="v">${dly ? Math.round(dly.temperature_2m_min[0]) + "° / " + Math.round(dly.temperature_2m_max[0]) + "°" : "–"}</div><div class="s"><span class="tag orange">pioggia ${dly ? dly.precipitation_probability_max[0] ?? 0 : "–"}%</span>${c ? "vento " + Math.round(c.wind_speed_10m) + " km/h" : ""}</div></div>
+      </div>
+      <div class="hd"><div><h3>Temperatura</h3><small>${chartMode === "24h" ? "Prossime 24 ore" : "Prossimi 7 giorni, massime"} · ${esc(S.city.name)}</small></div>
+        <div class="seg"><button class="${chartMode === "24h" ? "on" : ""}" onclick="chartMode='24h';refresh()">24 ore</button><button class="${chartMode === "7g" ? "on" : ""}" onclick="chartMode='7g';refresh()">7 giorni</button></div></div>
+      ${chartMode === "24h" ? areaChart(hrs.map(p => ({ v: p.temp, l: p.t.getHours() + ":00" }))) : areaChart(dly ? dly.time.map((t, i) => ({ v: dly.temperature_2m_max[i], l: cap(GIORNI[new Date(t).getDay()].slice(0, 3)) })) : [])}
+    </div>
+    <div class="span4" style="display:flex;flex-direction:column;gap:20px">
+      <div class="glass c">
+        <div class="hd"><div><h3>Anno ${now.getFullYear()}</h3><small>${left} giorni alla fine</small></div><span class="muted">${ico("cal")}</span></div>
+        <div style="display:flex;gap:18px;align-items:center">
+          <div class="ring"><svg viewBox="0 0 132 132" width="132" height="132"><circle cx="66" cy="66" r="${R}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/><circle cx="66" cy="66" r="${R}" fill="none" stroke="#2f7bff" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}" transform="rotate(-90 66 66)" style="filter:drop-shadow(0 0 6px #2f7bff)"/></svg>
+            <div class="lbl"><div><b>${Math.round(pct * 100)}%</b><small>dell'anno</small></div></div></div>
+          <div class="kv" style="flex:1"><span>Mese</span><span>${cap(MESI[now.getMonth()])}</span><span>Settimana</span><span>${weekNo(now)} di 52</span><span>Alba</span><span>${dly ? dly.sunrise[0].slice(11) : "–"}</span><span>Tramonto</span><span>${dly ? dly.sunset[0].slice(11) : "–"}</span></div>
+        </div>
+      </div>
+      <div class="glass c" style="flex:1">
+        <div class="hd"><div><h3><span class="dot" style="display:inline-block;margin-right:6px"></span>Prossimi 7 giorni</h3><small>Massime giorno per giorno</small></div><button class="lnk" onclick="go('meteo')">Meteo</button></div>
+        <div class="bars">${dayBars.map((v, i) => `<i class="${i === 0 ? "now" : ""}" style="height:${12 + (v - bmin) / ((bmax - bmin) || 1) * 88}%" title="${Math.round(v)}°"></i>`).join("") || '<span class="muted">Carico…</span>'}</div>
+        <div class="kv">${dly ? dly.time.slice(1, 4).map((t, i) => `<span>${cap(GIORNI[new Date(t).getDay()])}</span><span>${WMO(dly.weather_code[i + 1])[0]} ${Math.round(dly.temperature_2m_min[i + 1])}° / ${Math.round(dly.temperature_2m_max[i + 1])}°</span>`).join("") : ""}</div>
+      </div>
+    </div>
+    <div class="glass c span4">
+      <div class="hd"><div><h3>Notizie</h3><small>${S.news.cats.length} categorie · ${S.news.countries.includes("mondo") ? "tutto il mondo" : S.news.countries.length + " paesi"}</small></div><button class="lnk" onclick="go('notizie')">Scegli</button></div>
+      <div class="chips" style="margin-bottom:14px">${NEWS_CATS.filter(([k]) => S.news.cats.includes(k)).map(([, t]) => `<span class="chip">${t}</span>`).join("")}</div>
+      <div class="soon">${ico("news")}<span>Le notizie arrivano nella <b>fase 3</b>: le più importanti del momento, divise per categoria e paese, con riassunto AI.</span></div>
+    </div>
+    <div class="glass c span4">
+      <div class="hd"><div><h3>La mia conoscenza</h3><small>${notes.length ? notes.length + " note nel portale" : "Dal portale conoscenza"}</small></div><a href="../">Apri</a></div>
+      <div class="rows">${notes.length ? notes.slice(0, 4).map(n => `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>${esc(n.titolo)}</b><small>${esc(n.categoria || "")}${n.sintesi ? " · " + esc(n.sintesi) : ""}</small></div></div>`).join("")
+        : `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>Nessuna nota su questo dispositivo</b><small>Apri il portale da qui e le tue note compaiono in questo riquadro</small></div></div>`}</div>
+    </div>
+    <div class="glass c span4">
+      <div class="hd"><div><h3>Promemoria e sveglie</h3><small>Notifiche push su iPhone e PC</small></div><span class="tag blue">fase 4</span></div>
+      <div class="rows">
+        <div class="r"><div class="ic" style="color:#fb923c">${ico("bell")}</div><div class="t"><b>Promemoria con notifica</b><small>Ti arriva la push all'ora giusta, anche a schermo spento</small></div></div>
+        <div class="r"><div class="ic">${ico("alarm")}</div><div class="t"><b>Sveglia vera sull'iPhone</b><small>Un tocco lancia il Comando Rapido che la crea nell'Orologio</small></div></div>
+        <div class="r"><div class="ic" style="color:var(--blue-2)">${ico("cal")}</div><div class="t"><b>Google Calendar</b><small>Leggi e aggiungi eventi, li vedi anche sull'iPhone</small></div></div>
+      </div>
+    </div>
+    <div class="glass c span6">
+      <div class="hd"><div><h3>Calendario</h3><small>${cap(MESI[now.getMonth()])} ${now.getFullYear()}</small></div><button class="lnk" onclick="go('calendario')">Apri</button></div>
+      ${miniCal(now.getFullYear(), now.getMonth())}
+    </div>
+    <div class="glass c span6">
+      <div class="hd"><div><h3>Collegamenti rapidi</h3><small>Le altre tue cose</small></div><button class="lnk" onclick="go('collegamenti',{add:true})">+ Aggiungi</button></div>
+      <div class="rows">${linkRows(5)}</div>
+    </div>
+  </div>`;
+}
+function linkRows(max = 99){
+  return S.links.slice(0, max).map(l => `<a class="r" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><div class="ic" style="color:var(--green)">${ico(l.i || "link")}</div><div class="t"><b>${esc(l.n)}</b><small>${esc(l.u.replace(/^https?:\/\//, ""))}</small></div><span class="faint">${ico("ext", "width:15px;height:15px")}</span></a>`).join("") || `<div class="muted">Nessun collegamento.</div>`;
+}
+function miniCal(y, m){
+  const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), off = (first.getDay() + 6) % 7, prev = new Date(y, m, 0).getDate(), today = new Date();
+  let cells = ["L", "M", "M", "G", "V", "S", "D"].map(d => `<div class="h">${d}</div>`).join("");
+  for (let i = 0; i < off; i++) cells += `<span class="x">${prev - off + 1 + i}</span>`;
+  for (let d = 1; d <= days; d++){ const t = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d; cells += `<span class="${t ? "today" : ""}">${d}</span>`; }
+  const tail = (7 - (off + days) % 7) % 7; for (let i = 1; i <= tail; i++) cells += `<span class="x">${i}</span>`;
+  return `<div class="minical">${cells}</div>`;
+}
+
+/* ---------------- SEZIONI (PC e telefono) ---------------- */
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+const head = (t, s) => isPhone() ? "" : `<div><h1 style="font-size:20px;font-weight:600">${t}</h1>${s ? `<div class="muted" style="font-size:12.5px;margin-top:4px">${s}</div>` : ""}</div>`;
+const VIEWS = {
+  meteo(){
+    const c = wOk() ? W.current : null, d = wOk() ? W.daily : null, hrs = nextHours(24);
+    if (!c) return head("Meteo") + `<div class="glass c muted">Carico il meteo di ${esc(S.city.name)}…</div>`;
+    const [emo, desc] = WMO(c.weather_code), lo = Math.min(...d.temperature_2m_min), hi = Math.max(...d.temperature_2m_max);
+    return head("Meteo", "Dati Open-Meteo, aggiornati a ogni apertura") + `
+    <div class="glass c" style="text-align:center;padding:26px 16px">
+      <div style="font-size:15px;font-weight:600">${esc(S.city.name)}</div>
+      <div style="font-size:64px;font-weight:200;letter-spacing:-.04em;line-height:1.1">${Math.round(c.temperature_2m)}°</div>
+      <div>${emo} ${desc}</div>
+      <div class="muted" style="font-size:12.5px;margin-top:6px">Max ${Math.round(d.temperature_2m_max[0])}° · Min ${Math.round(d.temperature_2m_min[0])}° · Umidità ${c.relative_humidity_2m}% · Vento ${Math.round(c.wind_speed_10m)} km/h</div>
+      <button class="btn" style="margin-top:14px" onclick="go('impostazioni')">${ico("pin", "width:15px;height:15px")}Cambia città</button>
+    </div>
+    <div class="glass c"><div class="hd"><div><h3>Prossime 24 ore</h3></div></div>
+      <div class="hours">${hrs.map((h, i) => `<div><span class="muted">${i === 0 ? "Ora" : h.t.getHours()}</span><span style="font-size:20px">${WMO(h.code)[0]}</span><b>${Math.round(h.temp)}°</b>${h.rain ? `<span style="color:#7dd3fc;font-size:10.5px">${h.rain}%</span>` : `<span style="font-size:10.5px">&nbsp;</span>`}</div>`).join("")}</div></div>
+    <div class="glass c"><div class="hd"><div><h3>7 giorni</h3></div></div>
+      <div class="rows days">${d.time.map((t, i) => { const mn = d.temperature_2m_min[i], mx = d.temperature_2m_max[i];
+        return `<div class="r"><span class="d">${i === 0 ? "Oggi" : cap(GIORNI[new Date(t).getDay()].slice(0, 3))}</span><span class="e">${WMO(d.weather_code[i])[0]}</span><span class="mn">${Math.round(mn)}°</span><span class="rng"><i style="left:${(mn - lo) / (hi - lo || 1) * 100}%;right:${100 - (mx - lo) / (hi - lo || 1) * 100}%"></i></span><span class="mx">${Math.round(mx)}°</span></div>`; }).join("")}</div></div>`;
+  },
+  calendario(){
+    return head("Calendario", "Il collegamento a Google Calendar arriva nella fase 4") + `
+    <div class="glass c">
+      <div class="hd" style="align-items:center"><button class="round" onclick="calM--;if(calM<0){calM=11;calY--}reView()">${ico("back")}</button>
+        <h3 style="font-size:16px">${cap(MESI[calM])} ${calY}</h3>
+        <button class="round" onclick="calM++;if(calM>11){calM=0;calY++}reView()" style="transform:scaleX(-1)">${ico("back")}</button></div>
+      ${miniCal(calY, calM)}
+      <div style="text-align:center;margin-top:12px"><button class="btn" onclick="calY=new Date().getFullYear();calM=new Date().getMonth();reView()">Oggi</button></div>
+    </div>
+    <div class="soon">${ico("cal")}<span>Nella fase 4 colleghiamo il tuo Google Calendar: vedrai qui gli impegni e potrai aggiungerne di nuovi. Lo stesso calendario si vede anche nell'app Calendario dell'iPhone.</span></div>`;
+  },
+  notizie(){
+    const all = S.news.countries.includes("mondo");
+    return head("Notizie", "Scegli cosa vuoi vedere: la scelta resta salvata") + `
+    <div class="glass c"><div class="hd"><div><h3>Categorie</h3><small>Tocca per attivare o togliere</small></div></div>
+      <div class="chips">${NEWS_CATS.map(([k, t]) => `<button class="chip ${S.news.cats.includes(k) ? "on" : ""}" onclick="tog('cats','${k}')">${t}</button>`).join("")}</div></div>
+    <div class="glass c"><div class="hd"><div><h3>Paesi</h3><small>${all ? "Tutto il mondo" : S.news.countries.length + " selezionati"}</small></div></div>
+      <div class="chips">${COUNTRIES.map(([k, t]) => `<button class="chip ${S.news.countries.includes(k) ? "on" : ""}" onclick="tog('countries','${k}')">${t}</button>`).join("")}</div></div>
+    <div class="soon">${ico("news")}<span>Le notizie arrivano nella <b>fase 3</b>. Ogni ora un aggiornatore gratuito raccoglie i titoli di ANSA, Il Post, Il Sole 24 Ore, Reuters, BBC, AP e altre testate, mette in cima quelle riprese da più giornali e te le mostra con queste scelte. Con un tocco l'AI te le riassume in 3 righe.</span></div>`;
+  },
+  conoscenza(){
+    return head("Conoscenza", "Le note del tuo portale") + `
+    <div class="glass c" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div class="ic" style="width:48px;height:48px;color:var(--violet)">${ico("brain", "width:24px;height:24px")}</div>
+      <div style="flex:1;min-width:160px"><h3>Portale conoscenza</h3><div class="muted" style="font-size:12.5px;margin-top:3px">${notes.length ? notes.length + " note su questo dispositivo" : "Nessuna nota letta su questo dispositivo"}</div></div>
+      <a class="btn blue" href="../">Apri il portale</a>
+    </div>
+    <div class="glass c"><div class="hd"><div><h3>Ultime note</h3></div></div><div class="rows">${notes.length ? notes.slice(0, 12).map(n => `<div class="r"><div class="t"><b>${esc(n.titolo)}</b><small>${esc(n.categoria || "")}${n.sintesi ? " · " + esc(n.sintesi) : ""}</small></div></div>`).join("") : `<div class="muted" style="font-size:13px;line-height:1.5">Le note si vedono qui quando il portale è stato aperto su questo dispositivo. Sull'iPhone, aprilo dall'icona della dashboard (non da Safari), così le note restano nella stessa app.</div>`}</div></div>`;
+  },
+  promemoria(){
+    return head("Promemoria") + `
+    <div class="soon">${ico("bell")}<span><b>Fase 4.</b> Qui scrivi un promemoria con data e ora, e ti arriva la notifica push sull'iPhone e sul PC, anche con l'app chiusa. Per farlo serve aver aggiunto la dashboard alla schermata Home (vedi Impostazioni).</span></div>`;
+  },
+  sveglie(){
+    return head("Sveglie") + `
+    <div class="soon">${ico("alarm")}<span><b>Fase 4.</b> Una web app non può suonare come la sveglia dell'iPhone. Qui imposti l'ora e un tocco lancia un Comando Rapido che crea la sveglia vera nell'app Orologio. Il Comando Rapido te lo preparo io, tu lo installi una volta.</span></div>`;
+  },
+  collegamenti(){
+    return head("Collegamenti", "Le altre tue app e i tuoi siti") + `
+    <div class="glass c"><div class="rows">${S.links.map((l, i) => `<div class="lnk-row"><div class="ic" style="color:var(--green)">${ico(l.i || "link")}</div><a class="t" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><b>${esc(l.n)}</b><small>${esc(l.u)}</small></a><button class="round" title="Togli" onclick="delLink(${i})">${ico("trash", "width:15px;height:15px")}</button></div>`).join("") || '<div class="muted">Nessun collegamento.</div>'}</div></div>
+    <div class="glass c"><div class="hd"><div><h3>Aggiungi</h3></div></div>
+      <form class="form" onsubmit="event.preventDefault();addLink(this)">
+        <label>Nome<input class="input" name="n" id="ln-n" required placeholder="Es. Il mio bot di trading"></label>
+        <label>Indirizzo<input class="input" name="u" required placeholder="https://…" inputmode="url"></label>
+        <button class="btn blue">${ico("plus", "width:15px;height:15px")}Aggiungi</button>
+      </form></div>`;
+  },
+  impostazioni(){
+    return head("Impostazioni") + `
+    <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
+      <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Karim';save();renderStatic();toast('Salvato')"></div>
+    <div class="glass c"><div class="hd"><div><h3>Città del meteo</h3><small>Ora: ${esc(S.city.name)}${S.city.country ? ", " + esc(S.city.country) : ""}</small></div></div>
+      <div class="form"><input class="input" id="city-q" placeholder="Cerca una città…" oninput="findCity(this.value)"><div class="results" id="city-r"></div>
+      <button class="btn" onclick="useGeo()">${ico("pin", "width:15px;height:15px")}Usa la mia posizione</button></div></div>
+    <div class="glass c"><div class="hd"><div><h3>Installa come app</h3><small>Così diventa un'icona e può mandarti notifiche</small></div></div>
+      <b style="font-size:13px">iPhone</b>
+      <ol class="steps" style="margin:8px 0 14px"><li>Apri questa pagina in <b>Safari</b>.</li><li>Tocca il tasto <b>Condividi</b> (il quadrato con la freccia).</li><li>Scegli <b>Aggiungi alla schermata Home</b>, poi <b>Aggiungi</b>.</li></ol>
+      <b style="font-size:13px">PC Windows</b>
+      <ol class="steps" style="margin-top:8px"><li>Apri questa pagina in <b>Chrome</b> o <b>Edge</b>.</li><li>Clicca l'icona <b>Installa</b> a destra nella barra dell'indirizzo.</li><li>La trovi nel menu Start e puoi fissarla sulla barra delle applicazioni.</li></ol>
+      ${installBtn ? `<button class="btn blue" style="margin-top:14px" onclick="doInstall()">Installa adesso</button>` : ""}</div>
+    <div class="muted" style="font-size:11.5px;text-align:center">Mia Dashboard · fase 1 · i dati restano su questo dispositivo</div>`;
+  },
+};
+function reView(){ go(cur); }
+function tog(field, k){
+  let a = S.news[field];
+  if (field === "countries"){ if (k === "mondo") a = ["mondo"]; else { a = a.filter(x => x !== "mondo"); a = a.includes(k) ? a.filter(x => x !== k) : [...a, k]; if (!a.length) a = ["mondo"]; } }
+  else a = a.includes(k) ? a.filter(x => x !== k) : [...a, k];
+  S.news[field] = a; save(); reView();
+}
+function addLink(f){ let u = f.u.value.trim(); if (!/^(https?:|\.\.?\/)/.test(u)) u = "https://" + u; S.links.push({ n: f.n.value.trim(), u, i: "link" }); save(); toast("Collegamento aggiunto"); go("collegamenti"); }
+function delLink(i){ S.links.splice(i, 1); save(); go("collegamenti"); }
+let cityT;
+function findCity(q){
+  clearTimeout(cityT); const box = $("#city-r"); if (q.trim().length < 2){ box.innerHTML = ""; return; }
+  cityT = setTimeout(async () => {
+    try { const r = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=it`)).json();
+      box.innerHTML = (r.results || []).map(c => `<button onclick='setCity(${JSON.stringify({ name: c.name, country: [c.admin1, c.country].filter(Boolean).join(", "), lat: c.latitude, lon: c.longitude }).replace(/'/g, "&#39;")})'><b>${esc(c.name)}</b> <span class="muted">${esc([c.admin1, c.country].filter(Boolean).join(", "))}</span></button>`).join("") || '<div class="muted" style="padding:8px">Nessuna città trovata</div>';
+    } catch { box.innerHTML = '<div class="muted" style="padding:8px">Serve la connessione</div>'; }
+  }, 300);
+}
+function setCity(c){ S.city = c; save(); W = null; toast("Città: " + c.name); loadWeather(); reView(); }
+function useGeo(){
+  if (!navigator.geolocation) return toast("Posizione non disponibile");
+  navigator.geolocation.getCurrentPosition(p => setCity({ name: "La mia posizione", country: "", lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => toast("Permesso posizione negato"));
+}
+function after(id, root, opt){ if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
+
+/* ---------------- TELEFONO: home con griglia di icone ---------------- */
+function appIcon(a, withLab = true){
+  const now = new Date();
+  const inner = a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : ico(a.i);
+  return `<button class="app-i" onclick="go('${a.id}')"><span class="sq ${a.id === "calendario" ? "cal-i" : ""}" style="background:${a.g}">${inner}</span>${withLab ? `<span class="lab">${a.t}</span>` : ""}</button>`;
+}
+function renderPhone(){
+  const now = new Date();
+  $("#ph-date").textContent = dateLong(now);
+  $("#ph-hello").textContent = `${greet()}, ${S.name}`;
+  const c = wOk() ? W.current : null, d = wOk() ? W.daily : null;
+  $("#ph-wid").innerHTML = c ? `<div><div class="city">${esc(S.city.name)}</div><div class="big">${Math.round(c.temperature_2m)}°</div><div class="desc">${WMO(c.weather_code)[1]}</div></div><div class="right"><div class="emo">${WMO(c.weather_code)[0]}</div>Max ${Math.round(d.temperature_2m_max[0])}° Min ${Math.round(d.temperature_2m_min[0])}°<br>Pioggia ${d.precipitation_probability_max[0] ?? 0}%</div>`
+    : `<div><div class="city">${esc(S.city.name)}</div><div class="desc">Carico il meteo…</div></div>`;
+  const list = APPS.filter(a => !a.pcOnly);
+  const links = S.links.filter(l => /^https?:\/\/(?!localhost)/.test(l.u)).slice(0, 8);
+  $("#ph-apps").innerHTML = list.map(a => appIcon(a)).join("") + links.map(l => `<a class="app-i" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><span class="sq" style="background:linear-gradient(135deg,#1f2937,#0b1220);border:1px solid var(--line-2)">${ico(l.i || "link")}</span><span class="lab">${esc(l.n.length > 12 ? l.n.slice(0, 11) + "…" : l.n)}</span></a>`).join("");
+  $("#ph-dock").innerHTML = ["notizie", "calendario", "conoscenza", "meteo"].map(id => appIcon(appById(id), false)).join("");
+}
+
+/* ---------------- avvio ---------------- */
+function renderStatic(){
+  const now = new Date();
+  $("#hello").textContent = `${greet()}, ${S.name}`;
+  $("#sub").textContent = `${dateLong(now)} · ${cur === "oggi" ? "Dashboard" : appById(cur).t}`;
+  $("#me-name").textContent = S.name; $("#me-av").textContent = S.name.slice(0, 2).toUpperCase();
+}
+function refresh(){
+  renderStatic();
+  if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open")) { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
+  else { renderNav(); $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
+}
+$("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
+document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); $("#q").focus(); } if (e.key === "Escape" && isPhone()) closeSheet(); });
+$("#q").addEventListener("keydown", e => { if (e.key !== "Enter") return; const v = e.target.value.trim().toLowerCase(); if (!v) return;
+  const a = APPS.find(x => x.t.toLowerCase().includes(v)); if (a) { e.target.value = ""; return go(a.id); }
+  const l = S.links.find(x => x.n.toLowerCase().includes(v)); if (l) { e.target.value = ""; return window.open(l.u, "_blank"); }
+  toast("Nessun risultato per “" + e.target.value + "”"); });
+matchMedia("(max-width:899px)").addEventListener("change", () => { const id = cur; $("#sheet").classList.remove("open"); refresh(); if (id !== "oggi") go(id); });
+setInterval(() => { const el = $("#clock"); if (el) el.textContent = hhmm(new Date()); }, 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && (!W || Date.now() - (W._at || 0) > 30 * 6e4)) loadWeather(); });
+
+let installBtn = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installBtn = e; });
+async function doInstall(){ if (!installBtn) return; installBtn.prompt(); await installBtn.userChoice; installBtn = null; reView(); }
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+const start = (location.hash || "").slice(1);
+refresh();
+if (start && appById(start)) go(start);
+loadWeather(); loadNotes();
+</script>
+</body>
+</html>
