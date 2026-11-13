@@ -605,7 +605,8 @@ const VIEWS = {
       <b style="font-size:13px">PC Windows</b>
       <ol class="steps" style="margin-top:8px"><li>Apri questa pagina in <b>Chrome</b> o <b>Edge</b>.</li><li>Clicca l'icona <b>Installa</b> a destra nella barra dell'indirizzo.</li><li>La trovi nel menu Start e puoi fissarla sulla barra delle applicazioni.</li></ol>
       ${installBtn ? `<button class="btn blue" style="margin-top:14px" onclick="doInstall()">Installa adesso</button>` : ""}</div>
-    <div class="muted" style="font-size:11.5px;text-align:center">Mia Dashboard · fase 3 · i dati restano su questo dispositivo</div>`;
+    <div style="text-align:center"><button class="btn" onclick="checkAppUpdate(true)">Controlla aggiornamenti</button></div>
+    <div class="muted" style="font-size:11.5px;text-align:center">Mia Dashboard · versione ${APP_V} · i dati restano su questo dispositivo</div>`;
   },
 };
 function reView(){ go(cur); }
@@ -761,7 +762,31 @@ document.addEventListener("pointerdown", e => {
 }, { capture: true });
 document.addEventListener("visibilitychange", () => document.hidden ? Sound.pause() : Sound.resume());
 paintMusic();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+/* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
+   Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
+const APP_V = "9";
+let swReg = null, bootAt = Date.now();
+if ("serviceWorker" in navigator){
+  const hadCtl = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => { swReg = r; r.update().catch(() => {}); }).catch(() => {});
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadCtl || reloading) return; reloading = true; location.reload(); });
+}
+async function checkAppUpdate(manual){
+  try {
+    const r = await fetch("version.txt", { cache: "no-store" }); const v = (await r.text()).trim();
+    if (v && v !== APP_V){
+      // al massimo un ricaricamento ogni 5 minuti per la stessa versione, per non entrare in un giro infinito
+      let last = 0; try { last = +localStorage.getItem(KEY + "-upd-" + v) || 0; } catch {}
+      if (!manual && Date.now() - last < 5 * 6e4) return;
+      try { localStorage.setItem(KEY + "-upd-" + v, Date.now()); } catch {}
+      if (manual) toast("Aggiorno l'app…"); swReg && await swReg.update().catch(() => {}); setTimeout(() => location.reload(), 600); return;
+    }
+    if (manual) toast("Hai già l'ultima versione");
+  } catch { if (manual) toast("Nessuna connessione"); }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkAppUpdate(false); });
+setTimeout(() => checkAppUpdate(false), 3000);
 
 const start = (location.hash || "").slice(1);
 refresh();
