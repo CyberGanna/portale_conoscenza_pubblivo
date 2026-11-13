@@ -6,7 +6,11 @@ import { writeFile, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const OUT = fileURLToPath(new URL("./news.json", import.meta.url));
-const MAX_AGE_H = 48;
+const RAW = fileURLToPath(new URL("./raw.json", import.meta.url));
+const DAYS = 3;          // memoria: oggi, ieri, l'altro ieri. Il resto viene cancellato
+const PER_DAY = 350;     // notizie tenute per ogni giorno
+const TZ = "Europe/Zurich";
+const dayOf = ts => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(ts);
 
 const gn = (q, lang = "en") => lang === "it"
   ? `https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:1d")}&hl=it&gl=IT&ceid=IT:it`
@@ -111,7 +115,7 @@ export const CAT_RX = {
   economia: R(String.raw`\b(econom\w*|financ\w*|finanz\w*|market\w*|mercat\w+|borsa|borse|stock\w*|shares|azion\w+|Wall Street|Nasdaq|Dow Jones|S&P|FTSE|Ftse Mib|Dax|bond\w*|BTP|spread|inflation|inflazione|interest rate\w*|tass\w di interesse|tassi|Fed|Federal Reserve|BCE|ECB|central bank|banca centrale|Bank of England|GDP|PIL|recession\w*|recessione|tariff\w*|dazi\w*|trade war|earnings|trimestral\w+|utili|bilancio|IPO|merger|acquisition|acquisizione|fusione|bitcoin|crypto\w*|criptovalut\w+|oil price\w*|petrolio|gas price\w*|euro|dollar\w*|dollaro|yen|budget|manovra|tasse|tax\w*|debt|debito|jobs report|disoccupazione|unemployment|salari|wages)\b`),
   tecnologia: R(String.raw`\b(tech\w*|tecnologi\w+|software|hardware|smartphone\w*|iPhone|Android|Apple|Google|Microsoft|Meta|Amazon|Samsung|Tesla|SpaceX|chip\w*|semiconductor\w*|semicondutt\w+|app|apps|startup\w*|internet|5G|quantum|quantistic\w+|robot\w*|satellit\w+|digital\w*|digitale|cloud|data center|streaming|social network|TikTok|Instagram|X\.com|Elon Musk|gadget\w*|videogam\w+|gaming|console)\b`),
   politica: R(String.raw`\b(politic\w*|government|governo|minister\w*|ministr\w+|premier|prime minister|president\w*|presidente|parliament\w*|parlament\w+|senate|senato|congress|camera dei deputati|election\w*|elezion\w+|elettoral\w+|vote|voto|referendum|party|partito|Meloni|Schlein|Salvini|Tajani|Conte|Mattarella|Trump|Vance|Democrat\w*|Republican\w*|opposition|opposizione|coalition|coalizione|law|legge|decreto|bill|riforma|reform|White House|Casa Bianca|Palazzo Chigi|Quirinale|Downing Street|Bundestag|Merz|Starmer|Macron|S[aá]nchez|Consiglio federale|Bundesrat)\b`),
-  esteri: R(String.raw`\b(war|guerra|ceasefire|cessate il fuoco|tregua|military|militar\w+|army|esercito|troops|truppe|missile\w*|drone\w*|strike\w*|raid|bomb\w*|invasion|invasione|NATO|Nato|ONU|UN|United Nations|Nazioni Unite|sanction\w*|sanzion\w+|diplomat\w*|diplomazi\w+|summit|vertice|G7|G20|treaty|trattato|border|confine|refugee\w*|rifugiat\w+|migrant\w*|migranti|geopolitic\w*|geopolitica|Gaza|Hamas|Hezbollah|Iran|Israel\w*|Israele|Ukrain\w*|Ucraina|Russia\w*|Putin|Zelensky\w*|Kremlin|Cremlino|China|Cina|Taiwan|Xi Jinping|North Korea|Corea del Nord|Syria|Siria|Yemen|Houthi\w*|Venezuela|Sudan)\b`),
+  esteri: R(String.raw`\b(war|guerra|ceasefire|cessate il fuoco|tregua|military|militar\w+|army|esercito|troops|truppe|missile\w*|drone\w*|strike\w*|raid|bomb\w*|invasion|invasione|NATO|Nato|ONU|UN|United Nations|Nazioni Unite|sanction\w*|sanzion\w+|diplomat\w*|diplomazi\w+|summit|vertice|G7|G20|treaty|trattato|defen[cs]e|difesa|pact|patto|border|confine|refugee\w*|rifugiat\w+|migrant\w*|migranti|geopolitic\w*|geopolitica|Gaza|Hamas|Hezbollah|Iran|Israel\w*|Israele|Ukrain\w*|Ucraina|Russia\w*|Putin|Zelensky\w*|Kremlin|Cremlino|China|Cina|Taiwan|Xi Jinping|North Korea|Corea del Nord|Syria|Siria|Yemen|Houthi\w*|Venezuela|Sudan)\b`),
 };
 
 export const CC_RX = {
@@ -247,19 +251,29 @@ async function main(){
     }
   }));
   console.log(report.sort().join("\n"));
-  const fresh = all.filter(i => i.d <= now + 3600e3 && now - i.d < MAX_AGE_H * 3600e3);
-  if (fresh.length < 50){
-    console.error(`Troppo poche notizie (${fresh.length}): tengo il file precedente.`);
+  const got = all.filter(i => i.d <= now + 3600e3);
+  if (got.length < 50){
+    console.error(`Troppo poche notizie (${got.length}): tengo il file precedente.`);
     process.exitCode = 1; return;
   }
-  let groups = cluster(fresh);
-  groups.sort((a, b) => b.n - a.n || b.d - a.d);
-  groups = groups.slice(0, 600);
-  let prev = null; try { prev = JSON.parse(await readFile(OUT, "utf8")); } catch {}
-  const data = { updated: new Date(now).toISOString(), feeds: FEEDS.length, ok: report.filter(r => r.startsWith("ok")).length, items: groups };
-  if (prev && JSON.stringify(prev.items) === JSON.stringify(data.items)){ console.log("Nessuna novità."); return; }
+  // titoli dei giri precedenti (servono per ieri e l'altro ieri, che i feed non danno più)
+  const FB = new Map(FEEDS.map(f => [f.u, f]));
+  let raw = []; try { raw = JSON.parse(await readFile(RAW, "utf8")).map(r => ({ ...r, feed: FB.get(r.f) || { n: r.src } })); } catch {}
+  const keep = new Set([0, 1, 2].slice(0, DAYS).map(k => dayOf(now - k * 864e5)));
+  const byUrl = new Map();
+  for (const it of [...raw, ...got]) if (keep.has(dayOf(it.d))) byUrl.set(it.u, it);
+  const items = [...byUrl.values()];
+  // ogni giorno ha la sua classifica
+  const out = [];
+  for (const day of keep){
+    const g = cluster(items.filter(i => dayOf(i.d) === day));
+    g.sort((a, b) => b.n - a.n || b.d - a.d);
+    for (const x of g.slice(0, PER_DAY)) out.push({ ...x, day });
+  }
+  await writeFile(RAW, JSON.stringify(items.map(({ t, u, d, s, src, srcUrl, feed }) => ({ t, u, d, s, src, srcUrl, f: feed.u }))));
+  const data = { updated: new Date(now).toISOString(), days: [...keep], feeds: FEEDS.length, ok: report.filter(r => r.startsWith("ok")).length, items: out };
   await writeFile(OUT, JSON.stringify(data));
-  console.log(`Scritte ${groups.length} notizie da ${fresh.length} titoli (${data.ok}/${FEEDS.length} feed).`);
+  console.log(`Scritte ${out.length} notizie da ${items.length} titoli in memoria (${data.ok}/${FEEDS.length} feed).`);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();
