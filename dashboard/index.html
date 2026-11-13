@@ -167,6 +167,11 @@ a.wl{color:#fbbf24;text-decoration:none;border-bottom:1px dashed rgba(251,191,36
 .gc-cols{display:flex;flex-wrap:wrap;gap:8px} .gc-col{width:28px;height:28px;border-radius:50%;border:2px solid transparent;outline:1px solid rgba(255,255,255,.12)} .gc-col.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
 button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);cursor:pointer} .rows button.ev-r:first-child{border-top:0} .ev-ic{border:0}
 @media (max-width:560px){.gc-dt{display:none}}
+.mk-list{display:flex;flex-direction:column} .mk-r{display:grid;grid-template-columns:1fr auto 84px;gap:6px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)} .mk-r:first-child{border-top:0}
+.mk-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .mk-n b{font-size:14px} .mk-l small{display:block;margin-top:3px;font-size:11.5px}
+.mk-p{font-size:17px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums} .mk-why{grid-column:1/-1;font-size:12.5px;line-height:1.45;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.mk-why p{margin:2px 0} .mk-why b{color:var(--ink)} .tag.red{background:rgba(244,63,94,.16);color:#fb7185} .mk-kv span:nth-child(even){text-align:right}
+@media (max-width:560px){.mk-sp{display:none} .mk-r{grid-template-columns:1fr auto}}
 .btn.danger{background:rgba(244,63,94,.18);border-color:var(--red);color:#fda4af}
 .gc-day{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
 .minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
@@ -365,13 +370,14 @@ const APPS = [
   { id: "notizie", t: "Notizie", i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)" },
   { id: "conoscenza", t: "Conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)" },
   { id: "cervello", t: "Cervello", i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)" },
+  { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", pcOnly: true },
   { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)" },
   { id: "promemoria", t: "Promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)" },
   { id: "sveglie", t: "Sveglie", i: "alarm", g: "linear-gradient(135deg,#334155,#0f172a)" },
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#34d399,#047857)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#94a3b8,#475569)" },
 ];
-const NAV = [["OGGI", ["oggi", "calendario", "promemoria", "sveglie"]], ["INFORMAZIONE", ["notizie", "meteo", "conoscenza", "cervello"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["OGGI", ["oggi", "calendario", "promemoria", "sveglie"]], ["INFORMAZIONE", ["notizie", "mercati", "meteo", "conoscenza", "cervello"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
@@ -482,16 +488,7 @@ function DASH(){
   const dayBars = dly ? dly.temperature_2m_max : [];
   const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
   return `<div class="grid">
-    <div class="glass c span8">
-      <div class="stats">
-        <div class="stat"><div class="l">Adesso · ${esc(S.city.name)}</div><div class="v" id="clock">${hhmm(now)}</div><div class="s"><span class="tag blue">Settimana ${weekNo(now)}</span>${dateLong(now)}</div></div>
-        <div class="stat"><div class="l">Meteo adesso</div><div class="v">${c ? Math.round(c.temperature_2m) + "°" : "–"} <span style="font-size:22px">${emo}</span></div><div class="s"><span class="tag">${desc}</span>${c ? "percepiti " + Math.round(c.apparent_temperature) + "°" : ""}</div></div>
-        <div class="stat"><div class="l">Oggi</div><div class="v">${dly ? Math.round(dly.temperature_2m_min[0]) + "° / " + Math.round(dly.temperature_2m_max[0]) + "°" : "–"}</div><div class="s"><span class="tag orange">pioggia ${dly ? dly.precipitation_probability_max[0] ?? 0 : "–"}%</span>${c ? "vento " + Math.round(c.wind_speed_10m) + " km/h" : ""}</div></div>
-      </div>
-      <div class="hd"><div><h3>Temperatura</h3><small>${chartMode === "24h" ? "Prossime 24 ore" : "Prossimi 7 giorni, massime"} · ${esc(S.city.name)}</small></div>
-        <div class="seg"><button class="${chartMode === "24h" ? "on" : ""}" onclick="chartMode='24h';refresh()">24 ore</button><button class="${chartMode === "7g" ? "on" : ""}" onclick="chartMode='7g';refresh()">7 giorni</button></div></div>
-      ${chartMode === "24h" ? areaChart(hrs.map(p => ({ v: p.temp, l: p.t.getHours() + ":00" }))) : areaChart(dly ? dly.time.map((t, i) => ({ v: dly.temperature_2m_max[i], l: cap(GIORNI[new Date(t).getDay()].slice(0, 3)) })) : [])}
-    </div>
+    ${mkDashCard()}
     <div class="span4" style="display:flex;flex-direction:column;gap:20px">
       <div class="glass c">
         <div class="hd"><div><h3>Anno ${now.getFullYear()}</h3><small>${left} giorni alla fine</small></div><span class="muted">${ico("cal")}</span></div>
@@ -501,11 +498,7 @@ function DASH(){
           <div class="kv" style="flex:1"><span>Mese</span><span>${cap(MESI[now.getMonth()])}</span><span>Settimana</span><span>${weekNo(now)} di 52</span><span>Alba</span><span>${dly ? dly.sunrise[0].slice(11) : "–"}</span><span>Tramonto</span><span>${dly ? dly.sunset[0].slice(11) : "–"}</span></div>
         </div>
       </div>
-      <div class="glass c" style="flex:1">
-        <div class="hd"><div><h3><span class="dot" style="display:inline-block;margin-right:6px"></span>Prossimi 7 giorni</h3><small>Massime giorno per giorno</small></div><button class="lnk" onclick="go('meteo')">Meteo</button></div>
-        <div class="bars">${dayBars.map((v, i) => `<i class="${i === 0 ? "now" : ""}" style="height:${12 + (v - bmin) / ((bmax - bmin) || 1) * 88}%" title="${Math.round(v)}°"></i>`).join("") || '<span class="muted">Carico…</span>'}</div>
-        <div class="kv">${dly ? dly.time.slice(1, 4).map((t, i) => `<span>${cap(GIORNI[new Date(t).getDay()])}</span><span>${WMO(dly.weather_code[i + 1])[0]} ${Math.round(dly.temperature_2m_min[i + 1])}° / ${Math.round(dly.temperature_2m_max[i + 1])}°</span>`).join("") : ""}</div>
-      </div>
+      ${mkMainCard()}
     </div>
     <div class="glass c span4">
       <div class="hd"><div><h3>Notizie</h3><small>Le più riprese dai giornali${NEWS ? " · aggiornate alle " + hhmm(new Date(NEWS.updated)) : ""}</small></div><button class="lnk" onclick="go('notizie')">Tutte</button></div>
@@ -549,6 +542,7 @@ let calY = new Date().getFullYear(), calM = new Date().getMonth();
 const head = (t, s) => isPhone() ? "" : `<div><h1 style="font-size:20px;font-weight:600">${t}</h1>${s ? `<div class="muted" style="font-size:12.5px;margin-top:4px">${s}</div>` : ""}</div>`;
 const VIEWS = {
   cervello(){ return brView(); },
+  mercati(){ return mkView(); },
   meteo(){
     const c = wOk() ? W.current : null, d = wOk() ? W.daily : null, hrs = nextHours(24);
     if (!c) return head("Meteo") + `<div class="glass c muted">Carico il meteo di ${esc(S.city.name)}…</div>`;
@@ -643,6 +637,98 @@ async function loadNews(){
     NEWS = d; for (const k in SUMS) delete SUMS[k]; try { localStorage.setItem(KEY + "-news", JSON.stringify(d)); } catch { try { localStorage.removeItem(KEY + "-news"); } catch {} }
   } catch { newsErr = true; if (NEWS) return; }
   if (cur === "oggi" || cur === "notizie") refresh();
+}
+/* ---------------- MERCATI (prezzi dal ramo notizie, spiegazioni con Groq gratis) ---------------- */
+const MK_URL = NEWS_URL.replace("news.json", "mercati.json");
+let MK = null, mkErr = false, mkCls = "Tutti";
+const MKAI = { at: 0, items: {}, busy: false, err: "" };
+try { MK = JSON.parse(localStorage.getItem(KEY + "-mk") || "null"); Object.assign(MKAI, JSON.parse(localStorage.getItem(KEY + "-mkai") || "{}"), { busy: false, err: "" }); } catch {}
+async function loadMk(){
+  try {
+    let r; try { r = await fetch(MK_URL, { cache: "no-cache" }); if (!r.ok) throw 0; } catch { r = await fetch("news/mercati.json", { cache: "no-cache" }); }
+    if (!r.ok) throw 0;
+    const d = await r.json(); mkErr = false;
+    if (MK && MK.updated === d.updated) return mkExplain();
+    MK = d; try { localStorage.setItem(KEY + "-mk", JSON.stringify(d)); } catch {}
+  } catch { mkErr = true; if (MK) return; }
+  if (cur === "oggi" || cur === "mercati") refresh();
+  mkExplain();
+}
+const mkFmt = x => { const v = x.px, d = Math.abs(v) >= 1000 ? 0 : Math.abs(v) >= 10 ? 2 : 4; return v.toLocaleString("it-CH", { minimumFractionDigits: d, maximumFractionDigits: d }); };
+const mkPct = p => `${p > 0 ? "+" : ""}${p.toLocaleString("it-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+const mkCol = p => p > 0 ? "var(--green)" : p < 0 ? "var(--red)" : "var(--muted)";
+const mkFresh = x => Date.now() - x.t < 4 * 864e5;
+function mkTop(n){ return MK ? MK.items.filter(mkFresh).slice(0, n) : []; }
+function mkLevel(z){ z = Math.abs(z); return z >= 3 ? ["Movimento eccezionale", "red"] : z >= 2 ? ["Movimento forte", "orange"] : z >= 1.3 ? ["Sopra il normale", "blue"] : ["Normale", ""]; }
+function mkSpark(a, col, w = 90, h = 28){
+  if (!a || a.length < 2) return "";
+  const lo = Math.min(...a), hi = Math.max(...a), k = (hi - lo) || 1;
+  const pts = a.map((v, i) => `${(i / (a.length - 1) * w).toFixed(1)},${(h - 2 - (v - lo) / k * (h - 4)).toFixed(1)}`).join(" ");
+  return `<svg class="mk-sp" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function mkRow(x, why){
+  const ai = MKAI.items[x.s], [lv, lc] = mkLevel(x.z);
+  return `<div class="mk-r">
+    <div class="mk-l"><div class="mk-n"><b>${esc(x.n)}</b><span class="tag ${lc}" style="${lc ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${lv}</span></div>
+      <small class="muted">${esc(x.cls)} · ${mkFmt(x)}${x.cls === "Tassi" ? "%" : " " + esc(x.cur)}${x.wk != null ? ` · 5 giorni ${mkPct(x.wk)}` : ""} · di solito si muove ±${x.vol.toLocaleString("it-CH")}% al giorno</small></div>
+    ${mkSpark(x.spark, mkCol(x.pct))}
+    <div class="mk-p" style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</div>
+    ${why ? `<div class="mk-why">${ai ? `<p><b>Perché:</b> ${esc(ai.perche)}</p><p><b>Cosa può comportare:</b> ${esc(ai.effetti)}</p>` : `<p class="muted">${MKAI.busy ? "L'AI sta cercando il motivo nelle notizie…" : mkKey() ? "Spiegazione in arrivo…" : "Per il motivo serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)."}</p>`}</div>` : ""}
+  </div>`;
+}
+function mkKey(){ try { return localStorage.getItem("pc_groq") || ""; } catch { return ""; } }
+async function mkExplain(force){
+  const key = mkKey(), top = mkTop(8);
+  if (!key || !top.length || MKAI.busy || isPhone()) return;
+  if (!force && MKAI.at === MK.updated && top.every(x => MKAI.items[x.s])) return;
+  MKAI.busy = true; MKAI.err = "";
+  const since = Date.now() - 36 * 3600e3;
+  const heads = NEWS ? NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "esteri", "politica", "ai", "tecnologia", "clima"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 90).map(x => "- " + x.t).join("\n") : "";
+  const list = top.map(x => `${x.s} | ${x.n} (${x.cls}) | oggi ${mkPct(x.pct)} | di solito ±${x.vol}% al giorno | 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}`).join("\n");
+  const sys = "Sei un analista finanziario che spiega a una persona non esperta, in italiano semplice. Per ogni strumento scrivi il motivo più probabile del movimento di oggi e cosa può comportare (per i mercati, per l'economia o per chi risparmia/investe). Usa i titoli delle notizie dati quando c'entrano davvero, citandone il fatto. Se nessun titolo spiega il movimento, dillo chiaramente e indica la causa più plausibile come ipotesi (per esempio prese di profitto, dati economici, movimento di settore). Non inventare numeri o fatti. Niente consigli di comprare o vendere. Massimo 2 frasi per campo. Rispondi solo con JSON: {\"items\":[{\"s\":\"simbolo\",\"perche\":\"...\",\"effetti\":\"...\"}]}";
+  const user = `Movimenti più insoliti di oggi:\n${list}\n\nTitoli delle notizie delle ultime 36 ore:\n${heads || "(nessuna notizia disponibile)"}`;
+  try {
+    let out = null;
+    for (const model of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]){
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
+        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 1800, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) });
+      if (r.status === 401) throw new Error("la chiave Groq non è valida");
+      if (!r.ok) continue;
+      try { out = JSON.parse((await r.json()).choices?.[0]?.message?.content || "{}"); break; } catch {}
+    }
+    if (!out) throw new Error("l'AI non risponde adesso");
+    const items = {};
+    for (const it of out.items || []) if (it && it.s && it.perche) items[it.s] = { perche: String(it.perche), effetti: String(it.effetti || "") };
+    MKAI.items = items; MKAI.at = MK.updated;
+    try { localStorage.setItem(KEY + "-mkai", JSON.stringify({ at: MKAI.at, items })); } catch {}
+  } catch (e){ MKAI.err = e.message; }
+  MKAI.busy = false;
+  if (cur === "oggi" || cur === "mercati") refresh();
+}
+const MK_MAIN = [["^GSPC", "S&P 500"], ["^IXIC", "Nasdaq"], ["^STOXX50E", "Euro Stoxx 50"], ["FTSEMIB.MI", "FTSE MIB"], ["^SSMI", "SMI"], ["EURCHF=X", "EUR/CHF"], ["EURUSD=X", "EUR/USD"], ["GC=F", "Oro"], ["BZ=F", "Petrolio Brent"], ["BTC-USD", "Bitcoin"]];
+function mkMainCard(){
+  const rows = MK ? MK_MAIN.map(([s]) => MK.items.find(x => x.s === s)).filter(Boolean) : [];
+  return `<div class="glass c" style="flex:1"><div class="hd"><div><h3>Mercati principali</h3><small>Variazione dell'ultima seduta</small></div><button class="lnk" onclick="go('mercati')">Tutti</button></div>
+    ${rows.length ? `<div class="kv mk-kv">${rows.map(x => `<span>${esc(x.n)}</span><span><b style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</b></span>`).join("")}</div>` : `<div class="muted">${mkErr ? "Dati non raggiungibili adesso." : "Carico i prezzi…"}</div>`}</div>`;
+}
+function mkDashCard(){
+  const top = mkTop(5);
+  return `<div class="glass c span8">
+    <div class="hd"><div><h3>Mercati: i movimenti più forti</h3><small>${MK ? `Oggi, rispetto a quanto si muovono di solito · aggiornato alle ${hhmm(new Date(MK.updated))}` : "Indici, azioni, valute, materie prime e cripto"}</small></div><button class="lnk" onclick="go('mercati')">Vedi tutto</button></div>
+    ${top.length ? `<div class="mk-list">${top.map(x => mkRow(x, true)).join("")}</div>${MKAI.err ? `<div class="muted" style="font-size:12px;margin-top:8px">Spiegazioni non disponibili: ${esc(MKAI.err)}. <button class="lnk" onclick="mkExplain(true)">Riprova</button></div>` : ""}`
+      : `<div class="muted">${mkErr ? "Non riesco a leggere i prezzi adesso: riprovo tra poco." : "Carico i prezzi… (i dati si aggiornano ogni ora)"}</div>`}
+    <div class="muted" style="font-size:11px;margin-top:10px">Prezzi Yahoo Finance con qualche minuto di ritardo. Le spiegazioni sono scritte dall'AI dai titoli delle notizie: sono un aiuto a capire, non consigli di investimento.</div>
+  </div>`;
+}
+function mkView(){
+  if (!MK) return head("Mercati") + `<div class="glass c muted">${mkErr ? "Non riesco a leggere i prezzi adesso." : "Carico i prezzi…"}</div>`;
+  const classes = ["Tutti", ...new Set(MK.items.map(x => x.cls))];
+  const L = MK.items.filter(x => mkCls === "Tutti" || x.cls === mkCls);
+  const top = new Set(mkTop(8).map(x => x.s));
+  return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + `
+    <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
+      ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
+    <div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, top.has(x.s))).join("")}</div></div>`;
 }
 const CAT_T = Object.fromEntries(NEWS_CATS), CC_T = Object.fromEntries(COUNTRIES);
 function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); return m < 2 ? "adesso" : m < 60 ? m + " min fa" : m < 1440 ? Math.round(m / 60) + " h fa" : m < 2880 ? "ieri" : Math.round(m / 1440) + " giorni fa"; }
@@ -1017,7 +1103,7 @@ async function gcLoad(force){
     try { localStorage.setItem(KEY + "-gcal", JSON.stringify(GC.ev)); } catch {}
   } catch (e){ GC.err = e.message === "scaduto" ? "" : e.message; }
   GC.busy = false;
-  if (cur === "calendario" && !GC.form) reView(); else if (cur === "oggi") refresh();
+  if (cur === "calendario" && !GC.form && !(GC.bulk && GC.bulk.busy)) reView(); else if (cur === "oggi") refresh();
 }
 const evOn = d => (GC.ev || []).filter(e => { const s = evStart(e), en = evEnd(e), a = new Date(d.getFullYear(), d.getMonth(), d.getDate()), b = new Date(a); b.setDate(b.getDate() + 1); return s < b && (en > a || +s === +a); });
 const evTime = e => evAllDay(e) ? "Tutto il giorno" : hhmm(evStart(e)) + "–" + hhmm(evEnd(e));
@@ -1033,6 +1119,48 @@ function gcConnectBox(){
     <button class="btn blue" onclick="gcLogin(false)">${ico("cal")} Collega Google Calendar</button></div>`;
 }
 let calSel = null;
+function gcColPick(cid){
+  return `<div><div class="muted" style="font-size:12px;margin-bottom:6px">Colore: <b id="gc-cn">${GC_COL[cid]?.[0] || "Colore del calendario"}</b></div>
+    <div class="gc-cols">${Object.entries(GC_COL).map(([k, [n, h]]) => `<button type="button" class="gc-col ${k === String(cid) ? "on" : ""}" data-k="${k}" title="${n}" style="background:${h || "linear-gradient(135deg,#2f7bff,#a78bfa)"}" onclick="document.querySelectorAll('.gc-col').forEach(b=>b.classList.toggle('on',b===this));document.getElementById('gc-cn').textContent=this.title"></button>`).join("")}</div></div>`;
+}
+function gcBulkBox(){
+  if (!GC.bulk) return "";
+  return `<div class="glass c" id="gc-bulk"><div class="hd"><div><h3>Colora più eventi insieme</h3><small>Cambia il colore a tutti i tuoi eventi (passati e futuri) il cui titolo inizia con la parola che scrivi</small></div></div>
+    <div class="gc-f"><input class="input" id="gcb-t" placeholder="Il titolo inizia con… (es. Verifica)" value="${esc(GC.bulk.t || "")}">
+      ${gcColPick(GC.bulk.c || "11")}
+      ${GC.bulk.msg ? `<div class="muted" style="font-size:13px">${esc(GC.bulk.msg)}</div>` : ""}
+      <div class="gc-row"><span class="sp" style="flex:1"></span><button class="btn" onclick="GC.bulk=false;reView()">Chiudi</button><button class="btn blue" onclick="gcBulk()" ${GC.bulk.busy ? "disabled" : ""}>${GC.bulk.busy ? "Coloro…" : "Colora"}</button></div></div></div>`;
+}
+async function gcBulk(){
+  const t = $("#gcb-t").value.trim(), c = document.querySelector("#gc-bulk .gc-col.on")?.dataset.k ?? "11";
+  if (!t) return toast("Scrivi con cosa inizia il titolo");
+  const low = t.toLowerCase();
+  GC.bulk = { t, c, busy: true, msg: "Cerco gli eventi…" }; reView();
+  let done = 0, fail = 0;
+  try {
+    const cals = ((await gcApi("users/me/calendarList?minAccessRole=writer")).items || [{ id: "primary" }]);
+    for (const cal of cals){
+      let page = "";
+      do {
+        const j = await gcApi(`calendars/${encodeURIComponent(cal.id)}/events?singleEvents=false&maxResults=2500&q=${encodeURIComponent(t)}${page ? "&pageToken=" + encodeURIComponent(page) : ""}`);
+        for (const e of j.items || []){
+          if (e.status === "cancelled" || !(e.summary || "").trim().toLowerCase().startsWith(low) || (e.colorId || "") === c) continue;
+          try { await gcApi(`calendars/${encodeURIComponent(cal.id)}/events/${encodeURIComponent(e.id)}`, { method: "PATCH", body: JSON.stringify({ colorId: c || null }) }); done++; GC.bulk.msg = `Colorati ${done}…`; }
+          catch { fail++; }
+        }
+        page = j.nextPageToken || "";
+      } while (page);
+    }
+    GC.bulk = { t, c, busy: false, msg: done ? `Fatto: ${done} eventi colorati${fail ? `, ${fail} non riusciti` : ""}.` : (fail ? `Non sono riuscito a cambiarne ${fail}.` : `Nessun evento da cambiare: o non ce ne sono, o hanno già quel colore.`) };
+    toast(done ? `${done} eventi colorati` : "Niente da cambiare");
+    await gcLoad(true);
+  } catch (e){
+    GC.bulk = { t, c, busy: false, msg: "" };
+    if (e.message === "scaduto"){ toast("Permesso scaduto: ricollego"); return gcLogin(false); }
+    toast("Errore: " + e.message);
+  }
+  reView();
+}
 function gcCalView(){
   const sel = calSel ? new Date(calSel) : new Date();
   const dayEv = evOn(sel), week = [];
@@ -1048,14 +1176,13 @@ function gcCalView(){
         <label class="gc-chk"><input type="checkbox" id="gc-all" ${allD ? "checked" : ""} onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
         <div id="gc-times" class="gc-row" style="${allD ? "display:none" : ""}"><input class="input" id="gc-s" type="time" value="${E && !allD ? hm(eS) : "09:00"}"><input class="input" id="gc-e" type="time" value="${E && !allD ? hm(eE) : "10:00"}"></div>
         <input class="input" id="gc-w" placeholder="Luogo (facoltativo)" value="${E ? esc(E.where) : ""}">
-        <div><div class="muted" style="font-size:12px;margin-bottom:6px">Colore: <b id="gc-cn">${GC_COL[cid]?.[0] || "Colore del calendario"}</b></div>
-          <div class="gc-cols" id="gc-cols">${Object.entries(GC_COL).map(([k, [n, h]]) => `<button type="button" class="gc-col ${k === String(cid) ? "on" : ""}" data-k="${k}" title="${n}" style="background:${h || "linear-gradient(135deg,#2f7bff,#a78bfa)"}" onclick="document.querySelectorAll('.gc-col').forEach(b=>b.classList.toggle('on',b===this));document.getElementById('gc-cn').textContent=this.title"></button>`).join("")}</div></div>
+        ${gcColPick(cid)}
         <div class="gc-row">${E ? `<button class="btn gc-del" onclick="gcDel(this)">${ico("trash")}<span class="gc-dt"> Elimina</span></button>` : ""}<span class="sp" style="flex:1"></span><button class="btn" onclick="GC.form=false;reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">${E ? "Salva modifiche" : "Salva evento"}</button></div></div></div>` : "";
   return `${!gcOk() ? gcConnectBox() : ""}
     ${GC.err ? `<div class="soon">${ico("cal")}<span>Google Calendar non risponde: ${esc(GC.err)}</span></div>` : ""}
     <div class="nw-bar"><span class="muted" style="font-size:13px">${GC.busy ? "Aggiorno…" : GC.ev ? (GC.ev.length + " eventi in calendario") : ""}</span><span class="sp"></span>
-      ${gcOk() ? `<button class="btn blue" onclick="GC.form={color:''};reView()">${ico("plus")} Evento</button><button class="btn" onclick="gcLoad(true)" title="Aggiorna">↻</button>` : ""}</div>
-    ${form}
+      ${gcOk() ? `<button class="btn" onclick="GC.form=false;GC.bulk=GC.bulk?false:{t:'',c:'11'};reView()" title="Colora più eventi insieme">🎨 Colora</button><button class="btn blue" onclick="GC.bulk=false;GC.form={color:''};reView()">${ico("plus")} Evento</button><button class="btn" onclick="gcLoad(true)" title="Aggiorna">↻</button>` : ""}</div>
+    ${form}${gcBulkBox()}
     <div class="gc-grid">
       <div class="glass c">
         <div class="hd" style="align-items:center"><button class="round" onclick="calM--;if(calM<0){calM=11;calY--}reView()">${ico("back")}</button>
@@ -1267,10 +1394,10 @@ function renderPhone(){
   const c = wOk() ? W.current : null, d = wOk() ? W.daily : null;
   $("#ph-wid").innerHTML = c ? `<div><div class="city">${esc(S.city.name)}</div><div class="big">${Math.round(c.temperature_2m)}°</div><div class="desc">${WMO(c.weather_code)[1]}</div></div><div class="right"><div class="emo">${WMO(c.weather_code)[0]}</div>Max ${Math.round(d.temperature_2m_max[0])}° Min ${Math.round(d.temperature_2m_min[0])}°<br>Pioggia ${d.precipitation_probability_max[0] ?? 0}%</div>`
     : `<div><div class="city">${esc(S.city.name)}</div><div class="desc">Carico il meteo…</div></div>`;
-  const list = APPS.filter(a => !a.pcOnly);
-  const links = S.links.filter(l => /^https?:\/\/(?!localhost)/.test(l.u)).slice(0, 8);
+  const list = APPS.filter(a => !a.pcOnly && a.id !== "collegamenti");
+  const links = S.links.filter(l => /^https?:\/\/([\w-]+\.)*github\.com/i.test(l.u)).slice(0, 2);
   $("#ph-apps").innerHTML = list.map(a => appIcon(a)).join("") + links.map(l => `<a class="app-i" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><span class="sq" style="background:linear-gradient(135deg,#1f2937,#0b1220);border:1px solid var(--line-2)">${ico(l.i || "link")}</span><span class="lab">${esc(l.n.length > 12 ? l.n.slice(0, 11) + "…" : l.n)}</span></a>`).join("");
-  $("#ph-dock").innerHTML = ["notizie", "calendario", "conoscenza", "meteo"].map(id => appIcon(appById(id), false)).join("");
+  $("#ph-dock").style.display = "none";
 }
 
 /* ---------------- avvio ---------------- */
@@ -1312,7 +1439,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "14";
+const APP_V = "15";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
@@ -1339,10 +1466,10 @@ setTimeout(() => checkAppUpdate(false), 3000);
 const start = (location.hash || "").slice(1);
 refresh();
 if (start && appById(start)) go(start);
-loadWeather(); loadNotes(); loadNews(); brLoad(false); gcLoad(true); setTimeout(dsSync, 1200);
+loadWeather(); loadNotes(); loadNews(); loadMk(); brLoad(false); gcLoad(true); setTimeout(dsSync, 1200);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) gcLoad(false); });
-setInterval(loadNews, 15 * 6e4);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) loadNews(); });
+setInterval(loadNews, 15 * 6e4); setInterval(loadMk, 10 * 6e4);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadNews(); loadMk(); } });
 </script>
 </body>
 </html>
