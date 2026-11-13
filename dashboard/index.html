@@ -134,6 +134,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
   .phone{display:block;position:relative;z-index:1;min-height:100vh;padding:calc(var(--safe-t) + 18px) 20px calc(var(--safe-b) + 120px)}
   .orbs .o1{width:300px;height:300px;right:-90px;top:-90px}
   .orbs .o2{width:380px;height:380px;left:-180px;bottom:20%}
+  .phone .ph-music{display:grid;position:absolute;right:16px;top:calc(var(--safe-t) + 12px);z-index:3}
   .ph-date{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
   .ph-hello{font-size:13px;text-align:center;margin-top:2px}
   .wid{margin:16px 0 22px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:24px}
@@ -186,6 +187,17 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .results button{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;font-size:13px}
 .results button:hover{background:rgba(255,255,255,.06)}
 .steps{display:grid;gap:8px;font-size:13px;line-height:1.5;color:#cfd5e2;padding-left:18px}
+.music-btn.on{background:rgba(47,123,255,.25);border-color:var(--blue);color:#fff;box-shadow:0 0 18px rgba(47,123,255,.5)}
+.music-btn.on svg{animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.15)}}
+.ph-music{display:none}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.switch:first-of-type{border-top:0}
+.switch b{font-size:13px;font-weight:500;display:block}.switch small{font-size:11.5px;color:var(--muted)}
+.tg{width:46px;height:28px;border-radius:14px;background:rgba(255,255,255,.15);position:relative;flex:none;transition:.2s}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.tg.on{background:var(--green)}.tg.on::after{left:21px}
+input[type=range]{width:100%;accent-color:var(--blue)}
 .toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 100px);transform:translate(-50%,20px);opacity:0;z-index:60;padding:10px 16px;border-radius:12px;background:#1d2433;border:1px solid var(--line-2);font-size:13px;transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -207,6 +219,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
       <div><h1 id="hello">Buongiorno</h1><div class="sub"><span class="dot"></span><span id="sub"></span></div></div>
       <div class="acts">
         <button class="round" title="Cerca" onclick="document.getElementById('q').focus()"><svg class="i"><use href="#i-search"/></svg></button>
+        <button class="round music-btn" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
         <button class="round" title="Promemoria" onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg></button>
         <button class="pill blue" id="new-btn"><svg class="i"><use href="#i-plus"/></svg>Nuovo</button>
         <div class="menu glass" id="new-menu">
@@ -222,6 +235,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 
 <!-- ============ TELEFONO ============ -->
 <div class="phone">
+  <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
   <div class="ph-hello" id="ph-hello"></div>
   <button class="wid glass" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
@@ -251,9 +265,11 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
   <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
   <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M4 4 2 6M20 4l2 2"/></symbol>
 </svg>
 
+<script src="sound.js"></script>
 <script>
 "use strict";
 /* ---------------- dati e impostazioni (solo su questo dispositivo) ---------------- */
@@ -261,6 +277,7 @@ const KEY = "mia-dashboard-v1";
 const DEF = {
   name: "Karim",
   city: { name: "Lugano", country: "Svizzera", lat: 46.0037, lon: 8.9511 },
+  sound: { music: false, ui: true, vol: 0.6 },
   news: { cats: ["politica", "economia", "ai", "tecnologia", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
   links: [
     { n: "Portale conoscenza", u: "../", i: "brain" },
@@ -306,6 +323,7 @@ const isPhone = () => matchMedia("(max-width:899px)").matches;
 
 function go(id, opt = {}){
   $("#new-menu").classList.remove("open");
+  if (id !== cur || isPhone()) Sound.play(id === "oggi" ? "close" : "open");
   cur = id; renderStatic();
   if (isPhone()){
     if (id === "oggi") return closeSheet();
@@ -323,7 +341,7 @@ function go(id, opt = {}){
     window.scrollTo(0, 0);
   }
 }
-function closeSheet(){ $("#sheet").classList.remove("open"); cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
+function closeSheet(){ if ($("#sheet").classList.contains("open")) Sound.play("close"); $("#sheet").classList.remove("open"); cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
 
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
@@ -547,6 +565,11 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Karim';save();renderStatic();toast('Salvato')"></div>
+    <div class="glass c"><div class="hd"><div><h3>Suoni</h3><small>Generati dal vivo, rilassanti, senza file audio</small></div><span class="muted">${ico("music")}</span></div>
+      <div class="switch"><div><b>Musica rilassante</b><small>Accordi caldi e lenti in sottofondo</small></div><button class="tg ${S.sound.music ? "on" : ""}" onclick="toggleMusic()"></button></div>
+      <div class="switch"><div><b>Suoni dei tocchi</b><small>Piccoli suoni quando apri e tocchi</small></div><button class="tg ${S.sound.ui ? "on" : ""}" onclick="S.sound.ui=!S.sound.ui;Sound.setUi(S.sound.ui);save();Sound.play('toggle');reView()"></button></div>
+      <div class="switch"><div style="flex:1"><b>Volume</b><input type="range" min="0" max="1" step="0.05" value="${S.sound.vol}" oninput="S.sound.vol=+this.value;Sound.setVol(S.sound.vol);save()"></div></div>
+      <div class="muted" style="font-size:11.5px;margin-top:6px">Sull'iPhone la musica parte al primo tocco: è una regola dei browser.</div></div>
     <div class="glass c"><div class="hd"><div><h3>Città del meteo</h3><small>Ora: ${esc(S.city.name)}${S.city.country ? ", " + esc(S.city.country) : ""}</small></div></div>
       <div class="form"><input class="input" id="city-q" placeholder="Cerca una città…" oninput="findCity(this.value)"><div class="results" id="city-r"></div>
       <button class="btn" onclick="useGeo()">${ico("pin", "width:15px;height:15px")}Usa la mia posizione</button></div></div>
@@ -629,6 +652,17 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && (!
 let installBtn = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installBtn = e; });
 async function doInstall(){ if (!installBtn) return; installBtn.prompt(); await installBtn.userChoice; installBtn = null; reView(); }
+/* suoni: il browser li sblocca solo dopo un tocco */
+S.sound = { ...DEF.sound, ...(S.sound || {}) }; Sound.load(S.sound);
+function paintMusic(){ document.querySelectorAll(".music-btn").forEach(b => b.classList.toggle("on", !!S.sound.music)); }
+async function toggleMusic(){ S.sound.music = !S.sound.music; save(); paintMusic(); await Sound.setMusic(S.sound.music); Sound.play("toggle"); toast(S.sound.music ? "Musica rilassante accesa" : "Musica spenta"); if (cur === "impostazioni") reView(); }
+let unlocked = false;
+document.addEventListener("pointerdown", e => {
+  if (!unlocked){ unlocked = true; Sound.unlock(); }
+  const el = e.target.closest("button, a, .chip"); if (el && !el.closest(".music-btn") && !el.classList.contains("tg")) Sound.play("tap");
+}, { capture: true });
+document.addEventListener("visibilitychange", () => document.hidden ? Sound.pause() : Sound.resume());
+paintMusic();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 const start = (location.hash || "").slice(1);
