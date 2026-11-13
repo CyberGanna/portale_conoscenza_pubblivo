@@ -160,6 +160,10 @@ a.wl{color:#fbbf24;text-decoration:none;border-bottom:1px dashed rgba(251,191,36
 .minical span.pick{cursor:pointer} .minical span.pick:hover{background:rgba(255,255,255,.06)} .minical span.sel{outline:1px solid var(--blue)}
 .gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;max-width:980px} @media (max-width:899px){.gc-grid{grid-template-columns:1fr}}
 .gc-f{display:flex;flex-direction:column;gap:10px} .gc-row{display:flex;gap:10px} .gc-row>*{flex:1} .gc-chk{display:flex;align-items:center;gap:8px;font-size:13px}
+.rm-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-2);flex:0 0 auto;display:grid;place-items:center;font-size:12px;color:#fff} .rm-chk.on{background:var(--green);border-color:var(--green)}
+.rm-done .t b{text-decoration:line-through;color:var(--muted)}
+.al-r .t{flex:1 0 auto} .al-r .t b{white-space:nowrap}
+.sc-help summary{cursor:pointer;font-size:14px} .gc-row .btn{flex:0 0 auto}
 .gc-day{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
 .minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
 .view{display:flex;flex-direction:column;gap:18px}
@@ -266,7 +270,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <button class="pill blue" id="new-btn"><svg class="i"><use href="#i-plus"/></svg>Nuovo</button>
         <div class="menu glass" id="new-menu">
           <button onclick="go('collegamenti',{add:true})"><svg class="i"><use href="#i-link"/></svg>Nuovo collegamento</button>
-          <button onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg>Nuovo promemoria <span class="tag blue" style="margin-left:auto">fase 5</span></button>
+          <button onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg>Nuovo promemoria </button>
           <button onclick="go('impostazioni')"><svg class="i"><use href="#i-sliders"/></svg>Cambia città del meteo</button>
         </div>
       </div>
@@ -509,20 +513,13 @@ function DASH(){
         : `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>Nessuna nota su questo dispositivo</b><small>Apri il portale da qui e le tue note compaiono in questo riquadro</small></div></div>`}</div>
     </div>
     ${brTodayCard()}
-    <div class="glass c span4">
-      <div class="hd"><div><h3>Promemoria e sveglie</h3><small>Notifiche push su iPhone e PC</small></div><span class="tag blue">fase 5</span></div>
-      <div class="rows">
-        <div class="r"><div class="ic" style="color:#fb923c">${ico("bell")}</div><div class="t"><b>Promemoria con notifica</b><small>Ti arriva la push all'ora giusta, anche a schermo spento</small></div></div>
-        <div class="r"><div class="ic">${ico("alarm")}</div><div class="t"><b>Sveglia vera sull'iPhone</b><small>Un tocco lancia il Comando Rapido che la crea nell'Orologio</small></div></div>
-        <div class="r"><div class="ic" style="color:var(--blue-2)">${ico("cal")}</div><div class="t"><b>Google Calendar</b><small>Leggi e aggiungi eventi, li vedi anche sull'iPhone</small></div></div>
-      </div>
-    </div>
-    <div class="glass c span6">
+    ${remCard()}
+    <div class="glass c span8">
       <div class="hd"><div><h3>Calendario</h3><small>${cap(MESI[now.getMonth()])} ${now.getFullYear()}</small></div><button class="lnk" onclick="go('calendario')">Apri</button></div>
       ${miniCal(now.getFullYear(), now.getMonth())}
       ${gcTodayCard()}
     </div>
-    <div class="glass c span6">
+    <div class="glass c span12">
       <div class="hd"><div><h3>Collegamenti rapidi</h3><small>Le altre tue cose</small></div><button class="lnk" onclick="go('collegamenti',{add:true})">+ Aggiungi</button></div>
       <div class="rows">${linkRows(5)}</div>
     </div>
@@ -588,14 +585,8 @@ const VIEWS = {
   conoscenza(){
     return `<iframe class="portal" src="../" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`;
   },
-  promemoria(){
-    return head("Promemoria") + `
-    <div class="soon">${ico("bell")}<span><b>Fase 4.</b> Qui scrivi un promemoria con data e ora, e ti arriva la notifica push sull'iPhone e sul PC, anche con l'app chiusa. Per farlo serve aver aggiunto la dashboard alla schermata Home (vedi Impostazioni).</span></div>`;
-  },
-  sveglie(){
-    return head("Sveglie") + `
-    <div class="soon">${ico("alarm")}<span><b>Fase 4.</b> Una web app non può suonare come la sveglia dell'iPhone. Qui imposti l'ora e un tocco lancia un Comando Rapido che crea la sveglia vera nell'app Orologio. Il Comando Rapido te lo preparo io, tu lo installi una volta.</span></div>`;
-  },
+  promemoria(){ return remView(); },
+  sveglie(){ return alarmView(); },
   collegamenti(){
     return head("Collegamenti", "Le altre tue app e i tuoi siti") + `
     <div class="glass c"><div class="rows">${S.links.map((l, i) => `<div class="lnk-row"><div class="ic" style="color:var(--green)">${ico(l.i || "link")}</div><a class="t" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><b>${esc(l.n)}</b><small>${esc(l.u)}</small></a><button class="round" title="Togli" onclick="delLink(${i})">${ico("trash", "width:15px;height:15px")}</button></div>`).join("") || '<div class="muted">Nessun collegamento.</div>'}</div></div>
@@ -1077,6 +1068,103 @@ function gcTodayCard(){
   return gcId() && (gcOk() || GC.ev) ? `<div style="margin-top:12px">${evRows(L.slice(0, 3), "Niente in programma per oggi.")}${L2.length ? `<div class="gc-day">Domani</div>${evRows(L2.slice(0, 2), "")}` : ""}</div>` : "";
 }
 
+/* ---------------- SVEGLIE E PROMEMORIA ----------------
+   Sveglie: un tocco lancia il Comando Rapido "Sveglia Dashboard" che crea la sveglia vera nell'Orologio dell'iPhone.
+   Promemoria: salvati qui e, se Google Calendar è collegato, anche come evento con notifica:
+   così suonano sull'iPhone e sul PC anche con la dashboard chiusa. */
+const SC_ALARM = "Sveglia Dashboard";
+S.alarms = S.alarms || []; S.rem = S.rem || [];
+const remAt = r => new Date(r.at);
+const remFmt = r => { const d = remAt(r), t = new Date(), tm = new Date(); tm.setDate(t.getDate() + 1);
+  const day = dayKey(d) === dayKey(t) ? "Oggi" : dayKey(d) === dayKey(tm) ? "Domani" : cap(GIORNI[d.getDay()]) + " " + d.getDate() + " " + MESI[d.getMonth()];
+  return day + " alle " + hhmm(d); };
+function alarmGo(i){
+  const a = S.alarms[i]; if (!a) return;
+  if (!isPhone() || !/iPhone|iPad/.test(navigator.userAgent)) return toast("Le sveglie si creano dall'iPhone: apri la dashboard sul telefono");
+  location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(SC_ALARM)}&input=text&text=${encodeURIComponent(a.h)}`;
+}
+function alarmAdd(){
+  const h = $("#al-h").value, l = $("#al-l").value.trim(); if (!h) return toast("Scegli l'ora");
+  S.alarms.push({ h, l }); S.alarms.sort((a, b) => a.h.localeCompare(b.h)); save(); toast("Sveglia salvata"); reView();
+}
+function alarmDel(i){ S.alarms.splice(i, 1); save(); reView(); }
+function alarmView(){
+  const ios = /iPhone|iPad/.test(navigator.userAgent);
+  return head("Sveglie", "Sveglie vere nell'Orologio dell'iPhone") + `
+    <div class="glass c"><div class="hd"><div><h3>Nuova sveglia</h3><small>La salvi qui, poi con un tocco la metti sull'iPhone</small></div></div>
+      <div class="gc-row"><input class="input" id="al-h" type="time" value="07:00"><input class="input" id="al-l" placeholder="Nome (facoltativo)"><button class="btn blue" style="flex:0 0 auto" onclick="alarmAdd()">Salva</button></div></div>
+    <div class="glass c"><div class="hd"><div><h3>Le tue sveglie</h3><small>${ios ? "Tocca ⏰ per crearla nell'app Orologio" : "Per crearle sull'iPhone apri la dashboard dal telefono"}</small></div></div>
+      ${S.alarms.length ? `<div class="rows">${S.alarms.map((a, i) => `<div class="r al-r"><div class="ic">${ico("alarm")}</div><div class="t"><b style="font-size:20px">${esc(a.h)}</b><small>${esc(a.l || "Sveglia")}</small></div>
+        <button class="btn blue" onclick="alarmGo(${i})">⏰ Crea</button><button class="round" onclick="alarmDel(${i})" title="Elimina">${ico("trash")}</button></div>`).join("")}</div>`
+        : `<div class="muted" style="font-size:13px">Nessuna sveglia salvata.</div>`}</div>
+    <details class="glass c sc-help" ${S.scOk ? "" : "open"}><summary><b>Prima volta: crea il Comando Rapido</b> <span class="muted">(2 minuti, una volta sola)</span></summary>
+      <ol class="steps" style="margin-top:10px">
+        <li>Sull'iPhone apri l'app <b>Comandi Rapidi</b> e tocca <b>+</b> in alto a destra.</li>
+        <li>Tocca <b>Aggiungi azione</b>, cerca <b>Crea sveglia</b> e toccala.</li>
+        <li>Nell'azione tocca l'ora (la parola blu) e scegli <b>Input comando rapido</b>. Se te lo chiede, in "Ricevi" scegli <b>Testo</b>.</li>
+        <li>In alto tocca il nome e chiamalo esattamente <b>${SC_ALARM}</b>, poi <b>Fine</b>.</li>
+        <li>Torna qui e tocca ⏰ su una sveglia: la prima volta iOS chiede il permesso, rispondi <b>Consenti sempre</b>.</li>
+      </ol>
+      <button class="btn" style="margin-top:10px" onclick="S.scOk=true;save();reView()">Fatto, l'ho creato</button></details>`;
+}
+
+async function remGoogle(r){
+  if (!gcOk()) return null;
+  const s = remAt(r), e = new Date(s.getTime() + 15 * 6e4), tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const f = d => `${dayKey(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:00`;
+  const j = await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify({ summary: "🔔 " + r.t, description: "Promemoria dalla Mia Dashboard", start: { dateTime: f(s), timeZone: tz }, end: { dateTime: f(e), timeZone: tz }, reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 0 }] }, colorId: "6" }) });
+  return j && j.id;
+}
+async function remAdd(){
+  const t = $("#rm-t").value.trim(), d = $("#rm-d").value, h = $("#rm-h").value;
+  if (!t || !d || !h) return toast("Scrivi cosa, il giorno e l'ora");
+  const r = { id: Date.now().toString(36), t, at: `${d}T${h}:00`, done: false };
+  S.rem.push(r); S.rem.sort((a, b) => remAt(a) - remAt(b)); save();
+  try { r.gid = await remGoogle(r); save(); toast(r.gid ? "Promemoria salvato: ti avvisa anche Google Calendar" : "Promemoria salvato"); if (r.gid) gcLoad(true); }
+  catch (e){ toast(e.message === "scaduto" ? "Salvato qui; ricollega Google per la notifica sul telefono" : "Salvato qui; Google non ha risposto"); }
+  if ("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {});
+  reView();
+}
+async function remDel(id){
+  const r = S.rem.find(x => x.id === id); S.rem = S.rem.filter(x => x.id !== id); save(); reView();
+  if (r && r.gid && gcOk()) try { await gcApi("calendars/primary/events/" + encodeURIComponent(r.gid), { method: "DELETE" }); gcLoad(true); } catch {}
+}
+function remDone(id){ const r = S.rem.find(x => x.id === id); if (r){ r.done = !r.done; save(); reView(); } }
+function remRows(list){
+  return `<div class="rows">${list.map(r => { const late = !r.done && remAt(r) < new Date();
+    return `<div class="r ${r.done ? "rm-done" : ""}"><button class="rm-chk ${r.done ? "on" : ""}" onclick="remDone('${r.id}')" title="Fatto">${r.done ? "✓" : ""}</button>
+      <div class="t"><b>${esc(r.t)}</b><small style="${late ? "color:var(--red)" : ""}">${remFmt(r)}${r.gid ? " · in Google Calendar" : ""}</small></div>
+      <button class="round" onclick="remDel('${r.id}')" title="Elimina">${ico("trash")}</button></div>`; }).join("")}</div>`;
+}
+function remView(){
+  const now = new Date(), t = new Date(now.getTime() + 36e5);
+  const open = S.rem.filter(r => !r.done), done = S.rem.filter(r => r.done).slice(-10).reverse();
+  return head("Promemoria", gcOk() ? "Ti avvisa anche Google Calendar, sul telefono e sul PC" : "Collega Google Calendar per ricevere l'avviso anche con la dashboard chiusa") + `
+    <div class="glass c"><div class="hd"><div><h3>Nuovo promemoria</h3><small>Cosa, quando</small></div></div>
+      <div class="gc-f"><input class="input" id="rm-t" placeholder="Es. chiamare il dentista" onkeydown="if(event.key==='Enter')remAdd()">
+        <div class="gc-row"><input class="input" id="rm-d" type="date" value="${dayKey(t)}"><input class="input" id="rm-h" type="time" value="${String(t.getHours()).padStart(2, "0")}:00"></div>
+        <button class="btn blue" onclick="remAdd()">${ico("bell")} Salva promemoria</button></div></div>
+    ${!gcOk() ? `<div class="soon">${ico("cal")}<span>Senza Google Calendar il promemoria ti avvisa solo se la dashboard è aperta. ${gcId() ? `<a href="#" onclick="event.preventDefault();gcLogin(false)" style="color:var(--blue-2)">Collega Google</a> e arriva come notifica sull'iPhone.` : `Inserisci il Client ID in <a href="#" onclick="event.preventDefault();go('impostazioni')" style="color:var(--blue-2)">Impostazioni</a>.`}</span></div>` : ""}
+    <div class="glass c"><div class="hd"><div><h3>Da fare</h3><small>${open.length ? open.length + " promemoria" : "Niente in sospeso"}</small></div></div>${open.length ? remRows(open) : `<div class="muted" style="font-size:13px">Tutto fatto.</div>`}</div>
+    ${done.length ? `<div class="glass c"><div class="hd"><div><h3>Fatti</h3></div><button class="lnk" onclick="S.rem=S.rem.filter(r=>!r.done);save();reView()">Svuota</button></div>${remRows(done)}</div>` : ""}`;
+}
+/* avviso mentre la dashboard è aperta */
+function remTick(){
+  const now = Date.now(); let ch = false;
+  for (const r of S.rem) if (!r.done && !r.told && remAt(r) <= now && now - remAt(r) < 6 * 36e5){
+    r.told = true; ch = true; toast("🔔 " + r.t);
+    try { if ("Notification" in window && Notification.permission === "granted") navigator.serviceWorker?.ready.then(reg => reg.showNotification("Promemoria", { body: r.t, icon: "icons/icon-192.png", tag: r.id })).catch(() => new Notification("Promemoria", { body: r.t })); } catch {}
+  }
+  if (ch){ save(); if (cur === "promemoria" || cur === "oggi") refresh(); }
+}
+setInterval(remTick, 30e3); setTimeout(remTick, 2000);
+function remCard(){
+  const open = S.rem.filter(r => !r.done).slice(0, 3), al = S.alarms[0];
+  return `<div class="glass c span4"><div class="hd"><div><h3>Promemoria e sveglie</h3><small>${open.length ? S.rem.filter(r => !r.done).length + " da fare" : "Niente in sospeso"}${al ? " · prima sveglia " + esc(al.h) : ""}</small></div><button class="lnk" onclick="go('promemoria')">Apri</button></div>
+    ${open.length ? remRows(open) : `<div class="rows"><div class="r"><div class="ic" style="color:#fb923c">${ico("bell")}</div><div class="t"><b>Nessun promemoria</b><small>Aggiungine uno: ti avvisa all'ora giusta</small></div></div></div>`}
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="go('promemoria')">${ico("plus")} Promemoria</button><button class="btn" onclick="go('sveglie')">${ico("alarm")} Sveglie</button></div></div>`;
+}
+
 /* ---------------- TELEFONO: home con griglia di icone ---------------- */
 function appIcon(a, withLab = true){
   const now = new Date();
@@ -1135,7 +1223,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "11";
+const APP_V = "12";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
