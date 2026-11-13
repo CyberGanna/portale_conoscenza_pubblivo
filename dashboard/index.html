@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mia Dashboard</title>
 <meta name="theme-color" content="#050608">
-<meta name="description" content="La dashboard personale di Karim: meteo, calendario, notizie, conoscenza e collegamenti.">
+<meta name="description" content="La dashboard personale di Ale: meteo, calendario, notizie, conoscenza e collegamenti.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -163,6 +163,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
   .stats{grid-template-columns:1fr 1fr 1fr}
   .stat{padding:14px 12px}.stat .v{font-size:22px}
   .chart{height:170px}
+  .sheet.portal-open{padding-left:0;padding-right:0;padding-bottom:0}
+  .sheet.portal-open .bar{padding-left:16px;padding-right:16px}
+  .sheet .portal{height:calc(100dvh - var(--safe-t) - 64px);border:0;border-radius:0}
 }
 @media (min-width:900px) and (max-width:1250px){
   .span8,.span4,.span6{grid-column:span 12}.span3{grid-column:span 6}
@@ -198,6 +201,8 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .tg::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
 .tg.on{background:var(--green)}.tg.on::after{left:21px}
 input[type=range]{width:100%;accent-color:var(--blue)}
+.portal{display:block;width:100%;height:calc(100vh - 120px);border:1px solid var(--line);border-radius:var(--r);background:#000}
+.is-portal .view{gap:0}
 .toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 100px);transform:translate(-50%,20px);opacity:0;z-index:60;padding:10px 16px;border-radius:12px;background:#1d2433;border:1px solid var(--line-2);font-size:13px;transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -208,11 +213,10 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 <!-- ============ PC ============ -->
 <div class="app">
   <aside class="side glass">
-    <div class="brand"><div class="logo">K</div><div><b>Mia Dashboard</b><small>Karim · personale</small></div></div>
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
     <nav class="nav" id="nav"></nav>
     <div class="grow"></div>
-    <div class="me"><div class="av" id="me-av">K</div><div><b id="me-name">Karim</b><small>Dati salvati su questo dispositivo</small></div></div>
+    <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small>Dati salvati su questo dispositivo</small></div></div>
   </aside>
   <main class="main">
     <header class="top">
@@ -269,24 +273,27 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M4 4 2 6M20 4l2 2"/></symbol>
 </svg>
 
+<script>
+window.addEventListener("error", e => { const d = document.getElementById("boot-err") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "boot-err" })); d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99;padding:12px;border-radius:12px;background:#3b0d16;color:#fecdd3;font:12px/1.4 system-ui"; d.textContent = "Errore: " + (e.message || e.error) + " — mandami uno screenshot"; });
+</script>
 <script src="sound.js"></script>
 <script>
 "use strict";
 /* ---------------- dati e impostazioni (solo su questo dispositivo) ---------------- */
 const KEY = "mia-dashboard-v1";
 const DEF = {
-  name: "Karim",
+  name: "Ale",
   city: { name: "Lugano", country: "Svizzera", lat: 46.0037, lon: 8.9511 },
   sound: { music: false, ui: true, vol: 0.6, style: "beat" },
   news: { cats: ["politica", "economia", "ai", "tecnologia", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
   links: [
-    { n: "Portale conoscenza", u: "../", i: "brain" },
-    { n: "karimvarini.com", u: "https://karimvarini.com", i: "globe" },
+        { n: "karimvarini.com", u: "https://karimvarini.com", i: "globe" },
     { n: "OmniRoute (solo sul PC)", u: "http://localhost:20128", i: "server" },
     { n: "GitHub", u: "https://github.com/CyberGanna", i: "git" },
   ],
 };
 let S = load();
+if (S.name === "Karim") { S.name = "Ale"; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return structuredClone(DEF); } }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 const $ = s => document.querySelector(s);
@@ -328,6 +335,7 @@ function go(id, opt = {}){
     if (id === "oggi") return closeSheet();
     $("#sheet-t").textContent = appById(id).t;
     $("#sheet-body").innerHTML = VIEWS[id](opt);
+    $("#sheet").classList.toggle("portal-open", id === "conoscenza");
     $("#sheet").classList.add("open"); $("#sheet").scrollTop = 0;
     history.replaceState(null, "", "#" + id);
     after(id, $("#sheet-body"), opt);
@@ -457,7 +465,7 @@ function DASH(){
       <div class="soon">${ico("news")}<span>Le notizie arrivano nella <b>fase 3</b>: le più importanti del momento, divise per categoria e paese, con riassunto AI.</span></div>
     </div>
     <div class="glass c span4">
-      <div class="hd"><div><h3>La mia conoscenza</h3><small>${notes.length ? notes.length + " note nel portale" : "Dal portale conoscenza"}</small></div><a href="../">Apri</a></div>
+      <div class="hd"><div><h3>La mia conoscenza</h3><small>${notes.length ? notes.length + " note nel portale" : "Dal portale conoscenza"}</small></div><button class="lnk" onclick="go('conoscenza')">Apri</button></div>
       <div class="rows">${notes.length ? notes.slice(0, 4).map(n => `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>${esc(n.titolo)}</b><small>${esc(n.categoria || "")}${n.sintesi ? " · " + esc(n.sintesi) : ""}</small></div></div>`).join("")
         : `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>Nessuna nota su questo dispositivo</b><small>Apri il portale da qui e le tue note compaiono in questo riquadro</small></div></div>`}</div>
     </div>
@@ -534,13 +542,7 @@ const VIEWS = {
     <div class="soon">${ico("news")}<span>Le notizie arrivano nella <b>fase 3</b>. Ogni ora un aggiornatore gratuito raccoglie i titoli di ANSA, Il Post, Il Sole 24 Ore, Reuters, BBC, AP e altre testate, mette in cima quelle riprese da più giornali e te le mostra con queste scelte. Con un tocco l'AI te le riassume in 3 righe.</span></div>`;
   },
   conoscenza(){
-    return head("Conoscenza", "Le note del tuo portale") + `
-    <div class="glass c" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div class="ic" style="width:48px;height:48px;color:var(--violet)">${ico("brain", "width:24px;height:24px")}</div>
-      <div style="flex:1;min-width:160px"><h3>Portale conoscenza</h3><div class="muted" style="font-size:12.5px;margin-top:3px">${notes.length ? notes.length + " note su questo dispositivo" : "Nessuna nota letta su questo dispositivo"}</div></div>
-      <a class="btn blue" href="../">Apri il portale</a>
-    </div>
-    <div class="glass c"><div class="hd"><div><h3>Ultime note</h3></div></div><div class="rows">${notes.length ? notes.slice(0, 12).map(n => `<div class="r"><div class="t"><b>${esc(n.titolo)}</b><small>${esc(n.categoria || "")}${n.sintesi ? " · " + esc(n.sintesi) : ""}</small></div></div>`).join("") : `<div class="muted" style="font-size:13px;line-height:1.5">Le note si vedono qui quando il portale è stato aperto su questo dispositivo. Sull'iPhone, aprilo dall'icona della dashboard (non da Safari), così le note restano nella stessa app.</div>`}</div></div>`;
+    return `<iframe class="portal" src="../" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`;
   },
   promemoria(){
     return head("Promemoria") + `
@@ -563,7 +565,7 @@ const VIEWS = {
   impostazioni(){
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
-      <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Karim';save();renderStatic();toast('Salvato')"></div>
+      <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
     <div class="glass c"><div class="hd"><div><h3>Suoni</h3><small>Musica di sottofondo generata dal vivo</small></div><span class="muted">${ico("music")}</span></div>
       <div class="switch"><div><b>Musica rilassante</b><small>Musica originale di sottofondo</small></div><button class="tg ${S.sound.music ? "on" : ""}" onclick="toggleMusic()"></button></div>
       <div class="switch"><div><b>Stile della musica</b><small>${S.sound.style === "beat" ? "Beat chill, come il video" : "Calmo, accordi lenti"}</small></div><div class="seg"><button class="${S.sound.style === "beat" ? "on" : ""}" onclick="setStyle('beat')">Beat</button><button class="${S.sound.style === "calmo" ? "on" : ""}" onclick="setStyle('calmo')">Calmo</button></div></div>
@@ -634,8 +636,8 @@ function renderStatic(){
 }
 function refresh(){
   renderStatic();
-  if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open")) { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
-  else { renderNav(); $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
+  if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open") && cur !== "conoscenza") { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
+  else { renderNav(); if (cur === "conoscenza" && $("#pc-body iframe")) return; $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
 }
 $("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
 document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
