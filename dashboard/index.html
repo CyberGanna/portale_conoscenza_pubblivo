@@ -258,7 +258,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
     <nav class="nav" id="nav"></nav>
     <div class="grow"></div>
-    <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small>Dati salvati su questo dispositivo</small></div></div>
+    <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small id="me-sync">Dati salvati su questo dispositivo</small></div></div>
   </aside>
   <main class="main">
     <header class="top">
@@ -338,7 +338,7 @@ const DEF = {
 let S = load();
 if (S.name === "Karim") { S.name = "Ale"; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return structuredClone(DEF); } }
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} if (window.syncMark) window.syncMark(); }
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ico = (n, st = "") => `<svg class="i" style="${st}"><use href="#i-${n}"/></svg>`;
@@ -601,6 +601,7 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
+    ${syncBox()}
     <div class="glass c"><div class="hd"><div><h3>Google Calendar</h3><small>${gcOk() ? "Collegato" : gcId() ? "Client ID inserito" : "Incolla qui il tuo Client ID di Google"}</small></div><span class="muted">${ico("cal")}</span></div>
       <div class="br-row"><input class="input" id="gc-id" placeholder="…apps.googleusercontent.com" value="${esc(gcId())}"><button class="btn blue" onclick="const v=document.getElementById('gc-id').value.trim();S.gcal={id:v};save();toast(v?'Salvato':'Tolto');reView()">Salva</button></div>
       ${gcId() ? `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="gcLogin(false)">${gcOk() ? "Ricollega" : "Collega adesso"}</button>${gcOk() ? `<button class="btn" onclick="GTOK=null;try{localStorage.removeItem(KEY+'-gtok')}catch{};reView()">Scollega</button>` : ""}</div>` : ""}</div>
@@ -1165,6 +1166,66 @@ function remCard(){
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="go('promemoria')">${ico("plus")} Promemoria</button><button class="btn" onclick="go('sveglie')">${ico("alarm")} Sveglie</button></div></div>`;
 }
 
+/* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
+   Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
+   vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
+const SYNC_KEYS = ["name", "city", "news", "links", "alarms", "rem", "gcal", "scOk"];
+const SY = { snap: {}, busy: false, again: false, timer: null, last: 0, err: "" };
+S._t = S._t || {};
+const snapOf = k => JSON.stringify(S[k] ?? null);
+for (const k of SYNC_KEYS) SY.snap[k] = snapOf(k);
+window.syncMark = () => {
+  let ch = false;
+  for (const k of SYNC_KEYS){ const v = snapOf(k); if (v !== SY.snap[k]){ SY.snap[k] = v; S._t[k] = Date.now(); ch = true; } }
+  if (ch){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} clearTimeout(SY.timer); SY.timer = setTimeout(dsSync, 2500); }
+};
+async function dsSync(){
+  if (!brCfg().gh) return;
+  if (SY.busy){ SY.again = true; return; }
+  SY.busy = true;
+  try {
+    for (let i = 0; i < 3; i++){
+      const g = await brApi("contents/dashboard.json?t=" + Date.now());
+      let remote = { data: {}, t: {} }, sha;
+      if (g.ok){ const j = await g.json(); sha = j.sha; try { remote = JSON.parse(b64d(j.content || "")); } catch {} }
+      else if (g.status === 404){ const rr = await brApi(""); if (rr.status === 404) throw new Error(`non trovo la repository ${brCfg().repo}`); }
+      else throw new Error("GitHub " + g.status);
+      let changed = false, push = !sha;
+      for (const k of SYNC_KEYS){
+        const lt = S._t[k] || 0, rt = (remote.t || {})[k] || 0, has = remote.data && k in remote.data;
+        if (has && (rt > lt || (lt === 0 && rt === 0 && snapOf(k) !== JSON.stringify(remote.data[k] ?? null) && sha))){
+          S[k] = remote.data[k]; S._t[k] = rt; SY.snap[k] = snapOf(k); changed = true;
+        } else if (lt > rt || !has) push = true;
+      }
+      if (changed){
+        try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
+        const typing = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+        if (!typing) refresh();
+      }
+      if (!push) break;
+      for (const k of SYNC_KEYS) if (!S._t[k]) S._t[k] = 1;
+      const body = { formato: "mia-dashboard", versione: 1, aggiornato: new Date().toISOString(), data: Object.fromEntries(SYNC_KEYS.map(k => [k, S[k] ?? null])), t: Object.fromEntries(SYNC_KEYS.map(k => [k, S._t[k]])) };
+      const p = await brApi("contents/dashboard.json", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "Dashboard: sincronizzazione", content: b64e(JSON.stringify(body, null, 1)), ...(sha ? { sha } : {}) }) });
+      if (p.ok){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} break; }
+      if (p.status === 409 || p.status === 422) continue;
+      throw new Error("GitHub " + p.status);
+    }
+    SY.last = Date.now(); SY.err = "";
+  } catch (e){ SY.err = e.message || String(e); }
+  SY.busy = false;
+  if (cur === "impostazioni" && !(document.activeElement && /INPUT/.test(document.activeElement.tagName))) reView();
+  if (SY.again){ SY.again = false; setTimeout(dsSync, 500); }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - SY.last > 20e3) dsSync(); });
+setInterval(() => { if (!document.hidden) dsSync(); }, 120e3);
+function syncBox(){
+  const on = !!brCfg().gh;
+  return `<div class="glass c"><div class="hd"><div><h3>Sincronizzazione PC e telefono</h3><small>${!on ? "Non attiva" : SY.err ? "Problema: " + esc(SY.err) : SY.busy ? "Sincronizzo…" : SY.last ? "Attiva · ultima alle " + hhmm(new Date(SY.last)) : "Attiva"}</small></div><span class="muted">${ico("git")}</span></div>
+    <p class="muted" style="font-size:13px;line-height:1.6">${on ? `Nome, città, notizie, collegamenti, sveglie, promemoria e Google Calendar sono salvati nella tua repository privata <b>${esc(brCfg().repo)}</b> e restano uguali su tutti i dispositivi. Musica e volume restano per dispositivo.`
+      : `Usa la stessa chiave GitHub del portale. Apri <b>Conoscenza</b>, tocca ⚙ e attiva la sincronizzazione (sul telefono basta "Collega telefono" dal PC): da quel momento anche la dashboard si sincronizza da sola.`}</p>
+    ${on ? `<button class="btn" style="margin-top:10px" onclick="dsSync()">Sincronizza adesso</button>` : `<button class="btn blue" style="margin-top:10px" onclick="go('conoscenza')">Apri Conoscenza</button>`}</div>`;
+}
+
 /* ---------------- TELEFONO: home con griglia di icone ---------------- */
 function appIcon(a, withLab = true){
   const now = new Date();
@@ -1189,7 +1250,7 @@ function renderStatic(){
   const now = new Date();
   $("#hello").textContent = `${greet()}, ${S.name}`;
   $("#sub").textContent = `${dateLong(now)} · ${cur === "oggi" ? "Dashboard" : appById(cur).t}`;
-  $("#me-name").textContent = S.name; $("#me-av").textContent = S.name.slice(0, 2).toUpperCase();
+  $("#me-name").textContent = S.name; $("#me-sync").textContent = brCfg().gh ? "Uguale su PC e telefono" : "Dati salvati su questo dispositivo"; $("#me-av").textContent = S.name.slice(0, 2).toUpperCase();
 }
 function refresh(){
   renderStatic();
@@ -1223,7 +1284,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "12";
+const APP_V = "13";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
@@ -1250,7 +1311,7 @@ setTimeout(() => checkAppUpdate(false), 3000);
 const start = (location.hash || "").slice(1);
 refresh();
 if (start && appById(start)) go(start);
-loadWeather(); loadNotes(); loadNews(); brLoad(false); gcLoad(true);
+loadWeather(); loadNotes(); loadNews(); brLoad(false); gcLoad(true); setTimeout(dsSync, 1200);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) gcLoad(false); });
 setInterval(loadNews, 15 * 6e4);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) loadNews(); });
