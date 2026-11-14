@@ -25,14 +25,17 @@ jobs:
         with:
           node-version: 22
       - name: Recupera le notizie precedenti
-        run: git fetch -q --depth=1 origin notizie && git show FETCH_HEAD:raw.json > dashboard/news/raw.json || true
+        run: git fetch -q --depth=1 origin notizie && git show FETCH_HEAD:raw.json > dashboard/news/raw.json || true; git show FETCH_HEAD:trad.json > /tmp/t.json 2>/dev/null && mv /tmp/t.json dashboard/news/trad.json || true
       - name: Scarica e raggruppa le notizie
         run: node dashboard/news/aggiorna.mjs
+      - name: Traduci in italiano
+        run: node dashboard/news/traduci.mjs || true
       - name: Prezzi dei mercati
         run: node dashboard/news/mercati.mjs || true
       - name: Pubblica nel ramo notizie
         run: |
           mkdir -p /tmp/out && cp dashboard/news/news.json dashboard/news/raw.json /tmp/out/
+          cp dashboard/news/trad.json /tmp/out/ 2>/dev/null || true
           cp dashboard/news/mercati.json /tmp/out/ 2>/dev/null || (git show FETCH_HEAD:mercati.json > /tmp/m.json 2>/dev/null && mv /tmp/m.json /tmp/out/mercati.json) || true
           cd /tmp/out
           git init -q -b notizie
