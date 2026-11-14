@@ -420,6 +420,8 @@ html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
 .tg.on{background:var(--green)}.tg.on::after{left:21px}
 input[type=range]{width:100%;accent-color:var(--blue)}
 .portal{display:block;width:100%;height:calc(100vh - 120px);border:1px solid var(--line);border-radius:var(--r);background:#000}
+#portal-host{position:fixed;z-index:31;display:none;overflow:hidden;background:#000;border:1px solid var(--line)} #portal-host iframe{display:block;width:100%;height:100%;border:0}
+@media (max-width:899px){#portal-host{border:0}}
 .is-portal .view{gap:0}
 .toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 100px);transform:translate(-50%,20px);opacity:0;z-index:60;padding:10px 16px;border-radius:12px;background:#1d2433;border:1px solid var(--line-2);font-size:13px;transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -730,7 +732,7 @@ function go(id, opt = {}){
     window.scrollTo(0, 0);
   }
 }
-function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
+function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); portalSync(); }
 
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
@@ -914,7 +916,7 @@ const VIEWS = {
       <div class="chips">${COUNTRIES.map(([k, t]) => `<button class="chip ${S.news.countries.includes(k) ? "on" : ""}" onclick="tog('countries','${k}')">${t}</button>`).join("")}</div></div>`;
   },
   conoscenza(){
-    return `<iframe class="portal" src="../" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`;
+    return `<div class="portal portal-slot"></div>`;
   },
   promemoria(){ return remView(); },
   sveglie(){ return alarmView(); },
@@ -2008,7 +2010,20 @@ function useGeo(){
   if (!navigator.geolocation) return toast("Posizione non disponibile");
   navigator.geolocation.getCurrentPosition(p => setCity({ name: "La mia posizione", country: "", lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => toast("Permesso posizione negato"));
 }
-function after(id, root, opt){ if (id === "calendario"){ gcLoad(false); if (GC.form) setTimeout(() => root.querySelector("#gc-t")?.focus(), 200); } if (id === "cervello"){ if (BR.tab === "grafo") requestAnimationFrame(brGraph); brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
+/* Il portale resta sempre aperto: un solo iframe, creato la prima volta e poi solo nascosto,
+   così un test o una spiegazione in corso continua anche se vai in un'altra sezione. */
+function portalSync(){
+  const slot = cur === "conoscenza" ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
+  let host = document.getElementById("portal-host");
+  if (!slot){ if (host) host.style.display = "none"; return; }
+  if (!host){ host = document.createElement("div"); host.id = "portal-host";
+    host.innerHTML = `<iframe src="../" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`; document.body.appendChild(host); }
+  const r = slot.getBoundingClientRect();
+  Object.assign(host.style, { display: "block", left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", borderRadius: getComputedStyle(slot).borderRadius });
+}
+addEventListener("resize", () => portalSync());
+addEventListener("scroll", () => portalSync(), true);
+function after(id, root, opt){ portalSync(); [0, 120, 340].forEach(t => setTimeout(portalSync, t)); if (id === "calendario"){ gcLoad(false); if (GC.form) setTimeout(() => root.querySelector("#gc-t")?.focus(), 200); } if (id === "cervello"){ if (BR.tab === "grafo") requestAnimationFrame(brGraph); brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
 
 /* ---------------- SECONDO CERVELLO ----------------
    Archivio in stile Obsidian: file Markdown nella cartella cervello/ della repository privata
@@ -2807,7 +2822,7 @@ function renderStatic(){
 function refresh(){
   renderStatic();
   if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open") && cur !== "conoscenza" && cur !== "cervello") { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
-  else { renderNav(); if (cur === "conoscenza" && $("#pc-body iframe")) return; if (cur === "cervello" && $("#pc-body .br-ai")) return; $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
+  else { renderNav(); if (cur === "conoscenza" && $("#pc-body .portal-slot")) return portalSync(); if (cur === "cervello" && $("#pc-body .br-ai")) return; $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
 }
 if ($("#new-btn")) $("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
 document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
@@ -2836,7 +2851,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "45";
+const APP_V = "46";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
