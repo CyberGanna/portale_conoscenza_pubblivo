@@ -188,6 +188,15 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
   .phone .ph-music{display:grid;position:absolute;right:16px;top:calc(var(--safe-t) + 12px);z-index:3}
   .ph-date{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
   .ph-hello{font-size:13px;text-align:center;margin-top:2px}
+  .phone{display:flex!important;flex-direction:column;padding-bottom:calc(var(--safe-b) + 18px)!important}
+  .wid-bottom{margin:26px 0 0!important;margin-top:auto!important} .apps{margin-bottom:26px}
+  .cal-w{justify-content:flex-start!important;gap:16px!important;align-items:stretch!important}
+  .cw-d{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;padding-right:14px;border-right:1px solid var(--line)}
+  .cw-d small{font-size:10.5px;font-weight:700;color:var(--red);letter-spacing:.06em} .cw-d b{font-size:40px;font-weight:300;line-height:1.05} .cw-d span{font-size:11px;color:var(--muted)}
+  .cw-r{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px} .cw-h{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .cw-e{display:flex;gap:9px;align-items:flex-start} .cw-e i{flex:none;width:4px;align-self:stretch;border-radius:2px;min-height:28px}
+  .cw-e b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cw-e div{min-width:0} .cw-e small{font-size:11px;color:var(--muted)}
+  .cw-none{font-size:13px;color:var(--muted)}
   .wid{margin:16px 0 22px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:24px}
   .wid .big{font-size:44px;font-weight:300;letter-spacing:-.03em;line-height:1}
   .wid .city{font-size:13px;font-weight:600}
@@ -307,9 +316,10 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
   <div class="ph-hello" id="ph-hello"></div>
-  <button class="wid glass" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
+  <button class="wid glass cal-w" style="width:100%;text-align:left" onclick="go('calendario')" id="ph-cal"></button>
   <div id="ph-edit"></div>
   <div class="apps" id="ph-apps"></div>
+  <button class="wid glass wid-bottom" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
   <div class="dock glass" id="ph-dock"></div>
 </div>
 <div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div><div class="sh-edge"></div><button class="sh-home" aria-label="Torna alla home" onclick="closeSheet()"><i></i></button></div>
@@ -1424,7 +1434,7 @@ function syncBox(){
 let homeEdit = false;
 function homeCfg(){ S.home = S.home || {}; S.home.big = S.home.big || {}; S.home.cols = S.home.cols || 4; return S.home; }
 function homeItems(){
-  const apps = APPS.filter(a => !a.pcOnly && a.id !== "collegamenti").map(a => ({ k: a.id, a }));
+  const apps = APPS.filter(a => !a.pcOnly && !["collegamenti", "calendario", "meteo"].includes(a.id)).map(a => ({ k: a.id, a }));
   const links = S.links.filter(l => /^https?:\/\/([\w-]+\.)*github\.com/i.test(l.u)).slice(0, 2).map(l => ({ k: "link:" + l.u, l }));
   const all = [...apps, ...links], order = homeCfg().order || [];
   const pos = k => { const i = order.indexOf(k); return i < 0 ? 1e3 + all.findIndex(x => x.k === k) : i; };
@@ -1525,11 +1535,29 @@ function homeSaveOrder(){ homeCfg().order = [...$("#ph-apps").children].map(el =
   };
   document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
 })();
+function phCalWidget(now){
+  const left = `<div class="cw-d"><small>${GIORNI[now.getDay()].toUpperCase()}</small><b>${now.getDate()}</b><span>${MESI[now.getMonth()]}</span></div>`;
+  let rows = [], title = "Oggi";
+  if (GC.ev){
+    const today = evOn(now).filter(e => evAllDay(e) || evEnd(e) > now);
+    if (today.length) rows = today.slice(0, 3).map(e => [evAllDay(e) ? "Tutto il giorno" : hhmm(evStart(e)), e]);
+    else {
+      title = "Prossimi";
+      for (let i = 1; i < 8 && rows.length < 3; i++){ const d = new Date(now); d.setDate(d.getDate() + i);
+        for (const e of evOn(d)) { if (rows.length < 3 && !rows.some(r => r[1] === e)) rows.push([(i === 1 ? "Domani" : cap(GIORNI[d.getDay()]).slice(0, 3) + " " + d.getDate()) + (evAllDay(e) ? "" : " " + hhmm(evStart(e))), e]); } }
+    }
+  }
+  const body = !GC.ev ? `<div class="cw-none">${gcId() ? "Tocca per collegare Google Calendar" : "Tocca per aprire il calendario"}</div>`
+    : rows.length ? `<div class="cw-h">${title}</div>${rows.map(([t, e]) => `<div class="cw-e"><i style="background:${esc(e.col)}"></i><div><b>${esc(e.t)}</b><small>${t}${e.where ? " · " + esc(e.where) : ""}</small></div></div>`).join("")}`
+    : `<div class="cw-none">Nessun impegno nei prossimi giorni</div>`;
+  return left + `<div class="cw-r">${body}</div>`;
+}
 function renderPhone(){
   const now = new Date();
   $("#ph-date").textContent = dateLong(now);
   $("#ph-hello").textContent = `${greet()}, ${S.name}`;
   const c = wOk() ? W.current : null, d = wOk() ? W.daily : null;
+  $("#ph-cal").innerHTML = phCalWidget(now);
   $("#ph-wid").innerHTML = c ? `<div><div class="city">${esc(S.city.name)}</div><div class="big">${Math.round(c.temperature_2m)}°</div><div class="desc">${WMO(c.weather_code)[1]}</div></div><div class="right"><div class="emo">${WMO(c.weather_code)[0]}</div>Max ${Math.round(d.temperature_2m_max[0])}° Min ${Math.round(d.temperature_2m_min[0])}°<br>Pioggia ${d.precipitation_probability_max[0] ?? 0}%</div>`
     : `<div><div class="city">${esc(S.city.name)}</div><div class="desc">Carico il meteo…</div></div>`;
   renderHomeApps();
@@ -1575,7 +1603,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "18";
+const APP_V = "19";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
