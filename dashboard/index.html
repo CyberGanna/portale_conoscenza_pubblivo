@@ -228,6 +228,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
   .orbs .o2{width:380px;height:380px;left:-180px;bottom:20%}
   .phone .ph-music{display:grid;position:absolute;right:16px;top:calc(var(--safe-t) + 12px);z-index:3}
   .phone .ph-lang{display:grid;position:absolute;right:62px;top:calc(var(--safe-t) + 12px);z-index:3}
+  .phone .ph-ai{display:grid;position:absolute;right:108px;top:calc(var(--safe-t) + 12px);z-index:3;font-size:16px}
   .ph-date{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
   .ph-hello{font-size:13px;text-align:center;margin-top:2px}
   .phone{display:flex!important;flex-direction:column;padding-bottom:calc(var(--safe-b) + 64px)!important}
@@ -309,7 +310,17 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .music-btn.on{background:rgba(47,123,255,.25);border-color:var(--blue);color:#fff;box-shadow:0 0 18px rgba(47,123,255,.5)}
 .music-btn.on svg{animation:pulse 2.6s ease-in-out infinite}
 @keyframes pulse{50%{transform:scale(1.15)}}
-.ph-music,.ph-lang{display:none}
+.ph-music,.ph-lang,.ph-ai{display:none}
+.ai-side{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;text-align:left;width:100%;margin-bottom:10px;padding:11px 12px;border-radius:14px;cursor:pointer;color:var(--ink);background:linear-gradient(135deg,rgba(47,123,255,.22),rgba(167,139,250,.18));border:1px solid rgba(91,155,255,.35);box-shadow:0 0 22px rgba(47,123,255,.15);transition:transform .15s,box-shadow .15s}
+.ai-side:hover{transform:translateY(-1px);box-shadow:0 0 28px rgba(47,123,255,.3)} .ai-side span{grid-row:span 2;font-size:20px} .ai-side b{font-size:13.5px} .ai-side small{font-size:11px;color:var(--muted)}
+#ai-panel{position:fixed;inset:0;z-index:65;background:rgba(3,6,12,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;justify-content:flex-end}
+#ai-panel.open{display:flex} .ai-p{width:min(520px,100%);height:100%;border-radius:0;display:flex;flex-direction:column;padding:20px 20px calc(var(--safe-b) + 16px);background:rgba(14,18,28,.97);border-left:1px solid var(--line)}
+.ai-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-top:var(--safe-t)} .ai-hd h3{margin:0 0 2px} .ai-hd .btn{white-space:nowrap}
+.ai-p .ai-msgs{flex:1;overflow-y:auto;margin:14px 0 10px;display:flex;flex-direction:column;gap:8px}
+.ai-b{max-width:88%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.5} .ai-b.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:4px}
+.ai-b.ai{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line);border-bottom-left-radius:4px} .ai-b.err{color:#fda4af}
+.ai-sug{display:flex;flex-wrap:wrap;gap:6px} .ai-sug .chip{font-size:12px;text-align:left} .ai-f{display:flex;gap:8px} .ai-f .input{flex:1;margin:0}
+.mkd-chat .ai-msgs{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;margin:6px 0 10px}
 .lang-btn{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--ink);cursor:pointer} .lang-btn:hover{border-color:var(--blue);color:#fff}
 .acts .lang-btn{margin-right:8px}
 .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
@@ -334,6 +345,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
     <nav class="nav" id="nav"></nav>
     <div class="grow"></div>
+    <button class="ai-side" onclick="aiOpen()"><span>✨</span><b>Chiedi all'AI</b><small>Domande su mercati, notizie, calendario…</small></button>
     <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small id="me-sync">Dati salvati su questo dispositivo</small></div></div>
   </aside>
   <main class="main">
@@ -355,6 +367,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 
 <!-- ============ TELEFONO ============ -->
 <div class="phone">
+  <button class="round ph-ai" title="Chiedi all'AI" onclick="aiOpen()">✨</button>
   <button class="round lang-btn ph-lang" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
@@ -495,7 +508,7 @@ const I18N = {
 "Perché:": "Why:", "Cosa può comportare:": "What it can mean:", "Riassunto non disponibile adesso, riprova tra poco.": "Summary not available right now, try again soon.", "Sto riassumendo…": "Summarizing…",
 "Hai già l'ultima versione": "You already have the latest version", "Aggiorno l'app…": "Updating the app…", "Nessuna connessione": "No connection", "Musica rilassante accesa": "Relaxing music on", "Musica spenta": "Music off",
 "Giorno": "Day", "Settimana": "Week", "Mese": "Month", "Anno": "Year", "Alba": "Sunrise", "Tramonto": "Sunset", "Temperatura": "Temperature", "Umidità": "Humidity", "Vento": "Wind", "Percepiti": "Feels like", "24 ore": "24 hours",
-"Home": "Home", "Nuovo": "New", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
+"Home": "Home", "Nuovo": "New", "Chiedi all'AI": "Ask the AI", "Domande su mercati, notizie, calendario…": "Questions about markets, news, calendar…", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
 "Per esempio salva Oro, S&P 500 o Bitcoin: li vedrai sempre in questo riquadro, anche quando non sono tra i movimenti più forti.": "For example save Gold, S&P 500 or Bitcoin: you'll always see them in this box, even when they're not among the strongest moves.",
 "Togli dai preferiti": "Remove from favourites", "Salva nei preferiti": "Save to favourites", "Tolto dai preferiti": "Removed from favourites", "Salvato nei preferiti": "Saved to favourites",
 "Mappa dei mercati": "Market map", "Scende": "Down", "Sale": "Up", "Colore più acceso = movimento più insolito · ★ bordo giallo = preferito": "Brighter colour = more unusual move · yellow border = favourite",
@@ -1178,11 +1191,106 @@ function mkDraw(){
     <div class="mkd-sec"><h4>${L2("Cosa lo sta influenzando adesso", "What's driving it now")}</h4>
       ${ai ? `<p>${esc(ai.perche)}</p>${ai.effetti ? `<p class="muted">${esc(ai.effetti)}</p>` : ""}` : ""}
       ${now && now.txt ? `<p>${esc(now.txt)}</p>` : now && now.busy ? `<p class="muted">${L2("L'AI sta leggendo le notizie…", "The AI is reading the news…")}</p>` : now && now.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(now.err)}</p>` : ""}
-      ${mkKey() ? (!now || now.err ? `<button class="btn" onclick="mkAskNow()">✨ ${L2("Chiedi all'AI", "Ask the AI")}</button>` : "") : `<p class="muted">${L2("Con la chiave Groq gratuita l'AI ti spiega cosa lo muove in questi giorni.", "With the free Groq key the AI explains what's moving it these days.")}</p>`}</div>
+      ${mkKey() ? (!now || now.err ? `<button class="btn" onclick="mkAskNow()">✨ ${L2("Spiegamelo con l'AI", "Explain it with AI")}</button>` : "") : `<p class="muted">${L2("Con la chiave Groq gratuita l'AI ti spiega cosa lo muove in questi giorni.", "With the free Groq key the AI explains what's moving it these days.")}</p>`}</div>
+    ${mkChatHtml(x)}
     ${h ? mkYears(h) : ""}
     ${rel.length ? `<div class="mkd-sec"><h4>${L2("Nelle notizie", "In the news")}</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}" target="_blank" rel="noopener"><b>${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
     <p class="muted mkd-note">${L2("Dati Yahoo Finance (storico mensile, ultimo anno giorno per giorno). Solo le cripto hanno il prezzo in tempo reale gratis; gli altri strumenti si aggiornano ogni ora. Non sono consigli di investimento.", "Yahoo Finance data (monthly history, last year daily). Only crypto has a free live price; other instruments update hourly. Not investment advice.")}</p>
   </div>`;
+}
+/* ---------------- CHIEDI ALL'AI (Groq gratis): domande generali o su uno strumento ---------------- */
+async function groqText(key, sys, msgs, maxTokens){
+  let last = "";
+  for (const model of await groqModels(key)){
+    for (let t = 0; t < 2; t++){
+      let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
+        body: JSON.stringify({ model, temperature: 0.4, ...groqOpt(model, maxTokens), messages: [{ role: "system", content: sys + LANG_SFX }, ...msgs] }) }); }
+      catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
+      if (r.status === 401) throw new Error(L2("la chiave Groq non è valida", "the Groq key is not valid"));
+      if (r.status === 429){ last = L2("limite di richieste raggiunto", "rate limit reached"); const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 1){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
+      if (!r.ok){ last = "Groq " + r.status; if (r.status === 404){ GM = null; try { localStorage.removeItem(KEY + "-gm"); } catch {} } break; }
+      const txt = ((await r.json()).choices?.[0]?.message?.content || "").trim();
+      if (txt) return txt; last = L2("risposta vuota", "empty answer");
+    }
+  }
+  throw new Error(L2("l'AI non risponde adesso", "the AI isn't answering right now") + (last ? " (" + last + ")" : ""));
+}
+const aiMd = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^#+\s*(.+)$/gm, "<b>$1</b>").replace(/^\s*[-*]\s+/gm, "• ").replace(/\n/g, "<br>");
+const AI_BASE = () => L2(`Sei l'assistente della dashboard personale di ${S.name}. Rispondi in italiano semplice, chiaro e breve (massimo 8-10 righe se non ti chiedono di più). Usa i dati della dashboard qui sotto quando servono e dillo se un'informazione non c'è o se non la sai: non inventare numeri, date o fatti. Puoi spiegare economia e finanza, ma niente consigli personali di comprare o vendere.`,
+  `You are the assistant of ${S.name}'s personal dashboard. Answer in simple, clear, short English (at most 8-10 lines unless asked for more). Use the dashboard data below when useful and say when something isn't there or you don't know it: don't invent numbers, dates or facts. You can explain economics and finance, but no personal buy or sell advice.`);
+function aiContext(){
+  const now = new Date(), out = [`Adesso: ${dateLong(now)} ${now.getFullYear()}, ore ${hhmm(now)}. Sezione aperta: ${cur}.`];
+  if (MK){ const n = cur === "mercati" ? 30 : 12;
+    out.push(`Mercati (aggiornati alle ${hhmm(new Date(MK.updated))}, ordinati dal movimento più insolito):\n` + MK.items.filter(mkFresh).slice(0, n).map(x => `- ${x.n} (${x.cls}): ${mkFmt(x)} ${x.cls === "Tassi" ? "%" : x.cur}, oggi ${mkPct(x.pct)}, 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}, di solito ±${x.vol}%`).join("\n"));
+    const F = mkFavs().map(s => MK.items.find(x => x.s === s)).filter(Boolean); if (F.length) out.push("Preferiti: " + F.map(x => `${x.n} ${mkPct(x.pct)}`).join(", "));
+    const ex = Object.entries(MKAI.items || {}).slice(0, 6); if (ex.length) out.push("Spiegazioni AI dei movimenti forti:\n" + ex.map(([k, v]) => `- ${k}: ${v.perche}`).join("\n")); }
+  if (NEWS){ const n = cur === "notizie" ? 30 : 15;
+    out.push("Notizie più riprese delle ultime 24 ore:\n" + NEWS.items.filter(x => x.d > Date.now() - 864e5).sort((a, b) => b.n - a.n).slice(0, n).map(x => `- ${x.t} (${x.n} testate, ${x.cats.map(c => CAT_T[c] || c).join("/")})`).join("\n")); }
+  if (GC.ev && GC.ev.length){ const n = cur === "calendario" ? 40 : 15, a = new Date(); a.setHours(0, 0, 0, 0); const b = new Date(a); b.setDate(b.getDate() + (cur === "calendario" ? 31 : 8));
+    const ev = GC.ev.filter(e => evStart(e) >= a && evStart(e) < b).slice(0, n); if (ev.length) out.push("Calendario (prossimi giorni):\n" + ev.map(e => `- ${dateLong(evStart(e))}${evAllDay(e) ? "" : " " + hhmm(evStart(e))}: ${e.t}`).join("\n")); }
+  const rem = (S.rem || []).filter(r => !r.done).slice(0, 10); if (rem.length) out.push("Promemoria da fare:\n" + rem.map(r => `- ${r.t || r.text || ""}`).join("\n"));
+  if (W && W.current) out.push(`Meteo a ${S.city?.name || ""}: ${Math.round(W.current.temperature_2m)}°, ${WMO(W.current.weather_code)[1]}.`);
+  return out.join("\n\n").slice(0, 9000);
+}
+const AIC = { msgs: [], busy: false, err: "" };
+function aiOpen(){
+  let el = document.getElementById("ai-panel");
+  if (!el){ el = document.createElement("div"); el.id = "ai-panel"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) aiClose(); }; document.body.appendChild(el); }
+  el.classList.add("open"); aiDraw(); setTimeout(() => document.getElementById("ai-q")?.focus(), 50);
+}
+function aiClose(){ document.getElementById("ai-panel")?.classList.remove("open"); }
+addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("ai-panel")?.classList.contains("open")) aiClose(); });
+function aiChatHtml(msgs, busy, err, id, sugg, sendFn){
+  return `<div class="ai-msgs" id="${id}-m">${msgs.length ? msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content)}</div>`).join("")
+      : `<div class="ai-sug">${sugg.map(s => `<button class="chip" onclick="${sendFn}(this.textContent)">${esc(s)}</button>`).join("")}</div>`}
+    ${busy ? `<div class="ai-b ai muted">${L2("Sto pensando…", "Thinking…")}</div>` : ""}${err ? `<div class="ai-b ai err">${esc(err)}</div>` : ""}</div>
+    ${mkKey() ? `<form class="ai-f" onsubmit="event.preventDefault();${sendFn}(this.q.value);this.q.value=''"><input class="input" name="q" id="${id}-q" autocomplete="off" placeholder="${L2("Scrivi una domanda…", "Ask a question…")}"><button class="btn blue" ${busy ? "disabled" : ""}>${L2("Invia", "Send")}</button></form>`
+      : `<p class="muted" style="font-size:12.5px">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`}`;
+}
+function aiDraw(){
+  const el = document.getElementById("ai-panel"); if (!el) return;
+  const sugg = cur === "mercati" ? [L2("Perché oggi si muovono i mercati?", "Why are markets moving today?"), L2("Cosa significa uno z-score alto?", "What does a high z-score mean?"), L2("Riassumi i miei preferiti", "Summarize my favourites")]
+    : cur === "notizie" ? [L2("Riassumi le notizie più importanti di oggi", "Summarize today's top news"), L2("Cosa succede in Medio Oriente?", "What's happening in the Middle East?")]
+    : cur === "calendario" ? [L2("Cosa ho in programma questa settimana?", "What's on this week?"), L2("Quando ho la prossima verifica?", "When is my next test?")]
+    : [L2("Fammi un riassunto della giornata", "Give me a summary of the day"), L2("Cosa si muove oggi nei mercati?", "What's moving in the markets today?"), L2("Cosa ho in programma domani?", "What's planned tomorrow?")];
+  el.innerHTML = `<div class="ai-p glass"><div class="ai-hd"><div><h3>✨ ${L2("Chiedi all'AI", "Ask the AI")}</h3><small class="muted">${L2("Conosce mercati, notizie, calendario e promemoria della dashboard", "Knows the dashboard's markets, news, calendar and reminders")} · Groq</small></div>
+    <div style="display:flex;gap:6px">${AIC.msgs.length ? `<button class="btn" onclick="AIC.msgs=[];AIC.err='';aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button class="round" onclick="aiClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div></div>
+    ${aiChatHtml(AIC.msgs, AIC.busy, AIC.err, "ai", sugg, "aiSend")}</div>`;
+  const m = document.getElementById("ai-m"); if (m) m.scrollTop = m.scrollHeight;
+}
+async function aiSend(q){
+  q = String(q || "").trim(); const key = mkKey(); if (!q || !key || AIC.busy) return;
+  AIC.msgs.push({ role: "user", content: q }); AIC.busy = true; AIC.err = ""; aiDraw();
+  try { const a = await groqText(key, AI_BASE() + "\n\nDATI DELLA DASHBOARD:\n" + aiContext(), AIC.msgs.slice(-10), 900); AIC.msgs.push({ role: "assistant", content: a }); }
+  catch (e){ AIC.err = e.message; }
+  AIC.busy = false; aiDraw(); setTimeout(() => document.getElementById("ai-q")?.focus(), 30);
+}
+/* domande su un singolo strumento, dentro la sua scheda */
+const MKD_CHAT = {};
+function mkCtx(x){
+  const info = MK_INFO[x.s], h = STORIA && STORIA.s && STORIA.s[x.s], ai = mkAI(x), out = [`Strumento: ${x.n} (${x.s}), categoria ${x.cls}${info ? `, nato nel ${info[0]}` : ""}.`, info ? `Cos'è: ${info[1]}\nCosa lo muove di solito: ${info[2]}` : ""];
+  out.push(`Prezzo ${mkFmt(x)} ${x.cls === "Tassi" ? "%" : x.cur} (alle ${hhmm(new Date(x.t))}${MKD && MKD.live ? `, in tempo reale ${MKD.live.v}` : ""}), oggi ${mkPct(x.pct)}, 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}, oscillazione tipica ±${x.vol}% al giorno, z-score ${x.z}.`);
+  if (h){ const m = h.m || [], d = h.d || [], back = n => m.length > n ? m[m.length - 1 - n][1] : null;
+    out.push(`Rendimenti: 1 anno ${d.length > 200 ? mkPct1(pctOf(x.px, d.slice(-252)[0][1])) : "?"}, 5 anni ${back(60) ? mkPct1(pctOf(x.px, back(60))) : "?"}, 10 anni ${back(120) ? mkPct1(pctOf(x.px, back(120))) : "?"}. Storia mensile dal ${m.length ? mY(m[0][0]) : "?"}.`);
+    if (m.length) out.push("Chiusure di fine anno: " + Object.entries(m.reduce((o, p) => (o[dDate(p[0]).getUTCFullYear()] = p[1], o), {})).slice(-15).map(([y, v]) => `${y}: ${v}`).join(", ")); }
+  if (ai) out.push(`Spiegazione AI del movimento di oggi: ${ai.perche} ${ai.effetti || ""}`);
+  const rel = mkRelNews(x); if (rel.length) out.push("Notizie che lo citano:\n" + rel.map(n => "- " + n.t).join("\n"));
+  if (NEWS) out.push("Notizie di economia più riprese:\n" + NEWS.items.filter(n => n.cats.includes("economia")).sort((a, b) => b.n - a.n).slice(0, 10).map(n => "- " + n.t).join("\n"));
+  return out.filter(Boolean).join("\n\n");
+}
+async function mkChatSend(q){
+  if (!MKD) return; const s = MKD.s, x = MK.items.find(i => i.s === s), key = mkKey(); q = String(q || "").trim(); if (!q || !key) return;
+  const C = MKD_CHAT[s] = MKD_CHAT[s] || { msgs: [], busy: false, err: "" }; if (C.busy) return;
+  C.msgs.push({ role: "user", content: q }); C.busy = true; C.err = ""; mkDraw(); mkChatScroll();
+  try { const a = await groqText(key, AI_BASE() + "\n\nLa domanda riguarda questo strumento finanziario:\n" + mkCtx(x), C.msgs.slice(-10), 800); C.msgs.push({ role: "assistant", content: a }); }
+  catch (e){ C.err = e.message; }
+  C.busy = false; if (MKD && MKD.s === s){ mkDraw(); mkChatScroll(); setTimeout(() => document.getElementById("mkc-q")?.focus(), 30); }
+}
+function mkChatScroll(){ const m = document.getElementById("mkc-m"); if (m) m.scrollTop = m.scrollHeight; }
+function mkChatHtml(x){
+  const C = MKD_CHAT[x.s] || { msgs: [], busy: false, err: "" }, n = EN ? (I18N[x.n] || x.n) : x.n;
+  return `<div class="mkd-sec mkd-chat"><h4>✨ ${L2("Chiedi all'AI su", "Ask the AI about")} ${esc(n)}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "mkc",
+    [L2(`Perché si è mosso così oggi?`, "Why did it move like this today?"), L2("Cosa lo può far salire o scendere nei prossimi mesi?", "What could push it up or down in the coming months?"), L2("Spiegamelo come se fossi un principiante", "Explain it to me like a beginner")], "mkChatSend")}</div>`;
 }
 const nT = x => (!EN && !S.newsOrig && x.ti) || x.t, nS = x => (!EN && !S.newsOrig && x.si) || x.s || "";
 function newsLangBtn(){ return !EN && NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
@@ -2089,7 +2197,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "27";
+const APP_V = "28";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
