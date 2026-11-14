@@ -190,9 +190,9 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .mk-r,.mk-fav{cursor:pointer} .mk-r:hover .mk-n b,.mk-fav:hover b{color:var(--blue-2)}
 html.noscroll,html.noscroll body{overflow:hidden}
 #mk-modal{position:fixed;inset:0;z-index:60;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
-#mk-modal.open,#nw-modal.open{display:flex}
-#nw-modal{position:fixed;inset:0;z-index:62;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
-#nw-modal.open .mkd{animation:secIn .4s cubic-bezier(.2,.8,.2,1) both}
+#mk-modal.open,#nw-modal.open,#gv-modal.open{display:flex}  #gv-modal{z-index:61 !important}
+#nw-modal,#gv-modal{position:fixed;inset:0;z-index:62;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+#nw-modal.open .mkd,#gv-modal.open .mkd{animation:secIn .4s cubic-bezier(.2,.8,.2,1) both}
 .nwd-meta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px} .nwd-c{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .nwd-t{font-size:22px;line-height:1.3;margin:14px 0 6px} .nwd-orig{font-size:12px;margin:0 0 6px} .nwd-s{font-size:14px;line-height:1.55;color:#cbd5e1;margin:8px 0 0}
 .nwd-ai{background:linear-gradient(135deg,rgba(124,92,255,.10),rgba(47,123,255,.06));border:1px solid rgba(124,92,255,.25);border-radius:16px;padding:6px 16px 12px}
@@ -201,7 +201,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
 @keyframes nwDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 .nwd-alt{font-size:13px;line-height:1.45;padding:7px 0;border-top:1px solid var(--line);color:#cbd5e1} .nwd-alt:first-of-type{border-top:0}
 a.nw-t,a.mk-nt{cursor:pointer}
-@media (max-width:700px){#nw-modal{padding:0} #nw-modal .mkd{border-radius:0;min-height:100%;padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 30px)} .nwd-t{font-size:19px}} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
+@media (max-width:700px){#nw-modal,#gv-modal{padding:0} #nw-modal .mkd,#gv-modal .mkd{border-radius:0;min-height:100%;padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 30px)} .nwd-t{font-size:19px}} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
 .mkd-hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start} .mkd-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .mkd-t h2{margin:0;font-size:22px} .mkd-t .mk-star{font-size:20px}
 .mkd-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:16px 0 10px} .mkd-px b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums} .mkd-px span{color:var(--muted);font-size:13px} .mkd-px i{font-style:normal;font-weight:700;margin-left:6px}
 .mkd-px small,.mkd-day small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px} .mkd-day{text-align:right} .mkd-day b{font-size:20px}
@@ -1015,7 +1015,7 @@ function gvBigCal(y, m){
   for (let d = 1; d <= days; d++){
     const k = ymd(new Date(y, m, d)), ev = all.filter(x => x.day === k);
     cells += `<div class="bc-d ${k === today ? "today" : ""} ${k === selK ? "sel" : ""}" onclick="gvSel='${k}';reView()"><span class="bc-n">${d}</span>
-      ${ev.slice(0, 3).map(e => `<span class="bc-e" style="--c:${GV_COL[e.imp]}">${e.time ? `<b>${e.time}</b> ` : ""}${esc(e.title)}</span>`).join("")}${ev.length > 3 ? `<span class="bc-more">+${ev.length - 3} ${EN ? "more" : "altri"}</span>` : ""}</div>`;
+      ${ev.slice(0, 3).map(e => `<span class="bc-e" style="--c:${GV_COL[e.imp]}" onclick="event.stopPropagation();gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}'))">${e.time ? `<b>${e.time}</b> ` : ""}${esc(e.title)}</span>`).join("")}${ev.length > 3 ? `<span class="bc-more">+${ev.length - 3} ${EN ? "more" : "altri"}</span>` : ""}</div>`;
   }
   const tail = (7 - (off + days) % 7) % 7; for (let i = 0; i < tail; i++) cells += `<div class="bc-d x"></div>`;
   return `<div class="bigcal">${cells}</div>`;
@@ -1032,7 +1032,7 @@ function gvMiniCal(y, m){
 function gvRows(list, empty){
   if (!list.length) return `<div class="muted" style="font-size:13px;padding:6px 0">${empty}</div>`;
   return `<div class="rows">${list.map(e => { const c = GV_CAT[e.cat] || GV_CAT.altro, col = GV_COL[e.imp];
-    return `<button class="r ev-r" onclick="gvAsk(${e.i})" title="${L2("Chiedi ad Aris", "Ask Aris")}"><div class="ic ev-ic" style="background:${col}22;color:${col}">${ico(e.src === "ff" ? "chart" : "globe")}</div>
+    return `<button class="r ev-r" onclick="gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}'))"><div class="ic ev-ic" style="background:${col}22;color:${col}">${ico(e.src === "ff" ? "chart" : "globe")}</div>
       <div class="t"><b>${esc(e.title)}</b><small>${e.time || L2("Tutto il giorno", "All day")} · <span style="color:${col};font-weight:600">${L2(...GV_LAB[e.imp])}</span> · ${L2(c[0], I18N[c[0]] || c[0])}${e.where ? " · " + esc(e.where) : ""}${e.extra ? " · " + esc(e.extra) : ""}</small></div></button>`; }).join("")}</div>`;
 }
 function gvView(){
@@ -1044,7 +1044,7 @@ function gvView(){
     : gvErr ? `${L2("Eventi dal web non aggiornati", "Web events not updated")}: ${esc(gvErr)}`
     : S.gev ? `${L2("Eventi dal web aggiornati", "Web events updated")} ${ago(S.gev.at)}` : !mkKey() ? L2("Con la chiave Groq gratuita Aris aggiunge anche elezioni, vertici e altri grandi eventi.", "With the free Groq key Aris also adds elections, summits and other big events.") : "";
   const legend = `<div class="gv-leg">${[5, 4, 3, 2, 1].map(n => `<span><i style="background:${GV_COL[n]}"></i>${L2(...GV_LAB[n])}</span>`).join("")}</div>`;
-  return head(L2("Calendario globale", "World calendar"), L2("I grandi eventi del mondo: dal rosso (fondamentali) al verde chiaro (minori). Tocca un evento per chiedere ad Aris.", "Big world events: from red (critical) to light green (minor). Tap one to ask Aris.")) + `
+  return head(L2("Calendario globale", "World calendar"), L2("I grandi eventi del mondo: dal rosso (fondamentali) al verde chiaro (minori). Tocca un evento per aprire la sua scheda.", "Big world events: from red (critical) to light green (minor). Tap one to open it.")) + `
     <div class="nw-bar"><span class="muted" style="font-size:13px">${st}</span><span class="sp"></span>
       <div class="seg">${[["tutti", L2("Tutti", "All")], ["economia", L2("Economia", "Economy")], ["mondo", L2("Mondo", "World")]].map(([k, t]) => `<button class="${gvF === k ? "on" : ""}" onclick="gvF='${k}';reView()">${t}</button>`).join("")}</div>
       <button class="chip ${gvTop ? "on" : ""}" onclick="gvTop=!gvTop;reView()">${L2("Solo i più importanti", "Most important only")}</button>
@@ -1062,6 +1062,84 @@ function gvView(){
     </div>
     <div class="glass c"><div class="hd"><div><h3>${L2("Prossimi 7 giorni", "Next 7 days")}</h3></div></div>${week.length ? week.map(([k, L]) => `<div class="gc-day">${dLong(k)}</div>${gvRows(L, "")}`).join("") : `<div class="muted" style="font-size:13px">${L2("Nessun grande evento in arrivo.", "No big events coming up.")}</div>`}</div>
     <p class="muted" style="font-size:11.5px">${L2("Appuntamenti economici: ForexFactory (orari svizzeri, aggiornati ogni ora). Altri eventi: ricerca sul web di Aris, una volta al giorno; controlla sempre le date importanti.", "Economic events: ForexFactory (Swiss time, hourly). Other events: Aris web search, once a day; always double-check important dates.")}</p>`;
+}
+/* ---------------- SCHEDA DI UN EVENTO DEL CALENDARIO GLOBALE ---------------- */
+let GVD = null; const GVD_AI = {}, GVD_CHAT = {};
+const gvFind = k => gvItems().find(x => x.k === k) || null;
+function gvOpen(k){
+  if (!gvFind(k)) return; GVD = { k }; MDL_EN = false;
+  let el = document.getElementById("gv-modal");
+  if (!el){ el = document.createElement("div"); el.id = "gv-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) gvClose(); }; document.body.appendChild(el); }
+  el.classList.add("open"); document.documentElement.classList.add("noscroll"); el.scrollTop = 0;
+  gvDraw(); if (mkKey() && !GVD_AI[k]) gvExplain();
+}
+function gvClose(){ document.getElementById("gv-modal")?.classList.remove("open"); if (!document.querySelector("#mk-modal.open,#nw-modal.open")) document.documentElement.classList.remove("noscroll"); GVD = null; }
+addEventListener("keydown", e => { if (e.key === "Escape" && GVD && !NWD){ e.stopImmediatePropagation(); gvClose(); } }, true);
+function gvNews(x){
+  if (!NEWS) return []; const w = new Set([...nwWords(x.title), ...nwWords(x.orig), ...nwWords(x.where)]);
+  return NEWS.items.map(n => [n, [...new Set([...nwWords(n.t), ...nwWords(n.ti)])].filter(k => w.has(k)).length]).filter(p => p[1] >= 2).sort((a, b) => b[1] - a[1] || b[0].n - a[0].n).slice(0, 5).map(p => p[0]);
+}
+function gvCtx(x){
+  const rel = gvNews(x);
+  return [`Evento: ${x.title}${x.orig && x.orig !== x.title ? ` (nome originale: ${x.orig})` : ""}`, `Data: ${x.day}${x.time ? " alle " + x.time + " ora svizzera" : ""}`, x.where ? `Dove / chi: ${x.where}` : "", `Categoria: ${(GV_CAT[x.cat] || GV_CAT.altro)[0]}`, `Importanza: ${x.imp}/5 (${GV_LAB[x.imp][0]})`,
+    x.src === "ff" ? `Dato economico (calendario ForexFactory). ${x.extra || ""}` : x.extra ? `Nota: ${x.extra}` : "", rel.length ? `Notizie collegate di questi giorni:\n- ${rel.map(n => n.t).join("\n- ")}` : ""].filter(Boolean).join("\n");
+}
+async function gvExplain(){
+  if (!GVD) return; const k = GVD.k, x = gvFind(k), key = mkKey(); if (!x || !key) return;
+  GVD_AI[k] = { busy: true }; gvDraw();
+  const sys = `Sei Aris e spieghi un evento del calendario mondiale a una persona curiosa ma non esperta, in italiano semplice. Se serve usa la ricerca sul web per i dettagli aggiornati (attese, previsioni, contesto); non inventare numeri, date o dichiarazioni. Oggi è ${ymd(new Date())}. Rispondi SOLO con JSON valido, senza testo prima o dopo: {"cose":"cos'è questo evento, 2-3 frasi","perche":"perché è importante, 2-3 frasi","attese":"cosa ci si aspetta questa volta, 2-3 frasi","effetti":"cosa può cambiare per i mercati, l'economia o le persone, 2-3 frasi","punti":["3-4 cose da sapere, brevi"],"domande":["2 domande per approfondire"]}`;
+  try {
+    const txt = await groqText(key, sys, [{ role: "user", content: gvCtx(x) }], 1100);
+    let o = null; const m = txt.match(/\{[\s\S]*\}/); try { o = JSON.parse(m ? m[0] : txt); } catch {}
+    GVD_AI[k] = o ? { cose: String(o.cose || ""), perche: String(o.perche || ""), attese: String(o.attese || ""), effetti: String(o.effetti || ""), punti: (o.punti || []).map(String).slice(0, 5), domande: (o.domande || []).map(String).slice(0, 3), web: groqText.web }
+      : { cose: txt.replace(/[{}"]/g, "").slice(0, 900), perche: "", attese: "", effetti: "", punti: [], domande: [], web: groqText.web };
+  } catch (e){ GVD_AI[k] = { err: e.message }; }
+  if (GVD && GVD.k === k) gvDraw();
+}
+async function gvChatSend(q){
+  if (!GVD) return; const k = GVD.k, x = gvFind(k), key = mkKey(); q = String(q || "").trim(); if (!q || !key || !x) return;
+  const C = GVD_CHAT[k] = GVD_CHAT[k] || { msgs: [], busy: false, err: "" }; if (C.busy) return;
+  C.msgs.push({ role: "user", content: q }); C.busy = true; C.err = ""; gvDraw(); gvChatScroll();
+  const ai = GVD_AI[k], sp = ai && ai.cose ? `\n\nSpiegazione che hai già dato:\n${ai.cose}\n${ai.perche}\n${ai.attese}\n${ai.effetti}` : "";
+  try { const a = await groqText(key, AI_BASE() + "\n\nLa domanda riguarda questo evento del calendario mondiale:\n" + gvCtx(x) + sp, C.msgs.slice(-10).map(m => ({ role: m.role, content: m.content })), 800); C.msgs.push({ role: "assistant", content: a, web: groqText.web }); }
+  catch (e){ C.err = e.message; }
+  C.busy = false; if (GVD && GVD.k === k){ gvDraw(); gvChatScroll(); setTimeout(() => document.getElementById("gvc-q")?.focus(), 30); }
+}
+function gvChatScroll(){ const m = document.getElementById("gvc-m"); if (m) m.scrollTop = m.scrollHeight; }
+function gvDraw(){ mdlRun(gvDraw0, "gv-modal"); }
+function gvDraw0(){
+  const el = document.getElementById("gv-modal"); if (!el || !GVD) return;
+  const x = gvFind(GVD.k); if (!x) return gvClose();
+  const ai = GVD_AI[x.k], C = GVD_CHAT[x.k] || { msgs: [], busy: false, err: "" }, c = GV_CAT[x.cat] || GV_CAT.altro, col = GV_COL[x.imp], rel = gvNews(x);
+  const d = new Date(x.day + "T12:00:00"), diff = Math.round((d - new Date(ymd(new Date()) + "T12:00:00")) / 864e5);
+  const when = cap(d.toLocaleDateString(EN ? "en-GB" : "it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })) + (x.time ? ` · ${x.time}` : ` · ${L2("tutto il giorno", "all day")}`);
+  const fx = x.src === "ff" ? (EVS.items.find(i => "ff:" + i.id === x.k) || {}) : {};
+  const stats = [[L2("Quando", "When"), diff === 0 ? L2("Oggi", "Today") : diff === 1 ? L2("Domani", "Tomorrow") : diff > 1 ? L2(`Tra ${diff} giorni`, `In ${diff} days`) : L2(`${-diff} giorni fa`, `${-diff} days ago`), x.time || ""],
+    [L2("Importanza", "Importance"), `<span style="color:${col}">${"●".repeat(x.imp)}${"○".repeat(5 - x.imp)}</span>`, L2(...GV_LAB[x.imp])],
+    ...(x.src === "ff" ? [[L2("Previsto", "Forecast"), esc(fx.fc || "—"), ""], [fx.ac ? L2("Dato uscito", "Actual") : L2("Precedente", "Previous"), esc((fx.ac || fx.pv) || "—"), ""]] : [[L2("Dove", "Where"), esc(x.where || "—"), ""], [L2("Categoria", "Category"), L2(c[0], I18N[c[0]] || c[0]), ""]])];
+  el.innerHTML = `<div class="mkd glass nwd">
+    <div class="mkd-hd"><div class="nwd-meta"><span class="tag" style="background:${col}26;color:${col}">${L2(...GV_LAB[x.imp])}</span><span class="nwd-c" style="color:${c[1]}">${L2(c[0], I18N[c[0]] || c[0])}</span>${x.where ? `<span class="muted">${esc(x.where)}</span>` : ""}</div>
+      <div class="mdl-r">${mdlBtn("gvDraw")}<button class="round" onclick="gvClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div></div>
+    <h2 class="nwd-t" data-tr="src">${esc(x.title)}</h2>
+    <p class="muted nwd-orig">${when}${x.orig && x.orig !== x.title ? ` · ${esc(x.orig)}` : ""}</p>
+    <div class="mkd-stats">${stats.map(([a, b, i]) => `<div><small>${a}</small><b>${b}</b>${i ? `<i>${i}</i>` : ""}</div>`).join("")}</div>
+    ${x.src === "ai" && x.extra ? `<p class="nwd-s" data-tr="ai" style="margin-top:14px">${esc(x.extra)}</p>` : ""}
+    <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
+      ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
+        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta studiando l'evento…", "Aris is looking into the event…")}</span></div>`
+        : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="gvExplain()">${L2("Riprova", "Retry")}</button>`
+        : `${ai.cose ? `<h5>${L2("Cos'è", "What it is")}</h5><p data-tr="ai">${esc(ai.cose)}</p>` : ""}
+           ${ai.perche ? `<h5>${L2("Perché è importante", "Why it matters")}</h5><p data-tr="ai">${esc(ai.perche)}</p>` : ""}
+           ${ai.attese ? `<h5>${L2("Cosa ci si aspetta", "What to expect")}</h5><p data-tr="ai">${esc(ai.attese)}</p>` : ""}
+           ${ai.effetti ? `<h5>${L2("Cosa può cambiare", "What it could change")}</h5><p data-tr="ai">${esc(ai.effetti)}</p>` : ""}
+           ${ai.punti.length ? `<h5>${L2("Da sapere", "Good to know")}</h5><ul class="nwd-pts" data-tr="ai">${ai.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+           ${ai.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : ""}`}
+    </div>
+    <div class="mkd-sec mkd-chat"><h4>${L2("Chiedi ad Aris su questo evento", "Ask Aris about this event")}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "gvc",
+      (ai && ai.domande && ai.domande.length ? ai.domande : [L2("Spiegamelo in parole semplici", "Explain it in simple words"), L2("Come può influenzare i mercati?", "How could it affect markets?"), L2("Cosa è successo l'ultima volta?", "What happened last time?")]), "gvChatSend")}</div>
+    ${rel.length ? `<div class="mkd-sec"><h4>${L2("Notizie collegate", "Related stories")}</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}"><b data-tr="src">${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
+    <p class="muted mkd-note">${x.src === "ff" ? L2("Appuntamento dal calendario economico ForexFactory, orario svizzero.", "From the ForexFactory economic calendar, Swiss time.") : L2("Evento trovato da Aris sul web: controlla sempre le date importanti.", "Event found by Aris on the web: always double-check important dates.")}</p>
+  </div>`;
 }
 /* ---------------- MERCATI (prezzi dal ramo notizie, spiegazioni con Groq gratis) ---------------- */
 const MK_URL = NEWS_URL.replace("news.json", "mercati.json");
@@ -2544,7 +2622,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "38";
+const APP_V = "39";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
