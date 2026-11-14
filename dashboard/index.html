@@ -878,6 +878,9 @@ function welcome(){
 function welTilt(e, el){ if (S.anim === false) return; const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
   el.style.transform = `perspective(700px) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg) translateY(-3px)`; el.style.setProperty("--mx", (x + .5) * 100 + "%"); el.style.setProperty("--my", (y + .5) * 100 + "%"); }
 function DASH(){
+  return welcome() + `<div id="dash-rest">` + DASH_REST() + `</div>`;
+}
+function DASH_REST(){
   const now = new Date(), c = wOk() ? W.current : null, dly = wOk() ? W.daily : null;
   const [emo, desc] = c ? WMO(c.weather_code) : ["", "…"];
   const start = new Date(now.getFullYear(), 0, 1), end = new Date(now.getFullYear() + 1, 0, 1);
@@ -886,7 +889,7 @@ function DASH(){
   const hrs = nextHours(24);
   const dayBars = dly ? dly.temperature_2m_max : [];
   const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
-  return welcome() + `<div class="wel-sep"><span>Panoramica completa</span></div><div class="grid">
+  return `<div class="wel-sep"><span>Panoramica completa</span></div><div class="grid">
     <div class="span8 dash-l">${mkDashCard()}${mkMapCard()}</div>
     <div class="span4 dash-l">${mkNewsCard()}${mkFavCard()}</div>
     <div class="glass c span4">
@@ -2925,7 +2928,12 @@ function renderStatic(){
 function refresh(){
   renderStatic();
   if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open") && cur !== "conoscenza" && cur !== "cervello") { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
-  else { renderNav(); if (cur === "conoscenza" && $("#pc-body .portal-slot")) return portalSync(); if (cur === "cervello" && $("#pc-body .br-ai")) return; $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
+  else { renderNav(); if (cur === "conoscenza" && $("#pc-body .portal-slot")) return portalSync(); if (cur === "cervello" && $("#pc-body .br-ai")) return; if (cur === "oggi" && $("#pc-body .wel") && $("#dash-rest")) return welUpdate(); $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
+}
+/* quando arrivano dati nuovi il benvenuto non viene ridisegnato (la sua animazione ripartirebbe da capo): aggiorno solo i testi */
+function welUpdate(){
+  const H = welHints(); document.querySelectorAll("#pc-body .wel-c").forEach((el, i) => { const x = H[i]; if (!x) return; el.querySelector(".wel-t b").textContent = x.q; el.querySelector(".wel-t small").textContent = x.h; });
+  $("#dash-rest").innerHTML = DASH_REST();
 }
 if ($("#new-btn")) $("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
 document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
@@ -2954,7 +2962,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "49";
+const APP_V = "50";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
