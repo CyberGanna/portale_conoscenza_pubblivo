@@ -329,6 +329,14 @@ a.nw-t,a.mk-nt{cursor:pointer}
 .aris::before{content:"";position:absolute;inset:-7px;border-radius:inherit;border:1.5px solid rgba(167,139,250,.45);animation:arisMorph 7s ease-in-out -3s infinite reverse}
 .aris b{font-size:17px;font-weight:700;letter-spacing:.14em;color:#fff;text-shadow:0 0 12px rgba(255,255,255,.7),0 1px 2px rgba(0,0,0,.4);margin-left:.14em}
 .ai-side:hover .aris{transform:scale(1.07)} .ai-side:active .aris{transform:scale(.95)}
+/* icona di Aris: sfera fluida senza scritte */
+.orb{--s:30px;position:relative;display:inline-block;flex:none;width:var(--s);height:var(--s);border-radius:50%;vertical-align:middle;animation:arisMorph 9s ease-in-out infinite,orbGlow 3.4s ease-in-out infinite}
+.orb i{position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:#140f3a}
+.orb i::before{content:"";position:absolute;inset:-35%;background:conic-gradient(from 0deg,#8b5cf6,#3b82f6,#22d3ee,#a78bfa,#ec4899,#8b5cf6);filter:blur(calc(var(--s) * .14));animation:orbSpin 5s linear infinite}
+.orb i::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.9),rgba(255,255,255,0) 30%),radial-gradient(circle at 50% 55%,rgba(255,255,255,0) 45%,rgba(12,10,40,.5) 100%)}
+.orb::before{content:"";position:absolute;inset:calc(var(--s) * -.14);border-radius:inherit;border:1px solid rgba(167,139,250,.5);animation:arisMorph 9s ease-in-out -4s infinite reverse}
+@keyframes orbSpin{to{transform:rotate(1turn)}}
+@keyframes orbGlow{0%,100%{box-shadow:0 0 calc(var(--s) * .35) rgba(124,92,255,.5)}50%{box-shadow:0 0 calc(var(--s) * .6) rgba(56,189,248,.6)}}
 @keyframes arisMorph{0%,100%{border-radius:42% 58% 63% 37% / 41% 44% 56% 59%}25%{border-radius:58% 42% 45% 55% / 55% 60% 40% 45%}50%{border-radius:50% 50% 34% 66% / 56% 38% 62% 44%}75%{border-radius:38% 62% 58% 42% / 44% 56% 44% 56%}}
 @keyframes arisGlow{0%,100%{box-shadow:0 0 22px rgba(124,92,255,.6),0 0 50px rgba(47,123,255,.2),inset 0 -8px 18px rgba(0,0,0,.35)}50%{box-shadow:0 0 34px rgba(124,92,255,.95),0 0 80px rgba(47,123,255,.35),inset 0 -8px 18px rgba(0,0,0,.35)}}
 @keyframes aiSpin{to{transform:rotate(360deg)}} @keyframes aiShine{0%,55%{left:-60%}85%,100%{left:130%}}
@@ -354,26 +362,26 @@ a.nw-t,a.mk-nt{cursor:pointer}
 html.no-anim *,html.no-anim *::before,html.no-anim *::after{animation:none !important;transition:none !important}
 @media (prefers-reduced-motion:reduce){.anim-in *,.anim-home *,.spark{animation:none !important}}
 /* barra di Aris sempre in basso al centro */
-#ab{position:fixed;z-index:50;left:calc(50% + 136px);bottom:18px;transform:translateX(-50%);width:min(640px,calc(100vw - 360px));pointer-events:none}
+#ab{position:fixed;z-index:50;left:calc(50% + 136px);bottom:16px;transform:translateX(-50%);width:min(330px,calc(100vw - 360px));pointer-events:none}
 #ab>*{pointer-events:auto}
-.ab-row{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 7px;border-radius:999px;background:rgba(14,18,28,.82);border:1px solid rgba(167,139,250,.35);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 24px rgba(124,92,255,.18)}
-.ab-row .aris{width:40px;height:40px;flex:none;cursor:pointer;border:0;padding:0} .ab-row .aris::before{inset:-4px} .ab-row .aris b{font-size:15px;letter-spacing:0;margin:0}
-.ab-row input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:14.5px;padding:8px 4px}
+.ab-row{display:flex;align-items:center;gap:7px;padding:4px 4px 4px 5px;border-radius:999px;background:rgba(14,18,28,.82);border:1px solid rgba(167,139,250,.32);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(0,0,0,.45),0 0 18px rgba(124,92,255,.15);transition:border-color .2s} .ab-row:focus-within{border-color:rgba(167,139,250,.6)}
+.ab-orb{flex:none;border:0;padding:0;background:none;cursor:pointer;display:grid;place-items:center;width:32px;height:32px} .ab-orb .orb{--s:26px;transition:transform .25s cubic-bezier(.2,.9,.3,1.4)} .ab-orb:hover .orb{transform:scale(1.1)}
+.ab-row input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:13px;padding:5px 2px}
 .ab-row input::placeholder{color:var(--muted)}
-.ab-go{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--blue);color:#fff;font-size:17px;cursor:pointer;display:grid;place-items:center} .ab-go:disabled{opacity:.45}
-.ab-pop{display:none;margin-bottom:10px;border-radius:20px;background:rgba(14,18,28,.95);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 14px 44px rgba(0,0,0,.5);overflow:hidden;animation:secIn .25s ease both}
+.ab-go{flex:none;width:28px;height:28px;border-radius:50%;border:0;background:var(--blue);color:#fff;font-size:14px;cursor:pointer;display:grid;place-items:center} .ab-go:disabled{opacity:.45}
+.ab-pop{--pw:min(460px,calc(100vw - 24px));display:none;position:absolute;bottom:calc(100% + 10px);left:50%;margin-left:calc(var(--pw) / -2);width:var(--pw);border-radius:20px;background:rgba(14,18,28,.95);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 14px 44px rgba(0,0,0,.5);overflow:hidden;animation:secIn .25s ease both}
 #ab.open .ab-pop{display:block}
-.ab-hd{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600} .ab-hd span{flex:1}
+.ab-hd{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600} .ab-hd>span{flex:1} .ab-hd .orb{flex:none}
 .ab-hd button{border:0;background:rgba(255,255,255,.06);color:var(--muted);border-radius:9px;height:28px;min-width:28px;padding:0 8px;font-size:12px;cursor:pointer} .ab-hd button:hover{color:var(--text);background:rgba(255,255,255,.12)}
 .ab-msgs{max-height:min(300px,42vh);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
 .ab-msgs .ai-b{max-width:92%}
 html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
 @media (min-width:900px) and (max-width:1250px){#ab{left:calc(50% + 120px)}}
 @media (max-width:899px){
-  #ab{left:12px;right:12px;width:auto;transform:none;bottom:calc(var(--safe-b) + 14px)}
+  #ab{left:50%;width:min(270px,calc(100vw - 100px));bottom:calc(var(--safe-b) + 14px)}
   html:has(.sheet.open) #ab{bottom:calc(var(--safe-b) + 40px)} html:has(.sheet.open.portal-open) #ab{bottom:calc(var(--safe-b) + 76px)}
   .phone{padding-bottom:calc(var(--safe-b) + 84px)!important}
-  .ab-row .aris{width:36px;height:36px} .ab-row input{font-size:16px}
+  .ab-row input{font-size:16px}
   .ab-msgs{max-height:min(260px,38vh)}
   .sheet:not(.portal-open){padding-bottom:calc(var(--safe-b) + 120px) !important}
 }
@@ -409,7 +417,6 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
     <nav class="nav" id="nav"></nav>
     <div class="grow"></div>
-    <button class="ai-side" onclick="aiOpen()" title="Chiedi ad Aris" data-raw><span class="aris"><b>ARIS</b></span></button>
     <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small id="me-sync">Dati salvati su questo dispositivo</small></div></div>
   </aside>
   <main class="main">
@@ -431,7 +438,6 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 
 <!-- ============ TELEFONO ============ -->
 <div class="phone">
-  <button class="round ph-ai aris" title="Aris" data-raw onclick="aiOpen()"><b>A</b></button>
   <button class="round lang-btn ph-lang" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
@@ -442,7 +448,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <button class="wid glass wid-bottom" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
   <div class="dock glass" id="ph-dock"></div>
 </div>
-<div id="ab" data-raw><div class="ab-pop" id="ab-pop"></div><form class="ab-row" onsubmit="event.preventDefault();abSend()"><button type="button" class="aris" title="Aris" onclick="abToggle()"><b>A</b></button><input id="ab-q" autocomplete="off" enterkeyhint="send"><button class="ab-go" id="ab-go" aria-label="Invia">↑</button></form></div>
+<div id="ab" data-raw><div class="ab-pop" id="ab-pop"></div><form class="ab-row" onsubmit="event.preventDefault();abSend()"><button type="button" class="ab-orb" title="Aris" aria-label="Aris" onclick="abToggle()"><span class="orb"><i></i></span></button><input id="ab-q" autocomplete="off" enterkeyhint="send"><button class="ab-go" id="ab-go" aria-label="Invia">↑</button></form></div>
 <div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div><div class="sh-edge"></div><button class="sh-home" aria-label="Torna alla home" onclick="closeSheet()"><i></i></button></div>
 <div class="toast" id="toast"></div>
 
@@ -636,7 +642,7 @@ if (EN){
 function paintLang(){ document.querySelectorAll(".lang-btn").forEach(b => { b.textContent = EN ? "IT" : "EN"; b.title = EN ? "Passa all'italiano" : "Switch to English"; }); }
 /* piccole scintille colorate quando tocchi una voce del menu o un'app */
 document.addEventListener("click", e => {
-  if (S.anim === false) return; const t = e.target.closest(".nav a, .apps .app-i, .ai-side, .ph-ai, .mk-star"); if (!t) return;
+  if (S.anim === false) return; const t = e.target.closest(".nav a, .apps .app-i, .ab-orb, .mk-star"); if (!t) return;
   const cols = ["#5b9bff", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#22d3ee"];
   for (let i = 0; i < 8; i++){ const s = document.createElement("i"), a = Math.PI * 2 * i / 8 + Math.random() * .5, d = 22 + Math.random() * 22;
     s.className = "spark"; s.style.cssText = `left:${e.clientX - 3}px;top:${e.clientY - 3}px;background:${cols[i % cols.length]};box-shadow:0 0 8px ${cols[i % cols.length]};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px`;
@@ -1332,7 +1338,7 @@ function aiDraw(){
     : cur === "notizie" ? [L2("Riassumi le notizie più importanti di oggi", "Summarize today's top news"), L2("Cosa succede in Medio Oriente?", "What's happening in the Middle East?")]
     : cur === "calendario" ? [L2("Cosa ho in programma questa settimana?", "What's on this week?"), L2("Quando ho la prossima verifica?", "When is my next test?")]
     : [L2("Fammi un riassunto della giornata", "Give me a summary of the day"), L2("Cosa si muove oggi nei mercati?", "What's moving in the markets today?"), L2("Cosa ho in programma domani?", "What's planned tomorrow?")];
-  el.innerHTML = `<div class="ai-p glass"><div class="ai-hd"><div><h3><span class="aris aris-s"><b>A</b></span> Aris</h3><small class="muted">${L2("Conosce mercati, notizie, calendario e promemoria della dashboard", "Knows the dashboard's markets, news, calendar and reminders")} · Groq</small></div>
+  el.innerHTML = `<div class="ai-p glass"><div class="ai-hd"><div><h3><span class="orb" style="--s:26px"><i></i></span> Aris</h3><small class="muted">${L2("Conosce mercati, notizie, calendario e promemoria della dashboard", "Knows the dashboard's markets, news, calendar and reminders")} · Groq</small></div>
     <div style="display:flex;gap:6px">${AIC.msgs.length ? `<button class="btn" onclick="AIC.msgs=[];AIC.err='';aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button class="round" onclick="aiClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div></div>
     ${aiChatHtml(AIC.msgs, AIC.busy, AIC.err, "ai", sugg, "aiSend")}</div>`;
   const m = document.getElementById("ai-m"); if (m) m.scrollTop = m.scrollHeight;
@@ -1351,7 +1357,7 @@ function abDraw(){
   document.getElementById("ab-go").disabled = AIC.busy || !mkKey();
   const empty = !AIC.msgs.length && !AIC.busy && !AIC.err;
   const sugg = [L2("Fammi un riassunto della giornata", "Give me a summary of the day"), L2("Cosa si muove oggi nei mercati?", "What's moving in the markets today?"), L2("Cosa ho in programma domani?", "What's planned tomorrow?")];
-  pop.innerHTML = `<div class="ab-hd"><span>Aris</span>${AIC.msgs.length ? `<button type="button" onclick="AIC.msgs=[];AIC.err='';abDraw();aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button type="button" title="${L2("Apri grande", "Open large")}" onclick="abClose();aiOpen()">⤢</button><button type="button" aria-label="${L2("Chiudi", "Close")}" onclick="abClose()">✕</button></div>
+  pop.innerHTML = `<div class="ab-hd"><span style="display:flex;align-items:center;gap:9px"><span class="orb" style="--s:18px"><i></i></span>Aris</span>${AIC.msgs.length ? `<button type="button" onclick="AIC.msgs=[];AIC.err='';abDraw();aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button type="button" title="${L2("Apri grande", "Open large")}" onclick="abClose();aiOpen()">⤢</button><button type="button" aria-label="${L2("Chiudi", "Close")}" onclick="abClose()">✕</button></div>
     <div class="ab-msgs" id="ab-m">${!mkKey() ? `<p class="muted" style="font-size:12.5px;margin:0">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
       : empty ? `<div class="ai-sug">${sugg.map(t => `<button type="button" class="chip" onclick="abSend(this.textContent)">${esc(t)}</button>`).join("")}</div>`
       : AIC.msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content)}</div>`).join("")}
@@ -1457,7 +1463,7 @@ function nwDraw(){
     <h2 class="nwd-t">${esc(nT(x))}</h2>
     ${nT(x) !== x.t ? `<p class="muted nwd-orig">${L2("Titolo originale", "Original title")}: ${esc(x.t)}</p>` : ""}
     ${nS(x) ? `<p class="nwd-s">${esc(nS(x))}</p>` : ""}
-    <div class="mkd-sec nwd-ai"><h4><span class="aris aris-s"><b>A</b></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
+    <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
       ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
         : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta leggendo la notizia…", "Aris is reading the story…")}</span></div>`
         : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="nwExplain()">${L2("Riprova", "Retry")}</button>`
@@ -2400,7 +2406,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "33";
+const APP_V = "34";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
