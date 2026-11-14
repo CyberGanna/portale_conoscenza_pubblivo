@@ -19,10 +19,15 @@ async function week(which){
   return [];
 }
 async function tr(text){
-  try {
-    const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=it&dt=t&q=" + encodeURIComponent(text), { headers: { "user-agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(12000) });
-    if (!r.ok) return null; const j = await r.json(); return (j[0] || []).map(s => s[0] || "").join("") || null;
-  } catch { return null; }
+  for (let i = 0; i < 4; i++){
+    try {
+      const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=it&dt=t&q=" + encodeURIComponent(text), { headers: { "user-agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(12000) });
+      if (r.ok){ const j = await r.json(); const t = (j[0] || []).map(s => s[0] || "").join(""); if (t) return t; }
+      else console.log("traduzione HTTP", r.status);
+    } catch {}
+    await new Promise(s => setTimeout(s, 1500 * (i + 1)));
+  }
+  return null;
 }
 
 let prev = { items: [], tr: {} };
@@ -41,9 +46,9 @@ for (const x of raw){
 }
 const trm = prev.tr || {};
 const todo = [...new Set([...items.values()].map(x => x.t))].filter(t => !trm[t]).slice(0, 150);
-for (const t of todo){ const it = await tr(t); if (it) trm[t] = it; }
+let ok = 0; for (const t of todo){ const it = await tr(t); if (it){ trm[t] = it; ok++; } await new Promise(s => setTimeout(s, 250)); }
 for (const x of items.values()) x.ti = trm[x.t] || "";
 const list = [...items.values()].sort((a, b) => a.d.localeCompare(b.d));
 if (!list.length && !(prev.items || []).length){ console.log("nessun evento: non scrivo il file"); process.exit(0); }
 await writeFile(OUT, JSON.stringify({ updated: Date.now(), source: "ForexFactory", items: list, tr: trm }));
-console.log("eventi", list.length, "nuove traduzioni", todo.length, "grezzi", raw.length);
+console.log("eventi", list.length, "traduzioni", ok + "/" + todo.length, "grezzi", raw.length);
