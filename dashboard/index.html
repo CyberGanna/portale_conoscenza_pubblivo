@@ -881,37 +881,10 @@ function DASH(){
   return welcome() + `<div id="dash-rest">` + DASH_REST() + `</div>`;
 }
 function DASH_REST(){
-  const now = new Date(), c = wOk() ? W.current : null, dly = wOk() ? W.daily : null;
-  const [emo, desc] = c ? WMO(c.weather_code) : ["", "…"];
-  const start = new Date(now.getFullYear(), 0, 1), end = new Date(now.getFullYear() + 1, 0, 1);
-  const pct = (now - start) / (end - start), left = Math.ceil((end - now) / 864e5);
-  const R = 54, C = 2 * Math.PI * R;
-  const hrs = nextHours(24);
-  const dayBars = dly ? dly.temperature_2m_max : [];
-  const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
-  return `<div class="wel-sep"><span>Panoramica completa</span></div><div class="grid">
-    <div class="span8 dash-l">${mkDashCard()}${mkMapCard()}</div>
-    <div class="span4 dash-l">${mkNewsCard()}${mkFavCard()}</div>
-    <div class="glass c span4">
-      <div class="hd"><div><h3>Notizie</h3><small>Le più riprese dai giornali${NEWS ? " · aggiornate alle " + hhmm(new Date(NEWS.updated)) : ""}</small></div><button class="lnk" onclick="go('notizie')">Tutte</button></div>
-      ${newsMini(5)}
-    </div>
-    <div class="glass c span4">
-      <div class="hd"><div><h3>La mia conoscenza</h3><small>${notes.length ? notes.length + " note nel portale" : "Dal portale conoscenza"}</small></div><button class="lnk" onclick="go('conoscenza')">Apri</button></div>
-      <div class="rows">${notes.length ? notes.slice(0, 4).map(n => `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>${esc(n.titolo)}</b><small>${esc(n.categoria || "")}${n.sintesi ? " · " + esc(n.sintesi) : ""}</small></div></div>`).join("")
-        : `<div class="r"><div class="ic" style="color:var(--violet)">${ico("brain")}</div><div class="t"><b>Nessuna nota su questo dispositivo</b><small>Apri il portale da qui e le tue note compaiono in questo riquadro</small></div></div>`}</div>
-    </div>
-    ${brTodayCard()}
-    ${remCard()}
-    <div class="glass c span8">
-      <div class="hd"><div><h3>Calendario</h3><small>${cap(MESI[now.getMonth()])} ${now.getFullYear()}</small></div><button class="lnk" onclick="go('calendario')">Apri</button></div>
-      ${miniCal(now.getFullYear(), now.getMonth())}
-      ${gcTodayCard()}
-    </div>
-    <div class="glass c span12">
-      <div class="hd"><div><h3>Collegamenti rapidi</h3><small>Le altre tue cose</small></div><button class="lnk" onclick="go('collegamenti',{add:true})">+ Aggiungi</button></div>
-      <div class="rows">${linkRows(5)}</div>
-    </div>
+  // la home tiene solo le due cose che non hanno una sezione propria: la mappa e le notizie che muovono i mercati
+  return `<div class="wel-sep"><span>Mercati oggi</span></div><div class="grid">
+    <div class="span8 dash-l">${mkMapCard() || `<div class="glass c muted">Carico la mappa dei mercati…</div>`}</div>
+    <div class="span4 dash-l">${mkNewsCard()}</div>
   </div>`;
 }
 function linkRows(max = 99){
@@ -2993,7 +2966,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "53";
+const APP_V = "54";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
