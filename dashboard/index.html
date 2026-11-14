@@ -158,7 +158,15 @@ a.wl{color:#fbbf24;text-decoration:none;border-bottom:1px dashed rgba(251,191,36
 .minical span.x{color:var(--faint)}
 .minical span{position:relative} .minical .dots{position:absolute;left:0;right:0;bottom:1px;display:flex;justify-content:center;gap:2px} .minical .dots b{width:4px;height:4px;border-radius:50%}
 .minical span.pick{cursor:pointer} .minical span.pick:hover{background:rgba(255,255,255,.06)} .minical span.sel{outline:1px solid var(--blue)}
-.gc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;max-width:980px} @media (max-width:899px){.gc-grid{grid-template-columns:1fr}}
+.gc-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:18px} @media (max-width:1180px){.gc-grid{grid-template-columns:1fr}} @media (max-width:899px){.gc-grid{grid-template-columns:1fr}}
+.bigcal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.bc-h{font-size:11px;color:var(--faint);text-align:left;padding:0 6px 2px;text-transform:uppercase;letter-spacing:.05em}
+.bc-d{min-height:104px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:3px;cursor:pointer;overflow:hidden;transition:background .15s}
+.bc-d:hover{background:rgba(255,255,255,.06)} .bc-d.x{background:transparent;border-color:transparent;cursor:default}
+.bc-d.sel{border-color:var(--blue);background:rgba(47,123,255,.08)} .bc-n{font-size:13px;font-weight:600;width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
+.bc-d.today .bc-n{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(47,123,255,.5)}
+.bc-e{font-size:11px;line-height:1.25;padding:2px 6px;border-radius:6px;background:color-mix(in srgb,var(--c) 22%,transparent);border-left:3px solid var(--c);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word}
+.bc-e b{font-weight:600;opacity:.8;margin-right:2px} .bc-more{font-size:10.5px;color:var(--muted);padding-left:4px}
 .gc-f{display:flex;flex-direction:column;gap:10px} .gc-row{display:flex;gap:10px} .gc-row>*{flex:1} .gc-chk{display:flex;align-items:center;gap:8px;font-size:13px}
 .rm-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-2);flex:0 0 auto;display:grid;place-items:center;font-size:12px;color:#fff} .rm-chk.on{background:var(--green);border-color:var(--green)}
 .rm-done .t b{text-decoration:line-through;color:var(--muted)}
@@ -175,6 +183,7 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .mk-news{display:flex;flex-direction:column} .mk-nw{padding:11px 0;border-top:1px solid var(--line)} .mk-nw:first-child{border-top:0;padding-top:2px}
 .mk-nt{font-size:13.5px;font-weight:600;line-height:1.35;color:var(--ink)} .mk-nt:hover{color:var(--blue-2)} .mk-nw p{margin:5px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
 .mk-srcs{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:7px;font-size:11px} .mk-src{padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--blue-2);font-size:11px}
+.mk-hl{color:inherit} .mk-hl:hover{color:var(--blue-2)}
 .btn.danger{background:rgba(244,63,94,.18);border-color:var(--red);color:#fda4af}
 .gc-day{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
 .minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
@@ -299,10 +308,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <header class="top">
       <div><h1 id="hello">Buongiorno</h1><div class="sub"><span class="dot"></span><span id="sub"></span></div></div>
       <div class="acts">
-        <button class="round" title="Cerca" onclick="document.getElementById('q').focus()"><svg class="i"><use href="#i-search"/></svg></button>
         <button class="round music-btn" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
-        <button class="round" title="Promemoria" onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg></button>
-        <button class="pill blue" id="new-btn"><svg class="i"><use href="#i-plus"/></svg>Nuovo</button>
         <div class="menu glass" id="new-menu">
           <button onclick="go('collegamenti',{add:true})"><svg class="i"><use href="#i-link"/></svg>Nuovo collegamento</button>
           <button onclick="go('promemoria')"><svg class="i"><use href="#i-bell"/></svg>Nuovo promemoria </button>
@@ -376,6 +382,141 @@ let S = load();
 if (S.name === "Karim") { S.name = "Ale"; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return structuredClone(DEF); } }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} if (window.syncMark) window.syncMark(); }
+/* ---------------- LINGUA: italiano / inglese ----------------
+   L'interfaccia è scritta in italiano; in inglese ogni testo mostrato viene sostituito al volo con questo dizionario. */
+const EN = S.lang === "en";
+const I18N = {
+"(2 minuti, una volta sola)": "(2 minutes, only once)", "(il quadrato con la freccia).": "(the square with the arrow).", "), nella cartella": "), in the folder",
+"+ Aggiungi": "+ Add", ", cerca": ", search for", ", poi": ", then",
+", tocca l'ingranaggio ⚙ e inserisci la chiave GitHub nella sezione sincronizzazione: da quel momento il Cervello funziona da solo. Se sul PC è già collegato, sul telefono basta usare \"Collega telefono\" del portale.": ", tap the ⚙ gear and enter the GitHub key in the sync section: from then on the Brain works by itself. If the PC is already connected, on the phone just use the portal's \"Connect phone\".",
+", tocca ⚙ e attiva la sincronizzazione (sul telefono basta \"Collega telefono\" dal PC): da quel momento anche la dashboard si sincronizza da sola.": ", tap ⚙ and turn on sync (on the phone just use \"Connect phone\" from the PC): from then on the dashboard syncs by itself too.",
+". Apri": ". Open", ". Se te lo chiede, in \"Ricevi\" scegli": ". If asked, under \"Receive\" choose",
+"7 giorni": "7 days", "Aggiorna": "Refresh", "Aggiungi": "Add", "Aggiungi alla schermata Home": "Add to Home Screen", "Aggiungi azione": "Add action",
+"Aggiungine uno: ti avvisa all'ora giusta": "Add one: it reminds you at the right time", "Altro": "Other", "Annulla": "Cancel", "Apri": "Open", "Apri Conoscenza": "Open Knowledge",
+"Apri il portale da qui e le tue note compaiono in questo riquadro": "Open the portal from here and your notes appear in this box", "Apri questa pagina in": "Open this page in",
+"Argento": "Silver", "Attacchi hacker": "Cyber attacks", "Azioni": "Stocks", "Beat chill, come il video": "Chill beat, like the video", "Calmo": "Calm",
+"Calendario": "Calendar", "Cambia città": "Change city", "Cambia città del meteo": "Change weather city", "Cambia grandezza": "Change size",
+"Cambia il colore a tutti i tuoi eventi (passati e futuri) il cui titolo inizia con la parola che scrivi": "Change the colour of all your events (past and future) whose title starts with the word you type",
+"Categorie": "Categories", "Cerca nelle note…": "Search notes…", "Cerca una città…": "Search a city…", "Cerca…": "Search…", "Cervello": "Brain", "Chiudi": "Close", "Cina": "China",
+"Città del meteo": "Weather city", "Clicca l'icona": "Click the icon", "Collega Google Calendar per ricevere l'avviso anche con la dashboard chiusa": "Connect Google Calendar to get the alert even with the dashboard closed",
+"Collega il calendario per vedere gli impegni.": "Connect the calendar to see your plans.", "Collegamenti": "Links", "Collegamenti rapidi": "Quick links", "Collegato": "Connected",
+"Colora": "Colour", "Colora più eventi insieme": "Colour many events at once", "Colore del calendario": "Calendar colour", "Colore:": "Colour:", "Comandi Rapidi": "Shortcuts",
+"Con la chiave Groq gratuita l'AI sceglie quelle che muovono davvero i mercati e spiega l'effetto.": "With the free Groq key the AI picks the ones really moving markets and explains the effect.",
+"Condividi": "Share", "Conoscenza": "Knowledge", "Consenti sempre": "Always allow", "Controlla aggiornamenti": "Check for updates", "Cosa, quando": "What, when",
+"Così diventa un'icona e può mandarti notifiche": "This way it becomes an icon and can send you notifications", "Crea la repository": "Create the repository", "Crea sveglia": "Create alarm",
+"Cripto": "Crypto", "Da collegare a GitHub": "Connect to GitHub", "Da fare": "To do", "Dal portale conoscenza": "From the knowledge portal", "Dashboard": "Dashboard",
+"Dati Open-Meteo, aggiornati a ogni apertura": "Open-Meteo data, updated every time you open it", "Dati salvati su questo dispositivo": "Data saved on this device",
+"Diario": "Journal", "Diario di oggi": "Today's journal", "Domani": "Tomorrow", "Economia e finanza": "Economy and finance", "Elenco": "List", "Elimina": "Delete", "Elimina la nota": "Delete the note",
+"Es. \"aggiungi al diario che oggi ho finito le notizie\" · \"cosa avevo deciso sul bot?\"": "E.g. \"add to the journal that today I finished the news\" · \"what did I decide about the bot?\"",
+"Es. Il mio bot di trading": "E.g. My trading bot", "Es. chiamare il dentista": "E.g. call the dentist", "Esteri e geopolitica": "World and geopolitics", "Evento": "Event",
+"Fatto": "Done", "Fatto, l'ho creato": "Done, I created it", "Filtri": "Filters", "Fine": "Done", "Fonti:": "Sources:", "Francia": "France", "Gas naturale": "Natural gas",
+"Germania": "Germany", "Giappone": "Japan", "Giorno libero": "Free day", "Google Calendar collegato": "Google Calendar connected", "Grafo": "Graph", "Grandezza icone": "Icon size",
+"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "Idee": "Ideas", "Ieri": "Yesterday",
+"Il Cervello salva le note come file Markdown nella stessa repository privata che usa il portale per sincronizzarsi (": "The Brain saves notes as Markdown files in the same private repository the portal uses to sync (",
+"Il titolo inizia con… (es. Verifica)": "Title starts with… (e.g. Test)", "Il tuo nome": "Your name", "Il tuo secondo cervello, in stile Obsidian": "Your second brain, Obsidian style",
+"Impostazioni": "Settings", "In alto tocca il nome e chiamalo esattamente": "At the top tap the name and call it exactly", "Incolla qui il tuo Client ID di Google": "Paste your Google Client ID here",
+"Indice dollaro": "Dollar index", "Indici": "Indices", "Indici, azioni, valute, materie prime e cripto": "Indices, stocks, currencies, commodities and crypto", "Indirizzo": "Address",
+"Input comando rapido": "Shortcut input", "Installa": "Install", "Installa come app": "Install as an app", "Intelligenza artificiale": "Artificial intelligence", "Invia": "Send", "Israele": "Israel", "Italia": "Italy",
+"L'altro ieri": "Day before yesterday", "La mia conoscenza": "My knowledge", "La repository privata": "The private repository",
+"La salvi qui, poi con un tocco la metti sull'iPhone": "Save it here, then with one tap put it on the iPhone", "La trovi nel menu Start e puoi fissarla sulla barra delle applicazioni.": "You'll find it in the Start menu and can pin it to the taskbar.",
+"Le altre tue app e i tuoi siti": "Your other apps and sites", "Le altre tue cose": "Your other things", "Le modifiche vanno anche nel tuo Google Calendar": "Changes also go to your Google Calendar",
+"Le notizie di economia più riprese": "The most covered economy news", "Le tue sveglie": "Your alarms", "Lingua originale": "Original language", "Luogo (facoltativo)": "Place (optional)",
+"Manca solo il collegamento a GitHub": "Only the GitHub connection is missing", "Materie prime": "Commodities", "Medio Oriente": "Middle East", "Mercati": "Markets", "Mercati: i movimenti più forti": "Markets: the strongest moves",
+"Meteo": "Weather", "Modifica": "Edit", "Modifica evento": "Edit event", "Movimento forte": "Strong move", "Movimento eccezionale": "Exceptional move", "Musica di sottofondo generata dal vivo": "Background music generated live",
+"Musica originale di sottofondo": "Original background music", "Musica rilassante": "Relaxing music", "Nell'azione tocca l'ora (la parola blu) e scegli": "In the action tap the time (the blue word) and choose",
+"Nessun promemoria": "No reminders", "Nessuna nota su questo dispositivo": "No notes on this device", "Nessuna notizia di economia nelle ultime ore.": "No economy news in the last hours.",
+"Nessuna sveglia salvata.": "No alarms saved.", "Nessun impegno.": "No plans.", "Nessun impegno nei prossimi giorni": "Nothing planned in the next days", "Niente in programma per oggi.": "Nothing planned for today.", "Niente in sospeso": "Nothing pending", "Nome": "Name", "Nome (facoltativo)": "Name (optional)",
+"Nome, città, notizie, collegamenti, sveglie, promemoria e Google Calendar sono salvati nella tua repository privata": "Name, city, news, links, alarms, reminders and Google Calendar are saved in your private repository",
+"Non attiva": "Off", "Non riesco a leggere i prezzi adesso.": "I can't read prices right now.", "Non riesco a leggere i prezzi adesso: riprovo tra poco.": "I can't read prices right now: retrying soon.",
+"Normale": "Normal", "Normali": "Normal", "Nota": "Note", "Notizie": "News", "Notizie che muovono i mercati ›": "News moving the markets ›", "Nuova sveglia": "New alarm", "Nuovo collegamento": "New link",
+"Nuovo evento": "New event", "Nuovo promemoria": "New reminder", "OGGI": "TODAY", "Oggi": "Today", "OmniRoute (solo sul PC)": "OmniRoute (PC only)", "Ora": "Time", "Oro": "Gold",
+"PC Windows": "Windows PC", "Paesi": "Countries", "Per collegare": "To connect", "Per crearle sull'iPhone apri la dashboard dal telefono": "To create them on the iPhone open the dashboard from the phone",
+"Per il saluto": "For the greeting", "Petrolio Brent": "Brent oil", "Petrolio WTI": "WTI oil", "Piccole": "Small", "Più importanti": "Most important", "Più recenti": "Latest",
+"Politica": "Politics", "Prezzi Yahoo Finance con qualche minuto di ritardo. Le spiegazioni sono scritte dall'AI dai titoli delle notizie: sono un aiuto a capire, non consigli di investimento.": "Yahoo Finance prices, delayed a few minutes. Explanations are written by AI from news headlines: they help you understand, they are not investment advice.",
+"Prima volta: crea il Comando Rapido": "First time: create the Shortcut", "Promemoria": "Reminders", "Promemoria e sveglie": "Reminders and alarms", "Prossime 24 ore": "Next 24 hours", "Prossimi 7 giorni": "Next 7 days",
+"Rame": "Copper", "Regno Unito": "United Kingdom", "Rendimento USA 10 anni": "US 10-year yield", "Rendimento USA 30 anni": "US 30-year yield", "Ricollega": "Reconnect", "Riprova": "Retry",
+"STRUMENTI": "TOOLS", "Salva": "Save", "Salva evento": "Save event", "Salva modifiche": "Save changes", "Salva promemoria": "Save reminder", "Scegli": "Choose", "Scollega": "Disconnect", "Scrivi qui…": "Write here…",
+"Senza Google Calendar il promemoria ti avvisa solo se la dashboard è aperta. Inserisci il Client ID in": "Without Google Calendar the reminder alerts you only if the dashboard is open. Enter the Client ID in",
+"Si attiva con la chiave GitHub del portale": "It turns on with the portal's GitHub key", "Sincronizza adesso": "Sync now", "Sincronizzazione PC e telefono": "PC and phone sync", "Sopra il normale": "Above normal",
+"Spagna": "Spain", "Stile della musica": "Music style", "Sull'iPhone apri l'app": "On the iPhone open the app", "Sull'iPhone la musica parte al primo tocco: è una regola dei browser.": "On the iPhone the music starts at the first tap: it's a browser rule.",
+"Suoni": "Sounds", "Sveglia": "Alarm", "Sveglie": "Alarms", "Sveglie vere nell'Orologio dell'iPhone": "Real alarms in the iPhone Clock", "Svizzera": "Switzerland", "Tassi": "Rates", "Tecnologia": "Technology", "Testo": "Text",
+"Ti avvisa anche Google Calendar, sul telefono e sul PC": "Google Calendar alerts you too, on phone and PC", "Titolo": "Title", "Tocca": "Tap", "Tocca il tasto": "Tap the button", "Tocca per aprire il calendario": "Tap to open the calendar",
+"Tocca per attivare o togliere": "Tap to turn on or off", "Tocca per collegare Google Calendar": "Tap to connect Google Calendar", "Tocca ⏰ per crearla nell'app Orologio": "Tap ⏰ to create it in the Clock app", "Togli": "Remove", "Torna alla home": "Back to home",
+"Torna qui e tocca ⏰ su una sveglia: la prima volta iOS chiede il permesso, rispondi": "Come back here and tap ⏰ on an alarm: the first time iOS asks permission, answer",
+"Trascina un'icona per spostarla · tocca + o − per ingrandirla o rimpicciolirla": "Drag an icon to move it · tap + or − to make it bigger or smaller", "Turchia": "Turkey", "Tutte": "All", "Tutti": "All", "Tutto": "All", "Tutto fatto.": "All done.",
+"Tutto il giorno": "All day", "Tutto il mondo": "Whole world", "Ucraina": "Ukraine", "Uguale su PC e telefono": "Same on PC and phone", "Una volta sola su ogni dispositivo": "Only once on each device", "Unione Europea": "European Union",
+"Usa la mia posizione": "Use my location", "Usa la stessa chiave GitHub del portale. Apri": "Use the portal's GitHub key. Open", "VIX (paura)": "VIX (fear)",
+"Va nel tuo Google Calendar e lo vedi anche sull'iPhone": "It goes to your Google Calendar and you see it on the iPhone too", "Valute": "Currencies", "Vedi tutto": "See all",
+"a destra nella barra dell'indirizzo.": "on the right of the address bar.", "e restano uguali su tutti i dispositivi. Musica e volume restano per dispositivo.": "and stay the same on all devices. Music and volume stay per device.",
+"e tocca": "and tap", "e toccala.": "and tap it.", "in alto a destra.": "at the top right.", "solo qui: ricollega Google": "only here: reconnect Google",
+"non esiste ancora (oppure la chiave GitHub non può vederla). Posso crearla io adesso, privata e vuota: lì finiscono i dati della dashboard e le note del Cervello.": "doesn't exist yet (or the GitHub key can't see it). I can create it now, private and empty: the dashboard data and the Brain notes go there.",
+"serve il tuo Client ID di Google (gratis, 5 minuti). Quando ce l'hai incollalo in": "you need your Google Client ID (free, 5 minutes). When you have it paste it in",
+"↻ Rifai le spiegazioni": "↻ Redo the explanations", "⏰ Crea": "⏰ Create", "✨ Riassumi": "✨ Summarize", "✨ Scrivi o chiedi al tuo cervello": "✨ Write or ask your brain", "🎨 Colora": "🎨 Colour",
+"Sereno": "Clear", "Poco nuvoloso": "Partly cloudy", "Nuvoloso": "Cloudy", "Nebbia": "Fog", "Pioviggine": "Drizzle", "Pioggia": "Rain", "Neve": "Snow", "Rovesci": "Showers", "Rovesci di neve": "Snow showers", "Temporale": "Thunderstorm",
+"Lavanda": "Lavender", "Salvia": "Sage", "Vinaccia": "Grape", "Fenicottero": "Flamingo", "Mandarino": "Tangerine", "Pavone": "Peacock", "Grafite": "Graphite", "Mirtillo": "Blueberry", "Basilico": "Basil", "Pomodoro": "Tomato",
+"Prossimi": "Upcoming", "Nessun evento": "No events", "Lingua": "Language", "Lingua della dashboard": "Dashboard language", "Notizie, menu e spiegazioni dell'AI": "News, menus and AI explanations",
+"Salvato": "Saved", "Salvo…": "Saving…", "Evento aggiunto": "Event added", "Evento modificato": "Event changed", "Evento eliminato": "Event deleted", "Nota eliminata": "Note deleted", "Sicuro?": "Sure?", "Sicuro? Elimina": "Sure? Delete",
+"Carico i prezzi…": "Loading prices…", "Carico le notizie…": "Loading news…", "Carico il meteo…": "Loading weather…", "Scelte dall'AI tra le notizie di oggi": "Picked by AI from today's news", "L'AI le sta scegliendo…": "The AI is picking them…",
+"L'AI sta cercando il motivo nelle notizie…": "The AI is looking for the reason in the news…", "Spiegazione in arrivo…": "Explanation coming…", "Spiegazione non disponibile adesso: tocca Riprova qui sotto.": "Explanation not available right now: tap Retry below.",
+"Perché:": "Why:", "Cosa può comportare:": "What it can mean:", "Riassunto non disponibile adesso, riprova tra poco.": "Summary not available right now, try again soon.", "Sto riassumendo…": "Summarizing…",
+"Hai già l'ultima versione": "You already have the latest version", "Aggiorno l'app…": "Updating the app…", "Nessuna connessione": "No connection", "Musica rilassante accesa": "Relaxing music on", "Musica spenta": "Music off",
+"Giorno": "Day", "Settimana": "Week", "Mese": "Month", "Anno": "Year", "Alba": "Sunrise", "Tramonto": "Sunset", "Temperatura": "Temperature", "Umidità": "Humidity", "Vento": "Wind", "Percepiti": "Feels like", "24 ore": "24 hours",
+"Home": "Home", "Nuovo": "New", "Brasile": "Brazil", "Obiettivi": "Goals", "Progetti": "Projects", "Persone": "People", "Risorse": "Resources", "Libri": "Books", "Libri e film": "Books and films", "Liste": "Lists", "Note": "Notes", "In italiano": "In Italian", "COP31 e clima": "COP31 and climate", "Client ID inserito": "Client ID entered", "Elimina evento": "Delete event", "Apri in Google": "Open in Google", "Nessuna": "None", "Attiva": "On",
+};
+const I18N_RX = [
+  [/^(\d+) testat[ae]$/, (m, n) => `${n} ${n === "1" ? "outlet" : "outlets"}`],
+  [/^(\d+) min fa(.*)$/, (m, n, r) => `${n} min ago${r}`], [/^(\d+) h fa(.*)$/, (m, n, r) => `${n} h ago${r}`], [/^adesso(.*)$/, (m, r) => `now${r}`], [/^ieri(.*)$/, (m, r) => `yesterday${r}`],
+  [/^(\d+) testat[ae] · (.+)$/, (m, n, r) => `${n} ${n === "1" ? "outlet" : "outlets"} · ${trI(r) || r}`],
+  [/^Lo riportano anche (\d+) altre$/, (m, n) => `Also reported by ${n} others`], [/^Lo riportano anche un'altra testata$/, () => "Also reported by one other outlet"],
+  [/^Mostra altre \((\d+)\)$/, (m, n) => `Show more (${n})`], [/^(\d+) eventi in calendario$/, (m, n) => `${n} events in calendar`], [/^(\d+) note nel Cervello$/, (m, n) => `${n} notes in the Brain`],
+  [/^(\d+) impegni$/, (m, n) => `${n} plans`], [/^(\d+) promemoria$/, (m, n) => `${n} reminders`], [/^(\d+) note · (.+)$/, (m, n, r) => `${n} notes · ${r}`],
+  [/^(Buongiorno|Buonasera|Buon pomeriggio|Buonanotte), (.+)$/, (m, g, n) => `${{ Buongiorno: "Good morning", Buonasera: "Good evening", "Buon pomeriggio": "Good afternoon", Buonanotte: "Good night" }[g]}, ${n}`],
+  [/^(Oggi|Ieri|L'altro ieri) · (\d+) notizie con le tue scelte · aggiornate alle (.+)$/, (m, d, n, t) => `${I18N[d]} · ${n} news with your choices · updated at ${t}`],
+  [/^Le più riprese dai giornali · aggiornate alle (.+)$/, (m, t) => `Most covered by the papers · updated at ${t}`], [/^Le più riprese dai giornali$/, () => "Most covered by the papers"],
+  [/^Oggi, rispetto a quanto si muovono di solito · aggiornato alle (.+)$/, (m, t) => `Today, compared with how much they usually move · updated at ${t}`],
+  [/^(\d+) strumenti, ordinati dal movimento più insolito · aggiornato alle (.+)$/, (m, n, t) => `${n} instruments, sorted by most unusual move · updated at ${t}`],
+  [/^([^·]+) · (.+) · 5 giorni ([^·]+) · di solito si muove ±(.+)% al giorno$/, (m, c, p, w, v) => `${I18N[c.trim()] || c} · ${p} · 5 days ${w} · usually moves ±${v}% a day`],
+  [/^([^·]+) · (.+) · di solito si muove ±(.+)% al giorno$/, (m, c, p, v) => `${I18N[c.trim()] || c} · ${p} · usually moves ±${v}% a day`],
+  [/^Mia Dashboard · versione (\d+) · (.+)$/, (m, v) => `My Dashboard · version ${v} · data stays on this device`],
+  [/^Problema: (.+)$/, (m, r) => `Problem: ${r.replace("non trovo la repository", "can't find the repository")}`], [/^Attiva · ultima alle (.+)$/, (m, t) => `On · last at ${t}`],
+  [/^Carico il meteo di (.+)…$/, (m, c) => `Loading the weather for ${c}…`], [/^Ora: (.+)$/, (m, c) => `Now: ${c}`],
+  [/^Spiegazioni non disponibili: (.+)$/, (m, r) => `Explanations not available: ${r.replace("l'AI non risponde adesso", "the AI isn't answering right now").replace("limite di richieste raggiunto", "rate limit reached")}`],
+  [/^Solo (.+) ✕$/, (m, c) => `Only ${I18N[c] || c} ✕`], [/^Max (-?\d+)° Min (-?\d+)°$/, (m, a, b) => `High ${a}° Low ${b}°`], [/^Pioggia (\d+)%$/, (m, p) => `Rain ${p}%`],
+  [/^Max (.+)° · Min (.+)° · Umidità (.+)% · Vento (.+)$/, (m, a, b, h, w) => `High ${a}° · Low ${b}° · Humidity ${h}% · Wind ${w}`],
+  [/^(.+) alle (\d\d:\d\d)(.*)$/, (m, d, t, r) => `${d} at ${t}${r}`],
+  [/^(\d+) giorni fa$/, (m, n) => `${n} days ago`], [/^(.+ \d+ [A-Z][a-z]+) · (.+)$/, (m, d, v) => `${d} · ${I18N[v] || v}`],
+];
+function trI(s){
+  if (I18N[s] != null) return I18N[s];
+  if (s.length > 180) return null;
+  for (const [re, f] of I18N_RX){ const m = s.match(re); if (m) return f(...m); }
+  return null;
+}
+const I18N_SKIP = "script,style,textarea,input,.bc-e,.nw-t,.mk-nt,.nw-s,.mk-nw>p,.br-note,[data-raw]";
+function trNode(n){
+  const v = n.nodeValue; if (!v || !/[a-zà-ù]/i.test(v)) return;
+  const p = n.parentElement; if (p && p.closest(I18N_SKIP)) return;
+  const t = v.trim(), out = trI(t);
+  if (out != null && out !== t) n.nodeValue = v.replace(t, out);
+}
+function trAttrs(el){ for (const a of ["placeholder", "title", "aria-label"]) { const v = el.getAttribute(a); if (v){ const o = trI(v.trim()); if (o) el.setAttribute(a, o); } } }
+function trTree(root){
+  if (!EN || !root) return;
+  if (root.nodeType === 3) return trNode(root);
+  if (root.nodeType !== 1) return;
+  if (root.closest(I18N_SKIP)) { if (root.matches("input,textarea")) trAttrs(root); return; }
+  trAttrs(root);
+  for (const c of [...root.childNodes]) trTree(c);
+}
+if (EN){
+  document.documentElement.lang = "en";
+  document.title = document.title.replace("Mia Dashboard", "My Dashboard");
+  new MutationObserver(ms => { for (const m of ms){ if (m.type === "characterData") trNode(m.target); else m.addedNodes.forEach(trTree); } }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  addEventListener("DOMContentLoaded", () => trTree(document.body));
+  trTree(document.body);
+}
+function setLang(l){ if (S.lang === l) return; S.lang = l; save(); setTimeout(() => location.reload(), 150); }
+const LANG_SFX = EN ? " IMPORTANT: write every text value of your answer in English (keep JSON keys as they are)." : "";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ico = (n, st = "") => `<svg class="i" style="${st}"><use href="#i-${n}"/></svg>`;
@@ -411,6 +552,7 @@ let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
 
 function go(id, opt = {}){
+  if (id !== "notizie" && typeof newsCat1 !== "undefined") newsCat1 = null;
   $("#new-menu").classList.remove("open");
   cur = id; renderStatic();
   if (isPhone()){
@@ -439,12 +581,12 @@ function renderNav(){
 }
 
 /* ---------------- tempo ---------------- */
-const GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
-const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+const GIORNI = EN ? ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] : ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+const MESI = EN ? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] : ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const dateLong = d => `${cap(GIORNI[d.getDay()])} ${d.getDate()} ${MESI[d.getMonth()]}`;
-const hhmm = d => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-const greet = () => { const h = new Date().getHours(); return h < 5 ? "Buonanotte" : h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera"; };
+const hhmm = d => d.toLocaleTimeString(EN ? "en-GB" : "it-IT", { hour: "2-digit", minute: "2-digit" });
+const greet = () => { const h = new Date().getHours(); return EN ? (h < 5 ? "Good night" : h < 13 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening") : h < 5 ? "Buonanotte" : h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera"; };
 function weekNo(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y) / 864e5 + 1) / 7); }
 
 /* ---------------- meteo (Open-Meteo, gratis, senza chiave) ---------------- */
@@ -543,9 +685,22 @@ function DASH(){
 function linkRows(max = 99){
   return S.links.slice(0, max).map(l => `<a class="r" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><div class="ic" style="color:var(--green)">${ico(l.i || "link")}</div><div class="t"><b>${esc(l.n)}</b><small>${esc(l.u.replace(/^https?:\/\//, ""))}</small></div><span class="faint">${ico("ext", "width:15px;height:15px")}</span></a>`).join("") || `<div class="muted">Nessun collegamento.</div>`;
 }
+function bigCal(y, m){
+  const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), off = (first.getDay() + 6) % 7, today = new Date();
+  const selK = typeof calSel === "string" ? calSel.slice(0, 10) : dayKey(today);
+  let cells = (EN ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] : ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]).map(d => `<div class="bc-h">${d}</div>`).join("");
+  for (let i = 0; i < off; i++) cells += `<div class="bc-d x"></div>`;
+  for (let d = 1; d <= days; d++){
+    const dt = new Date(y, m, d), k = dayKey(dt), t = dayKey(today) === k, ev = GC.ev ? evOn(dt) : [];
+    cells += `<div class="bc-d ${t ? "today" : ""} ${k === selK ? "sel" : ""}" onclick="calSel='${k}T12:00:00';reView()"><span class="bc-n">${d}</span>
+      ${ev.slice(0, 3).map(e => `<span class="bc-e" style="--c:${esc(e.col)}">${evAllDay(e) ? "" : `<b>${hhmm(evStart(e))}</b> `}${esc(e.t)}</span>`).join("")}${ev.length > 3 ? `<span class="bc-more">+${ev.length - 3} ${EN ? "more" : "altri"}</span>` : ""}</div>`;
+  }
+  const tail = (7 - (off + days) % 7) % 7; for (let i = 0; i < tail; i++) cells += `<div class="bc-d x"></div>`;
+  return `<div class="bigcal">${cells}</div>`;
+}
 function miniCal(y, m, pick){
   const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), off = (first.getDay() + 6) % 7, prev = new Date(y, m, 0).getDate(), today = new Date();
-  let cells = ["L", "M", "M", "G", "V", "S", "D"].map(d => `<div class="h">${d}</div>`).join("");
+  let cells = (EN ? ["M", "T", "W", "T", "F", "S", "S"] : ["L", "M", "M", "G", "V", "S", "D"]).map(d => `<div class="h">${d}</div>`).join("");
   for (let i = 0; i < off; i++) cells += `<span class="x">${prev - off + 1 + i}</span>`;
   const selK = typeof calSel === "string" ? calSel.slice(0, 10) : "";
   for (let d = 1; d <= days; d++){ const t = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d, dt = new Date(y, m, d), k = dayKey(dt), ev = typeof GC !== "undefined" && GC.ev ? evOn(dt) : [];
@@ -587,7 +742,7 @@ const VIEWS = {
     const L = newsList(), nf = (S.news.cats.length < NEWS_CATS.length ? 1 : 0) + (all ? 0 : 1);
     return head("Notizie", NEWS ? `${["Oggi", "Ieri", "L'altro ieri"][newsDay]} · ${L.length} notizie con le tue scelte · aggiornate alle ${hhmm(new Date(NEWS.updated))}` : "Le più importanti del momento") + `
     <div class="nw-bar"><div class="seg">${["Oggi", "Ieri", "L'altro ieri"].map((t, k) => `<button class="${newsDay === k ? "on" : ""}" onclick="newsDay=${k};newsLimit=30;reView()">${t}</button>`).join("")}</div><div class="seg"><button class="${newsSort === "top" ? "on" : ""}" onclick="newsSort='top';newsLimit=30;reView()">Più importanti</button><button class="${newsSort === "new" ? "on" : ""}" onclick="newsSort='new';newsLimit=30;reView()">Più recenti</button></div>
-      <span class="sp"></span>${newsLangBtn()}<button class="btn" onclick="newsFilters=!newsFilters;reView()">${ico("sliders")} Filtri${nf ? " (" + nf + ")" : ""}</button></div>
+      ${newsCat1 ? `<button class="chip on" onclick="newsCat1=null;reView()">Solo ${CAT_T[newsCat1] || newsCat1} ✕</button>` : ""}<span class="sp"></span>${newsLangBtn()}<button class="btn" onclick="newsFilters=!newsFilters;reView()">${ico("sliders")} Filtri${nf ? " (" + nf + ")" : ""}</button></div>
     ${newsFilters ? newsFilterBox(all) : ""}
     ${newsBody(L)}`;
   },
@@ -615,6 +770,8 @@ const VIEWS = {
   },
   impostazioni(){
     return head("Impostazioni") + `
+    <div class="glass c"><div class="hd"><div><h3 data-raw>Lingua · Language</h3><small>${EN ? "Menus, dates, news and AI explanations" : "Menu, date, notizie e spiegazioni dell'AI"}</small></div><span class="muted">🌐</span></div>
+      <div class="chips"><button class="chip ${EN ? "" : "on"}" data-raw onclick="setLang('it')">🇮🇹 Italiano</button><button class="chip ${EN ? "on" : ""}" data-raw onclick="setLang('en')">🇬🇧 English</button></div></div>
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
     ${syncBox()}
@@ -643,6 +800,7 @@ function reView(){ go(cur); }
 
 /* ---------------- notizie: news/news.json, rifatto ogni ora da GitHub Actions ---------------- */
 const NEWS_URL = "https://raw.githubusercontent.com/CyberGanna/portale_conoscenza_pubblivo/notizie/news.json";
+let newsCat1 = null;
 let NEWS = null, newsErr = false, newsDay = 0, newsSort = "top", newsFilters = false, newsLimit = 30;
 const SUMS = {};
 try { NEWS = JSON.parse(localStorage.getItem(KEY + "-news") || "null"); } catch {}
@@ -700,7 +858,7 @@ const mkStrong = x => Math.abs(x.z) >= 2;
 async function mkExplain(force){
   const key = mkKey();
   if (!key || !MK || !NEWS || MKAI.busy || isPhone()) return;
-  if (!force && MKAI.v === 2 && MKAI.at === MK.updated) return;
+  if (!force && MKAI.v === 2 && MKAI.at === MK.updated && (MKAI.lang || "it") === (S.lang || "it")) return;
   const strong = MK.items.filter(x => mkFresh(x) && mkStrong(x)).slice(0, 8);
   MKAI.busy = true; MKAI.err = "";
   const since = Date.now() - 36 * 3600e3;
@@ -717,8 +875,8 @@ async function mkExplain(force){
     const news = [], seen = new Set();
     for (const n of out.notizie || []){ const x = pool[+n.i]; if (!x || seen.has(x.u)) continue; seen.add(x.u);
       news.push({ t: x.t, ti: x.ti, u: x.u, src: x.src, srcs: (x.srcs || [[x.src, x.u]]).slice(0, 5), n: x.n, d: x.d, effetto: String(n.effetto || "") }); if (news.length >= 6) break; }
-    Object.assign(MKAI, { v: 2, at: MK.updated, items, news });
-    try { localStorage.setItem(KEY + "-mkai", JSON.stringify({ v: 2, at: MKAI.at, items, news })); } catch {}
+    Object.assign(MKAI, { v: 2, at: MK.updated, items, news, lang: S.lang || "it" });
+    try { localStorage.setItem(KEY + "-mkai", JSON.stringify({ v: 2, at: MKAI.at, items, news, lang: MKAI.lang })); } catch {}
   } catch (e){ MKAI.err = e.message; }
   MKAI.busy = false;
   if (cur === "oggi" || cur === "mercati") refresh();
@@ -728,7 +886,7 @@ function mkNewsCard(){
   const since = Date.now() - 36 * 3600e3;
   const L = ai ? MKAI.news : (NEWS ? NEWS.items.filter(x => x.d > since && x.cats.includes("economia")).sort((a, b) => b.n - a.n).slice(0, 5) : []);
   const srcs = x => (x.srcs || [[x.src, x.u]]).filter(s => s && s[0]).slice(0, 4).map(([n, u]) => `<a class="mk-src" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("");
-  return `<div class="glass c span4"><div class="hd"><div><h3>Notizie che muovono i mercati</h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div><button class="lnk" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "In italiano" : "Lingua originale"}</button></div>
+  return `<div class="glass c span4"><div class="hd"><div><h3><a href="#notizie" class="mk-hl" onclick="event.preventDefault();newsCat1='economia';newsDay=0;go('notizie')">Notizie che muovono i mercati ›</a></h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div>${EN ? "" : `<button class="lnk" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "In italiano" : "Lingua originale"}</button>`}</div>
     ${L.length ? `<div class="mk-news">${L.map(x => `<div class="mk-nw"><a class="mk-nt" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(nT(x))}</a>
       ${x.effetto ? `<p>${esc(x.effetto)}</p>` : ""}<div class="mk-srcs"><span class="muted">Fonti:</span>${srcs(x)}</div></div>`).join("")}</div>` : `<div class="muted">${NEWS ? "Nessuna notizia di economia nelle ultime ore." : "Carico le notizie…"}</div>`}
     ${!mkKey() ? `<div class="muted" style="font-size:11.5px;margin-top:8px">Con la chiave Groq gratuita l'AI sceglie quelle che muovono davvero i mercati e spiega l'effetto.</div>` : ""}
@@ -759,8 +917,8 @@ function mkView(){
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
     <div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>`;
 }
-const nT = x => (!S.newsOrig && x.ti) || x.t, nS = x => (!S.newsOrig && x.si) || x.s || "";
-function newsLangBtn(){ return NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
+const nT = x => (!EN && !S.newsOrig && x.ti) || x.t, nS = x => (!EN && !S.newsOrig && x.si) || x.s || "";
+function newsLangBtn(){ return !EN && NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
 /* modelli Groq: li legge dal tuo account (cambiano nel tempo) e sceglie i migliori disponibili */
 let GM = null;
 const GM_PREF = [/llama-4-maverick/, /llama-3\.3-70b/, /kimi-k2/, /llama-4-scout/, /gpt-oss-120b/, /llama.*70b/, /gpt-oss-20b/, /llama-3\.1-8b|8b-instant/, /llama/, /gpt-oss/, /mistral|gemma/];
@@ -782,7 +940,7 @@ async function groqJSON(key, sys, user, maxTokens){
     for (let t = 0; t < 3; t++){
       const json = t < 2;
       let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, maxTokens), ...(json ? { response_format: { type: "json_object" } } : {}), messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) }); }
+        body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, maxTokens), ...(json ? { response_format: { type: "json_object" } } : {}), messages: [{ role: "system", content: sys + LANG_SFX }, { role: "user", content: user }] }) }); }
       catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
       if (r.status === 401) throw new Error("la chiave Groq non è valida");
       if (r.status === 429){ last = "limite di richieste raggiunto"; const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 2){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
@@ -796,12 +954,12 @@ async function groqJSON(key, sys, user, maxTokens){
   throw new Error("l'AI non risponde adesso" + (last ? " (" + last + ")" : ""));
 }
 const CAT_T = Object.fromEntries(NEWS_CATS), CC_T = Object.fromEntries(COUNTRIES);
-function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); return m < 2 ? "adesso" : m < 60 ? m + " min fa" : m < 1440 ? Math.round(m / 60) + " h fa" : m < 2880 ? "ieri" : Math.round(m / 1440) + " giorni fa"; }
+function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); if (EN) return m < 2 ? "now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : m < 2880 ? "yesterday" : Math.round(m / 1440) + " days ago"; return m < 2 ? "adesso" : m < 60 ? m + " min fa" : m < 1440 ? Math.round(m / 60) + " h fa" : m < 2880 ? "ieri" : Math.round(m / 1440) + " giorni fa"; }
 function newsList(){
   if (!NEWS) return [];
   const all = S.news.countries.includes("mondo");
   const day = NEWS.days ? NEWS.days[newsDay] || NEWS.days[0] : null;
-  const L = NEWS.items.filter(x => (!day || x.day === day || !x.day && newsDay === 0) && x.cats.some(c => S.news.cats.includes(c)) && (all || x.cc.some(c => S.news.countries.includes(c))));
+  const L = NEWS.items.filter(x => (!day || x.day === day || !x.day && newsDay === 0) && (newsCat1 ? x.cats.includes(newsCat1) : x.cats.some(c => S.news.cats.includes(c))) && (all || x.cc.some(c => S.news.countries.includes(c))));
   // importanti = riprese da più testate, ma una notizia ferma da ore scende
   const score = x => newsDay ? x.n : x.n * Math.pow(0.5, Math.max(0, Date.now() - x.d) / 3600e3 / 18);
   return newsSort === "new" ? L.sort((a, b) => b.d - a.d) : L.sort((a, b) => score(b) - score(a));
@@ -841,12 +999,12 @@ async function sumNews(i){
     try {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
         body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, 260), messages: [
-          { role: "system", content: "Sei un giornalista. Riassumi la notizia in italiano in massimo 3 frasi brevi, chiare e neutrali. Usa solo le informazioni date, non inventare dettagli. Se le informazioni sono poche, dillo." },
+          { role: "system", content: "Sei un giornalista. Riassumi la notizia in italiano in massimo 3 frasi brevi, chiare e neutrali. Usa solo le informazioni date, non inventare dettagli. Se le informazioni sono poche, dillo." + (EN ? " Write the summary in English." : "") },
           { role: "user", content: text }] }) });
       if (r.status === 401){ box.textContent = "La chiave Groq non è valida: aggiornala nelle impostazioni AI del portale."; return; }
       if (!r.ok) continue;
       const j = await r.json(), txt = (j.choices?.[0]?.message?.content || "").trim(); if (!txt) continue;
-      SUMS[i] = txt + "\n\nRiassunto AI da titoli e anteprime: apri l'articolo per i dettagli.";
+      SUMS[i] = txt + (EN ? "\n\nAI summary from headlines and previews: open the article for details." : "\n\nRiassunto AI da titoli e anteprime: apri l'articolo per i dettagli.");
       box.textContent = SUMS[i]; return;
     } catch {}
   }
@@ -1028,7 +1186,7 @@ async function brAsk(){
   };
   try {
     let plan; const raw = await call([
-      { role: "system", content: `Sei l'archivista del "secondo cervello" di ${S.name}: file Markdown nella cartella ${BR_DIR}, con sottocartelle ${BR_TYPES.map(t => t[0]).join(", ")}. Oggi è ${brToday()}.
+      { role: "system", content: (EN ? "Write titles, notes and answers in English. " : "") + `Sei l'archivista del "secondo cervello" di ${S.name}: file Markdown nella cartella ${BR_DIR}, con sottocartelle ${BR_TYPES.map(t => t[0]).join(", ")}. Oggi è ${brToday()}.
 Decidi se la richiesta chiede di SCRIVERE qualcosa nell'archivio o di RISPONDERE a una domanda. Rispondi solo con JSON:
 {"azione":"scrivi","file":"${BR_DIR}<cartella>/<nome>.md","titolo":"...","testo":"riga o righe Markdown da aggiungere, in italiano, usando [[nome]] per collegare persone, progetti e idee"}
 oppure {"azione":"rispondi","cerca":["parole chiave per trovare i file giusti"]}.
@@ -1047,7 +1205,7 @@ ${index || "(nessuno)"}` },
       const scored = files.map(f => ({ f, s: words.reduce((a, w) => a + (f.text.toLowerCase().split(w).length - 1) + (f.path.toLowerCase().includes(w) ? 3 : 0), 0) })).filter(x => x.s).sort((a, b) => b.s - a.s).slice(0, 6);
       const ctx = scored.map(({ f }) => `### ${f.path}\n${f.text.slice(0, 1800)}`).join("\n\n");
       BR.ai = await call([
-        { role: "system", content: `Rispondi in italiano, breve e diretto, usando SOLO i file del secondo cervello qui sotto. Cita i file con [[nome-file]] (senza .md). Se non trovi la risposta, dillo chiaramente.\n\n${ctx || "(nessun file pertinente)"}` },
+        { role: "system", content: `Rispondi in ${EN ? "inglese" : "italiano"}, breve e diretto, usando SOLO i file del secondo cervello qui sotto. Cita i file con [[nome-file]] (senza .md). Se non trovi la risposta, dillo chiaramente.\n\n${ctx || "(nessun file pertinente)"}` },
         { role: "user", content: q }]);
     }
   } catch (e){ BR.ai = "Non ci sono riuscito: " + (e.message || e); }
@@ -1270,7 +1428,7 @@ function gcCalView(){
         <div class="hd" style="align-items:center"><button class="round" onclick="calM--;if(calM<0){calM=11;calY--}reView()">${ico("back")}</button>
           <h3 style="font-size:16px">${cap(MESI[calM])} ${calY}</h3>
           <button class="round" onclick="calM++;if(calM>11){calM=0;calY++}reView()" style="transform:scaleX(-1)">${ico("back")}</button></div>
-        ${miniCal(calY, calM, true)}
+        ${isPhone() ? miniCal(calY, calM, true) : bigCal(calY, calM)}
         <div style="text-align:center;margin-top:12px"><button class="btn" onclick="calY=new Date().getFullYear();calM=new Date().getMonth();calSel=null;reView()">Oggi</button></div>
       </div>
       <div class="glass c"><div class="hd"><div><h3>${cap(dateLong(sel))}</h3><small>${dayEv.length ? dayEv.length + " impegni" : "Giorno libero"}</small></div></div>${evRows(dayEv, GC.ev ? "Nessun impegno." : "Collega il calendario per vedere gli impegni.")}</div>
@@ -1637,7 +1795,7 @@ function refresh(){
   if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open") && cur !== "conoscenza" && cur !== "cervello") { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
   else { renderNav(); if (cur === "conoscenza" && $("#pc-body iframe")) return; if (cur === "cervello" && $("#pc-body .br-ai")) return; $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
 }
-$("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
+if ($("#new-btn")) $("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
 document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); $("#q").focus(); } if (e.key === "Escape" && isPhone()) closeSheet(); });
 $("#q").addEventListener("keydown", e => { if (e.key !== "Enter") return; const v = e.target.value.trim().toLowerCase(); if (!v) return;
@@ -1664,7 +1822,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "24";
+const APP_V = "25";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
