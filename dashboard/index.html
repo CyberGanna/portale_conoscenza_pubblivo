@@ -205,7 +205,7 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
   .cal-i b{font-size:26px;font-weight:400;line-height:1}
   .dock{position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + 10px);z-index:5;display:flex;justify-content:space-around;padding:12px 10px;border-radius:30px}
   .dock .app-i span.lab{display:none}
-  .sheet{display:block;position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 40px)}
+  .sheet{display:block;position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 64px)}
   .sheet.open{transform:none}
   .sheet .bar{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 0 14px;background:linear-gradient(var(--bg) 70%,transparent)}
   .sheet .bar button{color:var(--blue-2);font-size:15px;display:flex;align-items:center;gap:2px;justify-self:start}
@@ -217,6 +217,20 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
   .sheet.portal-open{padding-left:0;padding-right:0;padding-bottom:0}
   .sheet.portal-open .bar{padding-left:16px;padding-right:16px}
   .sheet .portal{height:calc(100dvh - var(--safe-t) - 64px);border:0;border-radius:0}
+  .apps.c5{grid-template-columns:repeat(5,1fr);gap:18px 6px} .apps.c5 .app-i .sq{width:50px;height:50px;border-radius:13px} .apps.c5 .app-i .sq svg.i{width:23px;height:23px} .apps.c5 .lab{font-size:10px}
+  .apps.c3{grid-template-columns:repeat(3,1fr);gap:24px 12px} .apps.c3 .app-i .sq{width:84px;height:84px;border-radius:22px} .apps.c3 .app-i .sq svg.i{width:38px;height:38px} .apps.c3 .lab{font-size:13px}
+  .apps{grid-auto-flow:dense} .app-i{position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  .app-i.big{grid-column:span 2;grid-row:span 2;justify-content:center} .app-i.big .sq{width:100%!important;height:auto!important;aspect-ratio:1;max-width:150px;border-radius:30px} .app-i.big .sq svg.i{width:46%!important;height:46%!important}
+  .app-i.big.cal-big .sq b,.app-i.big .cal-i b{font-size:64px} .app-i.big .cal-i small{font-size:15px}
+  .hm-rs{display:none;position:absolute;top:-6px;left:calc(50% - 40px);width:24px;height:24px;border-radius:50%;background:rgba(40,44,54,.95);border:1px solid var(--line-2);color:#fff;font-size:16px;line-height:1;place-items:center;z-index:2}
+  .apps.c5 .hm-rs{left:calc(50% - 33px)} .apps.c3 .hm-rs{left:calc(50% - 52px)} .app-i.big .hm-rs{left:4px}
+  .apps.edit .hm-rs{display:grid} .apps.edit .app-i{touch-action:none;animation:jig .32s ease-in-out infinite alternate} .apps.edit .app-i:nth-child(2n){animation-delay:-.16s}
+  @keyframes jig{from{transform:rotate(-1.6deg)}to{transform:rotate(1.6deg)}}
+  .app-i.hm-hold{opacity:.25;animation:none!important} .hm-ghost{position:fixed;z-index:50;pointer-events:none;transform:scale(1.12);filter:drop-shadow(0 12px 20px rgba(0,0,0,.5))} .hm-ghost .hm-rs{display:none}
+  .hm-bar{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 12px;border-radius:18px;margin:0 0 10px;font-size:12px} .hm-bar .seg button{font-size:11.5px;padding:6px 8px}
+  .hm-tip{font-size:11.5px;color:var(--muted);text-align:center;margin:-2px 0 16px}
+  .sh-edge{display:none} .sheet.portal-open .sh-edge{display:block;position:fixed;left:0;top:70px;bottom:0;width:22px;z-index:3}
+  .sh-home{position:fixed;left:50%;bottom:calc(var(--safe-b) + 6px);transform:translateX(-50%);z-index:4;width:160px;height:28px;display:grid;place-items:center} .sh-home i{display:block;width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 }
 @media (min-width:900px) and (max-width:1250px){
   .span8,.span4,.span6{grid-column:span 12}.span3{grid-column:span 6}
@@ -294,10 +308,11 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <div class="ph-date" id="ph-date"></div>
   <div class="ph-hello" id="ph-hello"></div>
   <button class="wid glass" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
+  <div id="ph-edit"></div>
   <div class="apps" id="ph-apps"></div>
   <div class="dock glass" id="ph-dock"></div>
 </div>
-<div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div></div>
+<div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div><div class="sh-edge"></div><button class="sh-home" aria-label="Torna alla home" onclick="closeSheet()"><i></i></button></div>
 <div class="toast" id="toast"></div>
 
 <!-- icone -->
@@ -1348,7 +1363,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["name", "city", "news", "links", "alarms", "rem", "gcal", "scOk"];
+const SYNC_KEYS = ["name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home"];
 const SY = { snap: {}, busy: false, again: false, timer: null, last: 0, err: "" };
 S._t = S._t || {};
 const snapOf = k => JSON.stringify(S[k] ?? null);
@@ -1405,12 +1420,111 @@ function syncBox(){
     ${on ? `<button class="btn" style="margin-top:10px" onclick="dsSync()">Sincronizza adesso</button>` : `<button class="btn blue" style="margin-top:10px" onclick="go('conoscenza')">Apri Conoscenza</button>`}</div>`;
 }
 
-/* ---------------- TELEFONO: home con griglia di icone ---------------- */
+/* ---------------- TELEFONO: home con griglia di icone (spostabili e ridimensionabili) ---------------- */
+let homeEdit = false;
+function homeCfg(){ S.home = S.home || {}; S.home.big = S.home.big || {}; S.home.cols = S.home.cols || 4; return S.home; }
+function homeItems(){
+  const apps = APPS.filter(a => !a.pcOnly && a.id !== "collegamenti").map(a => ({ k: a.id, a }));
+  const links = S.links.filter(l => /^https?:\/\/([\w-]+\.)*github\.com/i.test(l.u)).slice(0, 2).map(l => ({ k: "link:" + l.u, l }));
+  const all = [...apps, ...links], order = homeCfg().order || [];
+  const pos = k => { const i = order.indexOf(k); return i < 0 ? 1e3 + all.findIndex(x => x.k === k) : i; };
+  return all.sort((a, b) => pos(a.k) - pos(b.k));
+}
 function appIcon(a, withLab = true){
   const now = new Date();
   const inner = a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : ico(a.i);
   return `<button class="app-i" onclick="go('${a.id}')"><span class="sq ${a.id === "calendario" ? "cal-i" : ""}" style="background:${a.g}">${inner}</span>${withLab ? `<span class="lab">${a.t}</span>` : ""}</button>`;
 }
+function homeTile(x){
+  const big = !!homeCfg().big[x.k], now = new Date();
+  let sq, lab, act;
+  if (x.a){ const a = x.a;
+    sq = `<span class="sq ${a.id === "calendario" ? "cal-i" : ""}" style="background:${a.g}">${a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : ico(a.i)}</span>`;
+    lab = a.t; act = `go('${a.id}')`; }
+  else { const l = x.l;
+    sq = `<span class="sq" style="background:linear-gradient(135deg,#1f2937,#0b1220);border:1px solid var(--line-2)">${ico(l.i || "link")}</span>`;
+    lab = l.n.length > 12 ? l.n.slice(0, 11) + "…" : l.n; act = `window.open(decodeURIComponent('${jq(l.u)}'),'_blank','noopener')`; }
+  return `<div class="app-i ${big ? "big" : ""}" data-k="${esc(x.k)}" data-act="${esc(act)}">${sq}<span class="lab">${esc(lab)}</span>
+    <button class="hm-rs" aria-label="Cambia grandezza" data-rs="1">${big ? "−" : "+"}</button></div>`;
+}
+function renderHomeApps(){
+  const box = $("#ph-apps"), cfg = homeCfg();
+  box.className = `apps c${cfg.cols} ${homeEdit ? "edit" : ""}`;
+  box.innerHTML = homeItems().map(homeTile).join("");
+  $("#ph-edit").innerHTML = homeEdit ? `<div class="hm-bar glass"><span>Grandezza icone</span><div class="seg">${[[5, "Piccole"], [4, "Normali"], [3, "Grandi"]].map(([n, t]) => `<button class="${cfg.cols === n ? "on" : ""}" onclick="homeCfg().cols=${n};save();renderHomeApps()">${t}</button>`).join("")}</div>
+    <button class="btn blue" onclick="homeEditSet(false)">Fine</button></div><div class="hm-tip">Trascina un'icona per spostarla · tocca + o − per ingrandirla o rimpicciolirla</div>` : "";
+}
+function homeEditSet(on){ homeEdit = on; if (on && navigator.vibrate) navigator.vibrate(15); renderHomeApps(); }
+function homeSaveOrder(){ homeCfg().order = [...$("#ph-apps").children].map(el => el.dataset.k); save(); }
+(function homeGestures(){
+  let t0 = null, lp = null, drag = null;
+  const box = () => $("#ph-apps");
+  const tileAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest("#ph-apps .app-i"); };
+  document.addEventListener("pointerdown", e => {
+    const tile = e.target.closest && e.target.closest("#ph-apps .app-i"); if (!tile) return;
+    if (e.target.closest("[data-rs]")) return;
+    t0 = { x: e.clientX, y: e.clientY, tile, moved: false, id: e.pointerId };
+    if (homeEdit){ e.preventDefault(); startDrag(e, tile); return; }
+    lp = setTimeout(() => { lp = null; t0.moved = true; homeEditSet(true); const nt = box().querySelector(`[data-k="${CSS.escape(tile.dataset.k)}"]`); if (nt) startDrag({ clientX: t0.x, clientY: t0.y, pointerId: t0.id }, nt); }, 480);
+  }, { passive: false });
+  function startDrag(e, tile){
+    const r = tile.getBoundingClientRect();
+    const ghost = tile.cloneNode(true); ghost.classList.add("hm-ghost"); ghost.style.width = r.width + "px"; ghost.style.left = r.left + "px"; ghost.style.top = r.top + "px";
+    const sr = tile.querySelector(".sq").getBoundingClientRect(), gs = ghost.querySelector(".sq"); gs.style.width = sr.width + "px"; gs.style.height = sr.height + "px"; gs.style.maxWidth = "none";
+    document.body.appendChild(ghost); tile.classList.add("hm-hold");
+    drag = { tile, ghost, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, sx: e.clientX, sy: e.clientY };
+  }
+  document.addEventListener("pointermove", e => {
+    if (lp && t0 && Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 10){ clearTimeout(lp); lp = null; t0 = null; }
+    if (!drag) return;
+    e.preventDefault();
+    if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) drag.moved = true;
+    drag.ghost.style.left = e.clientX - drag.dx + "px"; drag.ghost.style.top = e.clientY - drag.dy + "px";
+    drag.ghost.style.display = "none"; const over = tileAt(e.clientX, e.clientY); drag.ghost.style.display = "";
+    if (over && over !== drag.tile){
+      const kids = [...box().children], a = kids.indexOf(drag.tile), b = kids.indexOf(over);
+      box().insertBefore(drag.tile, a < b ? over.nextSibling : over);
+    }
+  }, { passive: false });
+  const end = e => {
+    if (lp){ clearTimeout(lp); lp = null; }
+    if (drag){ const d = drag; drag = null; d.ghost.remove(); d.tile.classList.remove("hm-hold"); homeSaveOrder(); if (d.moved) { t0 = null; return; } }
+    if (t0 && !t0.moved && !homeEdit && e.type === "pointerup"){ const tile = t0.tile; t0 = null; new Function(tile.dataset.act)(); return; }
+    t0 = null;
+  };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("click", e => {
+    const rs = e.target.closest && e.target.closest("#ph-apps [data-rs]");
+    if (rs){ const k = rs.closest(".app-i").dataset.k, b = homeCfg().big; if (b[k]) delete b[k]; else b[k] = true; save(); renderHomeApps(); return; }
+    if (homeEdit && e.target.isConnected && !e.target.closest("#ph-apps, #ph-edit")) homeEditSet(false);
+  });
+  document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("#ph-apps")) e.preventDefault(); });
+})();
+
+/* torna alla home: scorri da sinistra verso destra, oppure il tasto Home in basso */
+(function sheetSwipe(){
+  const sh = () => $("#sheet");
+  let s = null;
+  const scrollsX = el => { for (; el && el !== document.body; el = el.parentElement){ const cs = getComputedStyle(el); if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2) return true; if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.tagName === "CANVAS") return true; } return false; };
+  document.addEventListener("touchstart", e => {
+    if (!isPhone() || !sh().classList.contains("open") || e.touches.length !== 1) return;
+    const t = e.touches[0], edge = t.clientX < 28;
+    if (!e.target.closest("#sheet") || (!edge && scrollsX(e.target))) return;
+    s = { x: t.clientX, y: t.clientY, dx: 0, on: false, t: Date.now(), edge };
+  }, { passive: true });
+  document.addEventListener("touchmove", e => {
+    if (!s) return; const t = e.touches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if (!s.on){ if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { s = null; return; } if (dx > 14 && dx > Math.abs(dy) * 1.4) { s.on = true; sh().style.transition = "none"; } else return; }
+    s.dx = Math.max(0, dx); sh().style.transform = `translateX(${s.dx}px)`; e.preventDefault();
+  }, { passive: false });
+  const end = () => {
+    if (!s) return; const st = s; s = null; if (!st.on) return;
+    const el = sh(), fast = st.dx / Math.max(1, Date.now() - st.t) > 0.5;
+    el.style.transition = ""; el.style.transform = "";
+    if (st.dx > innerWidth * 0.3 || (fast && st.dx > 50)) closeSheet();
+  };
+  document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
+})();
 function renderPhone(){
   const now = new Date();
   $("#ph-date").textContent = dateLong(now);
@@ -1418,9 +1532,7 @@ function renderPhone(){
   const c = wOk() ? W.current : null, d = wOk() ? W.daily : null;
   $("#ph-wid").innerHTML = c ? `<div><div class="city">${esc(S.city.name)}</div><div class="big">${Math.round(c.temperature_2m)}°</div><div class="desc">${WMO(c.weather_code)[1]}</div></div><div class="right"><div class="emo">${WMO(c.weather_code)[0]}</div>Max ${Math.round(d.temperature_2m_max[0])}° Min ${Math.round(d.temperature_2m_min[0])}°<br>Pioggia ${d.precipitation_probability_max[0] ?? 0}%</div>`
     : `<div><div class="city">${esc(S.city.name)}</div><div class="desc">Carico il meteo…</div></div>`;
-  const list = APPS.filter(a => !a.pcOnly && a.id !== "collegamenti");
-  const links = S.links.filter(l => /^https?:\/\/([\w-]+\.)*github\.com/i.test(l.u)).slice(0, 2);
-  $("#ph-apps").innerHTML = list.map(a => appIcon(a)).join("") + links.map(l => `<a class="app-i" href="${esc(l.u)}" ${/^https?:/.test(l.u) ? 'target="_blank" rel="noopener"' : ""}><span class="sq" style="background:linear-gradient(135deg,#1f2937,#0b1220);border:1px solid var(--line-2)">${ico(l.i || "link")}</span><span class="lab">${esc(l.n.length > 12 ? l.n.slice(0, 11) + "…" : l.n)}</span></a>`).join("");
+  renderHomeApps();
   $("#ph-dock").style.display = "none";
 }
 
@@ -1463,7 +1575,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "17";
+const APP_V = "18";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
