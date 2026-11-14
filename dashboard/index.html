@@ -172,6 +172,9 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .mk-p{font-size:17px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums} .mk-why{grid-column:1/-1;font-size:12.5px;line-height:1.45;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .mk-why p{margin:2px 0} .mk-why b{color:var(--ink)} .tag.red{background:rgba(244,63,94,.16);color:#fb7185} .mk-kv span:nth-child(even){text-align:right}
 @media (max-width:560px){.mk-sp{display:none} .mk-r{grid-template-columns:1fr auto}}
+.mk-news{display:flex;flex-direction:column} .mk-nw{padding:11px 0;border-top:1px solid var(--line)} .mk-nw:first-child{border-top:0;padding-top:2px}
+.mk-nt{font-size:13.5px;font-weight:600;line-height:1.35;color:var(--ink)} .mk-nt:hover{color:var(--blue-2)} .mk-nw p{margin:5px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.mk-srcs{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:7px;font-size:11px} .mk-src{padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--blue-2);font-size:11px}
 .btn.danger{background:rgba(244,63,94,.18);border-color:var(--red);color:#fda4af}
 .gc-day{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px}
 .minical span.today{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(47,123,255,.5)}
@@ -431,7 +434,7 @@ function closeSheet(){ $("#sheet").classList.remove("open"); cur = "oggi"; histo
 
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
-    const n = id === "conoscenza" && notes.length ? `<span class="n">${notes.length}</span>` : id === "collegamenti" ? `<span class="n">${S.links.length}</span>` : "";
+    const n = id === "collegamenti" ? `<span class="n">${S.links.length}</span>` : "";
     return `<a href="#${id}" class="${cur === id ? "on" : ""}" onclick="event.preventDefault();go('${id}')">${ico(a.i)}${a.t}${n}</a>`; }).join("")).join("");
 }
 
@@ -514,17 +517,7 @@ function DASH(){
   const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
   return `<div class="grid">
     ${mkDashCard()}
-    <div class="span4" style="display:flex;flex-direction:column;gap:20px">
-      <div class="glass c">
-        <div class="hd"><div><h3>Anno ${now.getFullYear()}</h3><small>${left} giorni alla fine</small></div><span class="muted">${ico("cal")}</span></div>
-        <div style="display:flex;gap:18px;align-items:center">
-          <div class="ring"><svg viewBox="0 0 132 132" width="132" height="132"><circle cx="66" cy="66" r="${R}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/><circle cx="66" cy="66" r="${R}" fill="none" stroke="#2f7bff" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}" transform="rotate(-90 66 66)" style="filter:drop-shadow(0 0 6px #2f7bff)"/></svg>
-            <div class="lbl"><div><b>${Math.round(pct * 100)}%</b><small>dell'anno</small></div></div></div>
-          <div class="kv" style="flex:1"><span>Mese</span><span>${cap(MESI[now.getMonth()])}</span><span>Settimana</span><span>${weekNo(now)} di 52</span><span>Alba</span><span>${dly ? dly.sunrise[0].slice(11) : "–"}</span><span>Tramonto</span><span>${dly ? dly.sunset[0].slice(11) : "–"}</span></div>
-        </div>
-      </div>
-      ${mkMainCard()}
-    </div>
+    ${mkNewsCard()}
     <div class="glass c span4">
       <div class="hd"><div><h3>Notizie</h3><small>Le più riprese dai giornali${NEWS ? " · aggiornate alle " + hhmm(new Date(NEWS.updated)) : ""}</small></div><button class="lnk" onclick="go('notizie')">Tutte</button></div>
       ${newsMini(5)}
@@ -662,6 +655,7 @@ async function loadNews(){
     NEWS = d; for (const k in SUMS) delete SUMS[k]; try { localStorage.setItem(KEY + "-news", JSON.stringify(d)); } catch { try { localStorage.removeItem(KEY + "-news"); } catch {} }
   } catch { newsErr = true; if (NEWS) return; }
   if (cur === "oggi" || cur === "notizie") refresh();
+  mkExplain();
 }
 /* ---------------- MERCATI (prezzi dal ramo notizie, spiegazioni con Groq gratis) ---------------- */
 const MK_URL = NEWS_URL.replace("news.json", "mercati.json");
@@ -702,21 +696,25 @@ function mkRow(x, why){
   </div>`;
 }
 function mkKey(){ try { return localStorage.getItem("pc_groq") || ""; } catch { return ""; } }
+const mkStrong = x => Math.abs(x.z) >= 2;
 async function mkExplain(force){
-  const key = mkKey(), top = mkTop(8);
-  if (!key || !top.length || MKAI.busy || isPhone()) return;
-  if (!force && MKAI.at === MK.updated && top.every(x => MKAI.items[x.s])) return;
+  const key = mkKey();
+  if (!key || !MK || !NEWS || MKAI.busy || isPhone()) return;
+  if (!force && MKAI.v === 2 && MKAI.at === MK.updated) return;
+  const strong = MK.items.filter(x => mkFresh(x) && mkStrong(x)).slice(0, 8);
   MKAI.busy = true; MKAI.err = "";
   const since = Date.now() - 36 * 3600e3;
-  const heads = NEWS ? NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "esteri", "politica", "ai", "tecnologia", "clima"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 90).map(x => "- " + x.t).join("\n") : "";
-  const list = top.map(x => `${x.s} | ${x.n} (${x.cls}) | oggi ${mkPct(x.pct)} | di solito ±${x.vol}% al giorno | 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}`).join("\n");
-  const sys = "Sei un analista finanziario che spiega a una persona non esperta, in italiano semplice. Per ogni strumento scrivi il motivo più probabile del movimento di oggi e cosa può comportare (per i mercati, per l'economia o per chi risparmia/investe). Usa i titoli delle notizie dati quando c'entrano davvero, citandone il fatto. Se nessun titolo spiega il movimento, dillo chiaramente e indica la causa più plausibile come ipotesi (per esempio prese di profitto, dati economici, movimento di settore). Non inventare numeri o fatti. Niente consigli di comprare o vendere. Massimo 2 frasi per campo. Rispondi solo con JSON: {\"items\":[{\"s\":\"simbolo\",\"perche\":\"...\",\"effetti\":\"...\"}]}";
-  const user = `Movimenti più insoliti di oggi:\n${list}\n\nTitoli delle notizie delle ultime 36 ore:\n${heads || "(nessuna notizia disponibile)"}`;
+  const pool = NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "esteri", "politica", "ai", "tecnologia", "clima"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 80);
+  const heads = pool.map((x, i) => `[${i}] ${x.t} (${x.n} testate)`).join("\n");
+  const moves = MK.items.filter(mkFresh).slice(0, 12).map(x => `${x.n} ${mkPct(x.pct)}`).join(", ");
+  const list = strong.map(x => `${x.s} | ${x.n} (${x.cls}) | oggi ${mkPct(x.pct)} | di solito ±${x.vol}% al giorno | 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}`).join("\n");
+  const sys = "Sei un analista finanziario che spiega a una persona non esperta, in italiano semplice. Compito 1: per ogni strumento della lista 'movimenti forti' scrivi il motivo più probabile del movimento di oggi e cosa può comportare (per i mercati, per l'economia o per chi risparmia/investe), usando i titoli delle notizie quando c'entrano davvero; se nessun titolo lo spiega dillo e indica la causa più plausibile come ipotesi. Compito 2: scegli dai titoli numerati le notizie (massimo 6, dalla più importante) che stanno davvero muovendo i mercati oggi (banche centrali, tassi, inflazione, dazi, guerre, petrolio, risultati di grandi aziende, crisi) e per ognuna scrivi in una frase quali mercati muove e come. Ignora sport, cronaca e notizie senza effetto sui mercati. Non inventare numeri o fatti. Niente consigli di comprare o vendere. Massimo 2 frasi per campo. Rispondi solo con JSON: {\"items\":[{\"s\":\"simbolo\",\"perche\":\"...\",\"effetti\":\"...\"}],\"notizie\":[{\"i\":numero,\"effetto\":\"...\"}]}";
+  const user = `Movimenti forti di oggi:\n${list || "(nessuno)"}\n\nAltri movimenti di oggi: ${moves}\n\nTitoli delle notizie delle ultime 36 ore:\n${heads || "(nessuna notizia disponibile)"}`;
   try {
     let out = null;
     for (const model of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]){
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 1800, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) });
+        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 2200, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) });
       if (r.status === 401) throw new Error("la chiave Groq non è valida");
       if (!r.ok) continue;
       try { out = JSON.parse((await r.json()).choices?.[0]?.message?.content || "{}"); break; } catch {}
@@ -724,11 +722,25 @@ async function mkExplain(force){
     if (!out) throw new Error("l'AI non risponde adesso");
     const items = {};
     for (const it of out.items || []) if (it && it.s && it.perche) items[it.s] = { perche: String(it.perche), effetti: String(it.effetti || "") };
-    MKAI.items = items; MKAI.at = MK.updated;
-    try { localStorage.setItem(KEY + "-mkai", JSON.stringify({ at: MKAI.at, items })); } catch {}
+    const news = [], seen = new Set();
+    for (const n of out.notizie || []){ const x = pool[+n.i]; if (!x || seen.has(x.u)) continue; seen.add(x.u);
+      news.push({ t: x.t, u: x.u, src: x.src, srcs: (x.srcs || [[x.src, x.u]]).slice(0, 5), n: x.n, d: x.d, effetto: String(n.effetto || "") }); if (news.length >= 6) break; }
+    Object.assign(MKAI, { v: 2, at: MK.updated, items, news });
+    try { localStorage.setItem(KEY + "-mkai", JSON.stringify({ v: 2, at: MKAI.at, items, news })); } catch {}
   } catch (e){ MKAI.err = e.message; }
   MKAI.busy = false;
   if (cur === "oggi" || cur === "mercati") refresh();
+}
+function mkNewsCard(){
+  const ai = MKAI.v === 2 && MKAI.news && MKAI.news.length;
+  const since = Date.now() - 36 * 3600e3;
+  const L = ai ? MKAI.news : (NEWS ? NEWS.items.filter(x => x.d > since && x.cats.includes("economia")).sort((a, b) => b.n - a.n).slice(0, 5) : []);
+  const srcs = x => (x.srcs || [[x.src, x.u]]).filter(s => s && s[0]).slice(0, 4).map(([n, u]) => `<a class="mk-src" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("");
+  return `<div class="glass c span4"><div class="hd"><div><h3>Notizie che muovono i mercati</h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div><button class="lnk" onclick="go('notizie')">Notizie</button></div>
+    ${L.length ? `<div class="mk-news">${L.map(x => `<div class="mk-nw"><a class="mk-nt" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a>
+      ${x.effetto ? `<p>${esc(x.effetto)}</p>` : ""}<div class="mk-srcs"><span class="muted">Fonti:</span>${srcs(x)}</div></div>`).join("")}</div>` : `<div class="muted">${NEWS ? "Nessuna notizia di economia nelle ultime ore." : "Carico le notizie…"}</div>`}
+    ${!mkKey() ? `<div class="muted" style="font-size:11.5px;margin-top:8px">Con la chiave Groq gratuita l'AI sceglie quelle che muovono davvero i mercati e spiega l'effetto.</div>` : ""}
+  </div>`;
 }
 const MK_MAIN = [["^GSPC", "S&P 500"], ["^IXIC", "Nasdaq"], ["^STOXX50E", "Euro Stoxx 50"], ["FTSEMIB.MI", "FTSE MIB"], ["^SSMI", "SMI"], ["EURCHF=X", "EUR/CHF"], ["EURUSD=X", "EUR/USD"], ["GC=F", "Oro"], ["BZ=F", "Petrolio Brent"], ["BTC-USD", "Bitcoin"]];
 function mkMainCard(){
@@ -740,7 +752,7 @@ function mkDashCard(){
   const top = mkTop(5);
   return `<div class="glass c span8">
     <div class="hd"><div><h3>Mercati: i movimenti più forti</h3><small>${MK ? `Oggi, rispetto a quanto si muovono di solito · aggiornato alle ${hhmm(new Date(MK.updated))}` : "Indici, azioni, valute, materie prime e cripto"}</small></div><button class="lnk" onclick="go('mercati')">Vedi tutto</button></div>
-    ${top.length ? `<div class="mk-list">${top.map(x => mkRow(x, true)).join("")}</div>${MKAI.err ? `<div class="muted" style="font-size:12px;margin-top:8px">Spiegazioni non disponibili: ${esc(MKAI.err)}. <button class="lnk" onclick="mkExplain(true)">Riprova</button></div>` : ""}`
+    ${top.length ? `<div class="mk-list">${top.map(x => mkRow(x, mkStrong(x))).join("")}</div>${MKAI.err ? `<div class="muted" style="font-size:12px;margin-top:8px">Spiegazioni non disponibili: ${esc(MKAI.err)}. <button class="lnk" onclick="mkExplain(true)">Riprova</button></div>` : ""}`
       : `<div class="muted">${mkErr ? "Non riesco a leggere i prezzi adesso: riprovo tra poco." : "Carico i prezzi… (i dati si aggiornano ogni ora)"}</div>`}
     <div class="muted" style="font-size:11px;margin-top:10px">Prezzi Yahoo Finance con qualche minuto di ritardo. Le spiegazioni sono scritte dall'AI dai titoli delle notizie: sono un aiuto a capire, non consigli di investimento.</div>
   </div>`;
@@ -753,7 +765,7 @@ function mkView(){
   return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + `
     <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
-    <div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, top.has(x.s))).join("")}</div></div>`;
+    <div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>`;
 }
 const CAT_T = Object.fromEntries(NEWS_CATS), CC_T = Object.fromEntries(COUNTRIES);
 function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); return m < 2 ? "adesso" : m < 60 ? m + " min fa" : m < 1440 ? Math.round(m / 60) + " h fa" : m < 2880 ? "ieri" : Math.round(m / 1440) + " giorni fa"; }
@@ -1623,7 +1635,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "21";
+const APP_V = "22";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
