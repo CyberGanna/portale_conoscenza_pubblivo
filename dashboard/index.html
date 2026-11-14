@@ -391,7 +391,7 @@ html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
 .ai-p .ai-msgs{flex:1;overflow-y:auto;margin:14px 0 10px;display:flex;flex-direction:column;gap:8px}
 .ai-b{max-width:88%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.5} .ai-b.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:4px}
 .ai-b.ai{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line);border-bottom-left-radius:4px} .ai-b.err{color:#fda4af}
-.ai-sug{display:flex;flex-wrap:wrap;gap:6px} .ai-sug .chip{font-size:12px;text-align:left} .ai-f{display:flex;gap:8px} .ai-f .input{flex:1;margin:0}
+.ai-web{display:block;margin-top:6px;font-size:11px;color:var(--muted)} .ai-sug{display:flex;flex-wrap:wrap;gap:6px} .ai-sug .chip{font-size:12px;text-align:left} .ai-f{display:flex;gap:8px} .ai-f .input{flex:1;margin:0}
 .mkd-chat .ai-msgs{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;margin:6px 0 10px}
 .lang-btn{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--ink);cursor:pointer} .lang-btn:hover{border-color:var(--blue);color:#fff}
 .acts .lang-btn{margin-right:8px}
@@ -1284,25 +1284,33 @@ function mkDraw(){
   </div>`;
 }
 /* ---------------- CHIEDI ALL'AI (Groq gratis): domande generali o su uno strumento ---------------- */
-async function groqText(key, sys, msgs, maxTokens){
-  let last = "";
-  for (const model of await groqModels(key)){
-    for (let t = 0; t < 2; t++){
+/* ricerca sul web gratuita di Groq (strumento "browser_search" dei modelli gpt-oss): la proviamo per prima, se non va si usano i modelli normali */
+const GROQ_WEB = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"];
+let GROQ_WEB_OFF = 0;
+async function groqText(key, sys, msgs, maxTokens, opt = {}){
+  let last = ""; groqText.web = false;
+  const web = opt.web !== false && Date.now() > GROQ_WEB_OFF;
+  for (const model of [...(web ? GROQ_WEB : []), ...await groqModels(key)]){
+    const isWeb = GROQ_WEB.includes(model);
+    for (let t = 0; t < (isWeb ? 1 : 2); t++){
       let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.4, ...groqOpt(model, maxTokens), messages: [{ role: "system", content: sys + LANG_SFX }, ...msgs] }) }); }
+        body: JSON.stringify({ model, temperature: 0.4, ...(isWeb ? { max_completion_tokens: maxTokens + 1500, reasoning_effort: "low", tools: [{ type: "browser_search" }], tool_choice: "auto" } : groqOpt(model, maxTokens)), messages: [{ role: "system", content: sys + (isWeb ? WEB_SFX() : "") + LANG_SFX }, ...msgs] }) }); }
       catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
+      if (isWeb && !r.ok && r.status !== 401){ GROQ_WEB_OFF = Date.now() + (r.status === 429 || r.status === 413 ? 5 : 60) * 60e3; break; }
       if (r.status === 401) throw new Error(L2("la chiave Groq non è valida", "the Groq key is not valid"));
       if (r.status === 429){ last = L2("limite di richieste raggiunto", "rate limit reached"); const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 1){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
       if (!r.ok){ last = "Groq " + r.status; if (r.status === 404){ GM = null; try { localStorage.removeItem(KEY + "-gm"); } catch {} } break; }
-      const txt = ((await r.json()).choices?.[0]?.message?.content || "").trim();
-      if (txt) return txt; last = L2("risposta vuota", "empty answer");
+      const j = await r.json(), m0 = j.choices?.[0]?.message || {}, raw = m0.content || "", txt = raw.replace(/【[^】]*】/g, "").replace(/[ \t]+([.,;:])/g, "$1").trim();
+      if (txt){ groqText.web = isWeb && (!!(m0.executed_tools || []).length || /【/.test(raw)); return txt; } last = L2("risposta vuota", "empty answer");
     }
   }
   throw new Error(L2("l'AI non risponde adesso", "the AI isn't answering right now") + (last ? " (" + last + ")" : ""));
 }
 const aiMd = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^#+\s*(.+)$/gm, "<b>$1</b>").replace(/^\s*[-*]\s+/gm, "• ").replace(/\n/g, "<br>");
-const AI_BASE = () => L2(`Ti chiami Aris e sei l'assistente personale della dashboard di ${S.name}. Rispondi in italiano semplice, chiaro e breve (massimo 8-10 righe se non ti chiedono di più). Usa i dati della dashboard qui sotto quando servono e dillo se un'informazione non c'è o se non la sai: non inventare numeri, date o fatti. Puoi spiegare economia e finanza, ma niente consigli personali di comprare o vendere.`,
-  `Your name is Aris and you are the personal assistant of ${S.name}'s dashboard. Answer in simple, clear, short English (at most 8-10 lines unless asked for more). Use the dashboard data below when useful and say when something isn't there or you don't know it: don't invent numbers, dates or facts. You can explain economics and finance, but no personal buy or sell advice.`);
+const AI_BASE = () => L2(`Ti chiami Aris e sei l'assistente personale di ${S.name}. Rispondi a qualsiasi domanda, non solo su quello che c'è nella dashboard: cultura generale, consigli, cose da fare, spiegazioni, idee. Rispondi in italiano semplice, chiaro e breve (massimo 8-10 righe se non ti chiedono di più). ${S.name} vive a ${S.city?.name || "Lugano"}: se chiede "qui", "oggi" o "vicino" intende lì. I dati della dashboard qui sotto usali quando c'entrano. Non inventare numeri, date, orari o eventi: se non li sai con certezza dillo. Puoi spiegare economia e finanza, ma niente consigli personali di comprare o vendere.`,
+  `Your name is Aris and you are ${S.name}'s personal assistant. Answer any question, not only about what's in the dashboard: general knowledge, advice, things to do, explanations, ideas. Answer in simple, clear, short English (at most 8-10 lines unless asked for more). ${S.name} lives in ${S.city?.name || "Lugano"}: "here", "today" or "nearby" means there. Use the dashboard data below when relevant. Don't invent numbers, dates, times or events: say so if you're not sure. You can explain economics and finance, but no personal buy or sell advice.`);
+const WEB_SFX = () => L2(`\n\nHai la ricerca sul web: usala per tutto ciò che è attuale o locale (eventi, meteo, orari, aperture, notizie, prezzi di oggi). Oggi è ${new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}. Alla fine indica in breve le fonti (nome del sito).`,
+  `\n\nYou have web search: use it for anything current or local (events, weather, opening times, news, today's prices). Today is ${new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}. At the end briefly name the sources (site name).`);
 function aiContext(){
   const now = new Date(), out = [`Adesso: ${dateLong(now)} ${now.getFullYear()}, ore ${hhmm(now)}. Sezione aperta: ${cur}.`];
   if (MK){ const n = cur === "mercati" ? 30 : 12;
@@ -1326,7 +1334,7 @@ function aiOpen(){
 function aiClose(){ document.getElementById("ai-panel")?.classList.remove("open"); }
 addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("ai-panel")?.classList.contains("open")) aiClose(); });
 function aiChatHtml(msgs, busy, err, id, sugg, sendFn){
-  return `<div class="ai-msgs" id="${id}-m">${msgs.length ? msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content)}</div>`).join("")
+  return `<div class="ai-msgs" id="${id}-m">${msgs.length ? msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content) + (m.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : "")}</div>`).join("")
       : `<div class="ai-sug">${sugg.map(s => `<button class="chip" onclick="${sendFn}(this.textContent)">${esc(s)}</button>`).join("")}</div>`}
     ${busy ? `<div class="ai-b ai muted">${L2("Sto pensando…", "Thinking…")}</div>` : ""}${err ? `<div class="ai-b ai err">${esc(err)}</div>` : ""}</div>
     ${mkKey() ? `<form class="ai-f" onsubmit="event.preventDefault();${sendFn}(this.q.value);this.q.value=''"><input class="input" name="q" id="${id}-q" autocomplete="off" placeholder="${L2("Scrivi una domanda…", "Ask a question…")}"><button class="btn blue" ${busy ? "disabled" : ""}>${L2("Invia", "Send")}</button></form>`
@@ -1346,7 +1354,7 @@ function aiDraw(){
 async function aiSend(q){
   q = String(q || "").trim(); const key = mkKey(); if (!q || !key || AIC.busy) return;
   AIC.msgs.push({ role: "user", content: q }); AIC.busy = true; AIC.err = ""; aiDraw(); abDraw();
-  try { const a = await groqText(key, AI_BASE() + "\n\nDATI DELLA DASHBOARD:\n" + aiContext(), AIC.msgs.slice(-10), 900); AIC.msgs.push({ role: "assistant", content: a }); }
+  try { const a = await groqText(key, AI_BASE() + "\n\nDATI DELLA DASHBOARD:\n" + aiContext(), AIC.msgs.slice(-10).map(m => ({ role: m.role, content: m.content })), 900); AIC.msgs.push({ role: "assistant", content: a, web: groqText.web }); }
   catch (e){ AIC.err = e.message; }
   AIC.busy = false; aiDraw(); abDraw(); if (document.getElementById("ai-panel")?.classList.contains("open")) setTimeout(() => document.getElementById("ai-q")?.focus(), 30);
 }
@@ -1360,7 +1368,7 @@ function abDraw(){
   pop.innerHTML = `<div class="ab-hd"><span style="display:flex;align-items:center;gap:9px"><span class="orb" style="--s:18px"><i></i></span>Aris</span>${AIC.msgs.length ? `<button type="button" onclick="AIC.msgs=[];AIC.err='';abDraw();aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button type="button" title="${L2("Apri grande", "Open large")}" onclick="abClose();aiOpen()">⤢</button><button type="button" aria-label="${L2("Chiudi", "Close")}" onclick="abClose()">✕</button></div>
     <div class="ab-msgs" id="ab-m">${!mkKey() ? `<p class="muted" style="font-size:12.5px;margin:0">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
       : empty ? `<div class="ai-sug">${sugg.map(t => `<button type="button" class="chip" onclick="abSend(this.textContent)">${esc(t)}</button>`).join("")}</div>`
-      : AIC.msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content)}</div>`).join("")}
+      : AIC.msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content) + (m.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : "")}</div>`).join("")}
       ${AIC.busy ? `<div class="ai-b ai muted">${L2("Sto pensando…", "Thinking…")}</div>` : ""}${AIC.err ? `<div class="ai-b ai err">${esc(AIC.err)}</div>` : ""}</div>`;
   const m = document.getElementById("ab-m"); if (m) m.scrollTop = m.scrollHeight;
 }
@@ -1392,7 +1400,7 @@ async function mkChatSend(q){
   if (!MKD) return; const s = MKD.s, x = MK.items.find(i => i.s === s), key = mkKey(); q = String(q || "").trim(); if (!q || !key) return;
   const C = MKD_CHAT[s] = MKD_CHAT[s] || { msgs: [], busy: false, err: "" }; if (C.busy) return;
   C.msgs.push({ role: "user", content: q }); C.busy = true; C.err = ""; mkDraw(); mkChatScroll();
-  try { const a = await groqText(key, AI_BASE() + "\n\nLa domanda riguarda questo strumento finanziario:\n" + mkCtx(x), C.msgs.slice(-10), 800); C.msgs.push({ role: "assistant", content: a }); }
+  try { const a = await groqText(key, AI_BASE() + "\n\nLa domanda riguarda questo strumento finanziario:\n" + mkCtx(x), C.msgs.slice(-10).map(m => ({ role: m.role, content: m.content })), 800); C.msgs.push({ role: "assistant", content: a, web: groqText.web }); }
   catch (e){ C.err = e.message; }
   C.busy = false; if (MKD && MKD.s === s){ mkDraw(); mkChatScroll(); setTimeout(() => document.getElementById("mkc-q")?.focus(), 30); }
 }
@@ -1446,7 +1454,7 @@ async function nwChatSend(q){
   const C = NWD_CHAT[u] = NWD_CHAT[u] || { msgs: [], busy: false, err: "" }; if (C.busy) return;
   C.msgs.push({ role: "user", content: q }); C.busy = true; C.err = ""; nwDraw(); nwChatScroll();
   const ai = NWD_AI[u], sp = ai && ai.cosa ? `\n\nSpiegazione che hai già dato:\n${ai.cosa}\n${ai.contesto}\n${ai.perche}` : "";
-  try { const a = await groqText(key, AI_BASE() + " Hai solo titoli e anteprime della notizia, non l'articolo completo: se serve dillo.\n\nLa domanda riguarda questa notizia:\n" + nwCtx(x) + sp, C.msgs.slice(-10), 800); C.msgs.push({ role: "assistant", content: a }); }
+  try { const a = await groqText(key, AI_BASE() + " Hai solo titoli e anteprime della notizia, non l'articolo completo: se serve dillo.\n\nLa domanda riguarda questa notizia:\n" + nwCtx(x) + sp, C.msgs.slice(-10).map(m => ({ role: m.role, content: m.content })), 800); C.msgs.push({ role: "assistant", content: a, web: groqText.web }); }
   catch (e){ C.err = e.message; }
   C.busy = false; if (NWD && NWD.u === u){ nwDraw(); nwChatScroll(); setTimeout(() => document.getElementById("nwc-q")?.focus(), 30); }
 }
@@ -2406,7 +2414,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "34";
+const APP_V = "35";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
