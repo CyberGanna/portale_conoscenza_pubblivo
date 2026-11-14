@@ -385,6 +385,15 @@ html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
   .ab-msgs{max-height:min(260px,38vh)}
   .sheet:not(.portal-open){padding-bottom:calc(var(--safe-b) + 120px) !important}
 }
+.vd-add{display:flex;gap:8px;flex-wrap:wrap} .vd-add .input{flex:1;min-width:220px;margin:0}
+.vd-how{margin-top:12px;font-size:13px;line-height:1.55} .vd-how summary{cursor:pointer;color:var(--blue-2);font-weight:600} .vd-how p{margin:8px 0} .vd-how code{font-size:11.5px;background:rgba(255,255,255,.06);padding:2px 5px;border-radius:5px;word-break:break-all}
+.vd-c{margin-top:12px} .vd-hd{display:flex;align-items:center;gap:12px;cursor:pointer} .vd-ic{font-size:22px;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.05);flex:none}
+.vd-t{flex:1;min-width:0} .vd-t b{display:block;font-size:14.5px} .vd-t small{font-size:12px;color:var(--muted)} .vd-blue{color:var(--blue-2)} .vd-green{color:#34d399} .vd-orange{color:#fb923c} .vd-red{color:#f87171}
+.vd-sum{margin:10px 0 0;font-size:13px;color:#cbd5e1;line-height:1.5} .vd-body{margin-top:12px;font-size:13.5px;line-height:1.55} .vd-body h5{margin:14px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)} .vd-body p{margin:0 0 6px} .vd-body ul{margin:0;padding-left:18px}
+.vd-idea{padding:9px 12px;border-radius:12px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);margin-bottom:6px} .vd-idea b{display:block} .vd-idea span{font-size:13px;color:#cbd5e1}
+.vd-first{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25)} .vd-first b{color:#34d399;margin-right:6px}
+.vd-tr{margin-top:8px;font-size:12.5px} .vd-tr summary{cursor:pointer;color:var(--muted)} .vd-tr p{white-space:pre-wrap;color:#cbd5e1;max-height:220px;overflow:auto}
+.vd-note{display:flex;flex-direction:column;gap:6px;margin:10px 0} .vd-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .gv-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--muted);margin:-6px 0 12px} .gv-leg span{display:inline-flex;align-items:center;gap:6px} .gv-leg i{width:10px;height:10px;border-radius:3px}
 .gv-st{margin:-4px 0 12px;font-size:12px;display:flex;gap:12px;flex-wrap:wrap}
 .gv-day{margin:0} .gv-day h3{margin:0 0 6px;font-size:14px} .gv-day h3::first-letter{text-transform:uppercase}
@@ -478,6 +487,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="m10 9 5 3-5 3z"/></symbol>
   <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
   <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M4 4 2 6M20 4l2 2"/></symbol>
 </svg>
@@ -534,7 +544,7 @@ const I18N = {
 "Es. Il mio bot di trading": "E.g. My trading bot", "Es. chiamare il dentista": "E.g. call the dentist", "Esteri e geopolitica": "World and geopolitics", "Evento": "Event",
 "Fatto": "Done", "Fatto, l'ho creato": "Done, I created it", "Filtri": "Filters", "Fine": "Done", "Fonti:": "Sources:", "Francia": "France", "Gas naturale": "Natural gas",
 "Germania": "Germany", "Giappone": "Japan", "Giorno libero": "Free day", "Google Calendar collegato": "Google Calendar connected", "Grafo": "Graph", "Grandezza icone": "Icon size",
-"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "MONDO": "WORLD", "IO": "ME", "Calendario globale": "World calendar", "Globale": "World", "Idee": "Ideas", "Ieri": "Yesterday",
+"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "Video salvati": "Saved videos", "Video": "Videos", "MONDO": "WORLD", "IO": "ME", "Calendario globale": "World calendar", "Globale": "World", "Idee": "Ideas", "Ieri": "Yesterday",
 "Il Cervello salva le note come file Markdown nella stessa repository privata che usa il portale per sincronizzarsi (": "The Brain saves notes as Markdown files in the same private repository the portal uses to sync (",
 "Il titolo inizia con… (es. Verifica)": "Title starts with… (e.g. Test)", "Il tuo nome": "Your name", "Il tuo secondo cervello, in stile Obsidian": "Your second brain, Obsidian style",
 "Impostazioni": "Settings", "In alto tocca il nome e chiamalo esattamente": "At the top tap the name and call it exactly", "Incolla qui il tuo Client ID di Google": "Paste your Google Client ID here",
@@ -682,11 +692,12 @@ const APPS = [
   { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", pcOnly: true },
   { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)" },
   { id: "promemoria", t: "Promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)" },
+  { id: "video", t: "Video salvati", s: "Video", i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)" },
   { id: "sveglie", t: "Sveglie", i: "alarm", g: "linear-gradient(135deg,#334155,#0f172a)" },
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#34d399,#047857)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#94a3b8,#475569)" },
 ];
-const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "conoscenza", "cervello"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
@@ -861,6 +872,7 @@ const VIEWS = {
   cervello(){ return brView(); },
   mercati(){ return mkView(); },
   globale(){ return gvView(); },
+  video(){ return vdView(); },
   meteo(){
     const c = wOk() ? W.current : null, d = wOk() ? W.daily : null, hrs = nextHours(24);
     if (!c) return head("Meteo") + `<div class="glass c muted">Carico il meteo di ${esc(S.city.name)}…</div>`;
@@ -1093,7 +1105,7 @@ async function gvExplain(){
     let o = null; const m = txt.match(/\{[\s\S]*\}/); try { o = JSON.parse(m ? m[0] : txt); } catch {}
     GVD_AI[k] = o ? { cose: String(o.cose || ""), perche: String(o.perche || ""), attese: String(o.attese || ""), effetti: String(o.effetti || ""), punti: (o.punti || []).map(String).slice(0, 5), domande: (o.domande || []).map(String).slice(0, 3), web: groqText.web }
       : { cose: txt.replace(/[{}"]/g, "").slice(0, 900), perche: "", attese: "", effetti: "", punti: [], domande: [], web: groqText.web };
-  } catch (e){ GVD_AI[k] = { err: e.message }; }
+  } catch (e){ const lim = /limite|rate limit/i.test(e.message) && !gvExplain.retry; GVD_AI[k] = lim ? { busy: true, wait: true } : { err: e.message }; if (lim){ gvExplain.retry = 1; setTimeout(() => { gvExplain.retry = 0; if (GVD && GVD.k === k) gvExplain(); else delete GVD_AI[k]; }, 30000); } }
   if (GVD && GVD.k === k) gvDraw();
 }
 async function gvChatSend(q){
@@ -1126,7 +1138,7 @@ function gvDraw0(){
     ${x.src === "ai" && x.extra ? `<p class="nwd-s" data-tr="ai" style="margin-top:14px">${esc(x.extra)}</p>` : ""}
     <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
       ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
-        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta studiando l'evento…", "Aris is looking into the event…")}</span></div>`
+        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${ai && ai.wait ? L2("Aris ha raggiunto il limite gratuito di questo minuto: riprovo da solo tra 30 secondi…", "Aris hit this minute's free limit: retrying by itself in 30 seconds…") : L2("Aris sta studiando l'evento…", "Aris is looking into the event…")}</span></div>`
         : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="gvExplain()">${L2("Riprova", "Retry")}</button>`
         : `${ai.cose ? `<h5>${L2("Cos'è", "What it is")}</h5><p data-tr="ai">${esc(ai.cose)}</p>` : ""}
            ${ai.perche ? `<h5>${L2("Perché è importante", "Why it matters")}</h5><p data-tr="ai">${esc(ai.perche)}</p>` : ""}
@@ -1141,6 +1153,185 @@ function gvDraw0(){
     <p class="muted mkd-note">${x.src === "ff" ? L2("Appuntamento dal calendario economico ForexFactory, orario svizzero.", "From the ForexFactory economic calendar, Swiss time.") : L2("Evento trovato da Aris sul web: controlla sempre le date importanti.", "Event found by Aris on the web: always double-check important dates.")}</p>
   </div>`;
 }
+/* ---------------- VIDEO SALVATI (Instagram, TikTok, YouTube…) ----------------
+   1. il link arriva qui (incolla, ?salva= da un Comando Rapido o da un segnalibro) e si sincronizza tra i dispositivi;
+   2. nella repository privata portale-dati una GitHub Action gratuita scarica l'audio, lo trascrive (Whisper sul server) e prende la didascalia;
+   3. Aris (Groq) spiega di cosa parla, propone come metterlo in pratica e scrive una nota nel Cervello. */
+S.vid = S.vid || [];
+let VD_OPEN = null, VD_BUSY = {}, VD_SETUP = "";
+const vdHost = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+const vdIcon = u => /instagram/.test(u) ? "📸" : /tiktok/.test(u) ? "🎵" : /youtu/.test(u) ? "▶️" : "🔗";
+function vdAdd(raw, quiet){
+  const m = String(raw || "").match(/https?:\/\/[^\s"'<>]+/); if (!m) { if (!quiet) toast(L2("Non vedo un link valido", "That's not a valid link")); return null; }
+  const u = m[0].replace(/[).,]+$/, "").replace(/[?&](igsh|igshid|utm_[a-z]+)=[^&#]*/g, "").replace(/\?$/, "");
+  const old = S.vid.find(v => v.u === u); if (old){ if (!quiet) toast(L2("C'è già", "Already saved")); return old; }
+  const v = { id: "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), u, at: Date.now(), st: "coda" };
+  S.vid.unshift(v); save(); if (!quiet) toast(L2("Video salvato: lo analizzo", "Video saved: analysing it"));
+  vdQueue(v); return v;
+}
+async function vdPaste(){
+  try { const t = await navigator.clipboard.readText(); if (vdAdd(t)) reView(); }
+  catch { toast(L2("Non posso leggere gli appunti: incolla il link nel riquadro", "Can't read the clipboard: paste the link in the box")); document.getElementById("vd-in")?.focus(); }
+}
+/* l'Action che trascrive, scritta una volta sola nella repository privata */
+const VD_WF = `name: Video salvati
+# Scrive la dashboard: per ogni link in video/coda scarica l'audio, lo trascrive con Whisper (gratis, sul server di GitHub)
+# e salva didascalia + trascrizione in video/<id>.json. L'analisi la fa poi Aris nella dashboard.
+on:
+  push:
+    paths: ["video/coda/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: video
+  cancel-in-progress: false
+jobs:
+  trascrivi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -U yt-dlp faster-whisper imageio-ffmpeg numpy
+      - name: Trascrivi i video in coda
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, subprocess, time
+          import numpy as np, imageio_ffmpeg
+          from faster_whisper import WhisperModel
+          model = None
+          for q in sorted(glob.glob("video/coda/*.json")):
+              job = json.load(open(q)); vid = job["id"]; url = job["u"]; out = {"id": vid, "u": url, "at": int(time.time() * 1000)}
+              for f in glob.glob("/tmp/a.*"): os.remove(f)
+              r = subprocess.run(["yt-dlp", "--no-warnings", "--no-playlist", "-f", "bestaudio/best", "-o", "/tmp/a.%(ext)s", "--write-info-json", "--max-filesize", "200M", url], capture_output=True, text=True, timeout=600)
+              info = {}
+              if os.path.exists("/tmp/a.info.json"): info = json.load(open("/tmp/a.info.json"))
+              out.update({"title": info.get("title") or "", "cap": (info.get("description") or "")[:3000], "by": info.get("uploader") or info.get("channel") or "", "dur": info.get("duration") or 0, "thumb": info.get("thumbnail") or ""})
+              media = [f for f in glob.glob("/tmp/a.*") if not f.endswith(".json")]
+              if media:
+                  model = model or WhisperModel("small", device="cpu", compute_type="int8")
+                  raw = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-nostdin", "-i", media[0], "-f", "s16le", "-ac", "1", "-ar", "16000", "-"], capture_output=True).stdout
+                  audio = np.frombuffer(raw, np.int16).astype(np.float32) / 32768.0
+                  segs, inf = model.transcribe(audio, vad_filter=True)
+                  out["tr"] = " ".join(s.text.strip() for s in segs)[:12000]; out["lang"] = inf.language
+              else:
+                  out["err"] = (r.stderr or r.stdout or "download non riuscito")[-400:]
+              json.dump(out, open(f"video/{vid}.json", "w"), ensure_ascii=False)
+              os.remove(q)
+              print(vid, url, "ok" if media else "senza audio")
+          PY
+      - name: Salva i risultati
+        run: |
+          git config user.name "video-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A video
+          git diff --cached --quiet && exit 0
+          git commit -q -m "Video trascritti"
+          for i in 1 2 3; do git pull -q --rebase && git push -q && break; sleep 5; done
+`;
+async function vdSetup(){
+  const g = await brApi("contents/.github/workflows/video.yml?t=" + Date.now());
+  if (g.ok){ const cur = b64d((await g.json()).content || ""); if (cur === VD_WF) return true; }
+  try { await brWrite(".github/workflows/video.yml", VD_WF, "Dashboard: trascrizione dei video salvati"); return true; }
+  catch (e){ VD_SETUP = e.message; return false; }
+}
+async function vdQueue(v){
+  if (!brCfg().gh){ v.st = "nogh"; save(); return; }
+  try {
+    if (!vdQueue.ok) vdQueue.ok = await vdSetup();
+    if (!vdQueue.ok){ v.st = "nowf"; save(); if (cur === "video") reView(); return; }
+    await brWrite(`video/coda/${v.id}.json`, JSON.stringify({ id: v.id, u: v.u }), "Dashboard: nuovo video da trascrivere");
+    v.st = "attesa"; v.qAt = Date.now(); save(); vdPoll();
+  } catch (e){ v.st = "err"; v.err = e.message; save(); }
+  if (cur === "video") reView();
+}
+async function vdPoll(){
+  clearTimeout(vdPoll.t);
+  const wait = S.vid.filter(v => v.st === "attesa"); if (!wait.length || !brCfg().gh) return;
+  for (const v of wait){
+    try { const r = await brApi(`contents/video/${v.id}.json?t=${Date.now()}`); if (!r.ok) continue;
+      const d = JSON.parse(b64d((await r.json()).content || "{}"));
+      Object.assign(v, { title: d.title || "", cap: d.cap || "", by: d.by || "", dur: d.dur || 0, tr: (d.tr || "").slice(0, 6000), lang: d.lang || "", derr: d.err || "", st: "pronto" }); save();
+      vdAnalyze(v);
+    } catch {}
+  }
+  if (cur === "video") reView();
+  if (S.vid.some(v => v.st === "attesa")) vdPoll.t = setTimeout(vdPoll, 30000);
+}
+async function vdAnalyze(v, force){
+  const key = mkKey(); if (!key || VD_BUSY[v.id] || (v.ai && !force)) return;
+  if (!v.tr && !v.cap && !v.note){ v.st = "vuoto"; save(); if (cur === "video") reView(); return; }
+  VD_BUSY[v.id] = 1; if (cur === "video") reView();
+  const sys = `Sei Aris, l'assistente di ${S.name}. ${S.name} salva video dai social e poi non li riguarda: tu li guardi al posto suo (hai trascrizione e didascalia) e lo aiuti a METTERLI IN PRATICA. Rispondi in italiano semplice. Non inventare cose che nel video non ci sono. Rispondi SOLO con JSON: {"titolo":"titolo breve e chiaro","tema":"una parola: categoria (es. fitness, soldi, cucina, AI, studio, viaggi, mindset, business, tecnologia)","riassunto":"di cosa parla, 3-5 frasi","punti":["3-6 cose chiave del video"],"idee":[{"idea":"cosa potrebbe fare ${S.name}","come":"passi concreti, 1-3 frasi"}],"primo_passo":"una cosa piccola da fare oggi o questa settimana","nota":"nota per il suo secondo cervello in Markdown (titolo con #, sezioni Riassunto, Idee da provare, Primo passo, Link)"}`;
+  const user = [`Link: ${v.u}`, v.by ? `Autore: ${v.by}` : "", v.title ? `Titolo: ${v.title}` : "", v.cap ? `Didascalia:\n${v.cap.slice(0, 2500)}` : "", v.tr ? `Trascrizione dell'audio (${v.lang || "?"}):\n${v.tr.slice(0, 5000)}` : "", v.note ? `Note di ${S.name} sul video:\n${v.note}` : ""].filter(Boolean).join("\n\n");
+  try {
+    const o = await groqJSON(key, sys, user, 1600);
+    v.ai = { titolo: String(o.titolo || v.title || "Video"), tema: String(o.tema || ""), riassunto: String(o.riassunto || ""), punti: (o.punti || []).map(String).slice(0, 8), idee: (o.idee || []).filter(i => i && i.idea).map(i => ({ idea: String(i.idea), come: String(i.come || "") })).slice(0, 6), primo: String(o.primo_passo || ""), nota: String(o.nota || "") };
+    v.st = "fatto"; v.aerr = ""; save();
+    vdBrain(v);
+  } catch (e){ v.aerr = e.message; save(); if (/limite|rate limit/i.test(e.message)) setTimeout(() => vdAnalyze(v), 45000); }
+  delete VD_BUSY[v.id]; if (cur === "video") reView();
+}
+async function vdBrain(v){
+  if (!brCfg().gh || !v.ai || v.brain) return;
+  const a = v.ai, path = `${BR_DIR}idee/${brSlug("video " + a.titolo)}.md`;
+  const md = a.nota && /^#/.test(a.nota.trim()) ? a.nota.trim() + `\n\n[Video originale](${v.u})\n` : `# ${a.titolo}\n\n${a.riassunto}\n\n## Idee da provare\n${a.idee.map(i => `- **${i.idea}**: ${i.come}`).join("\n")}\n\n## Primo passo\n${a.primo}\n\n[Video originale](${v.u})\n`;
+  try { await brWrite(path, md + `\n_Salvato dalla sezione Video il ${new Date().toLocaleDateString("it-IT")}_\n`, "Cervello: idee dal video " + a.titolo); v.brain = path; save(); BR.at = 0; }
+  catch (e){ v.berr = e.message; save(); }
+}
+function vdDel(id){ S.del = S.del || {}; S.del[id] = Date.now(); S.vid = S.vid.filter(v => v.id !== id); if (VD_OPEN === id) VD_OPEN = null; save(); reView(); }
+function vdNote(id){ const v = S.vid.find(x => x.id === id), t = document.getElementById("vd-note-" + id)?.value.trim(); if (!v || !t) return; v.note = t; save(); vdAnalyze(v, true); }
+function vdStatus(v){
+  if (VD_BUSY[v.id]) return ["✨", L2("Aris lo sta analizzando…", "Aris is analysing it…"), "blue"];
+  return { coda: ["⏳", L2("In coda", "Queued"), ""], attesa: ["🎧", L2("Lo sto ascoltando e trascrivendo (1-3 minuti)…", "Listening and transcribing (1-3 minutes)…"), "blue"], pronto: ["✨", L2("Trascritto, ora lo analizza Aris", "Transcribed, Aris will analyse it"), "blue"],
+    fatto: ["✅", L2("Analizzato", "Analysed"), "green"], nogh: ["🔑", L2("Serve la chiave GitHub per trascriverlo", "GitHub key needed to transcribe it"), "orange"], nowf: ["⚙️", L2("Trascrizione da attivare", "Transcription to be enabled"), "orange"],
+    err: ["⚠️", L2("Errore", "Error"), "red"], vuoto: ["📝", L2("Non sono riuscito a sentirlo: scrivi tu due righe", "Couldn't get it: add a short note"), "orange"] }[v.st] || ["•", v.st, ""];
+}
+function vdCard(v){
+  const a = v.ai, [ic, st, col] = vdStatus(v), open = VD_OPEN === v.id;
+  return `<div class="glass c vd-c"><div class="vd-hd" onclick="VD_OPEN=VD_OPEN==='${v.id}'?null:'${v.id}';reView()">
+      <span class="vd-ic">${vdIcon(v.u)}</span><div class="vd-t"><b>${esc(a ? a.titolo : v.title || vdHost(v.u))}</b><small>${a && a.tema ? `<span class="tag">${esc(a.tema)}</span> ` : ""}<span class="${col ? "vd-" + col : "muted"}">${ic} ${st}</span> · ${ago(v.at)}${v.by ? " · " + esc(v.by) : ""}</small></div>
+      <span class="muted">${open ? "▴" : "▾"}</span></div>
+    ${a && !open ? `<p class="vd-sum">${esc(a.riassunto.slice(0, 220))}${a.riassunto.length > 220 ? "…" : ""}</p>` : ""}
+    ${open ? `<div class="vd-body">
+      ${a ? `<h5>${L2("Di cosa parla", "What it's about")}</h5><p>${esc(a.riassunto)}</p>
+        ${a.punti.length ? `<h5>${L2("Le cose chiave", "Key points")}</h5><ul>${a.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+        ${a.idee.length ? `<h5>${L2("Come potresti metterlo in pratica", "How you could use it")}</h5>${a.idee.map(i => `<div class="vd-idea"><b>💡 ${esc(i.idea)}</b><span>${esc(i.come)}</span></div>`).join("")}` : ""}
+        ${a.primo ? `<div class="vd-first"><b>${L2("Primo passo", "First step")}</b> ${esc(a.primo)}</div>` : ""}
+        <p class="muted" style="font-size:12px">${v.brain ? `🧠 ${L2("Salvato nel Cervello", "Saved to your Brain")} · <a href="#cervello" onclick="event.preventDefault();BR.open='${esc(v.brain)}';go('cervello')">${L2("apri la nota", "open the note")}</a>` : v.berr ? `🧠 ${L2("Non salvato nel Cervello", "Not saved to the Brain")}: ${esc(v.berr)}` : ""}</p>`
+        : v.aerr ? `<p class="muted">${L2("Aris non ha risposto", "Aris didn't answer")}: ${esc(v.aerr)}</p>` : ""}
+      ${v.st === "nowf" ? `<div class="soon">⚙️ <span>${L2("Per ascoltare i video la dashboard deve aggiungere una piccola automazione gratuita nella tua repository privata, ma la chiave GitHub non ha il permesso <b>Workflows</b>. Aggiungilo alla chiave (Read and write) e premi Riprova.", "To listen to videos the dashboard adds a small free automation to your private repository, but the GitHub key lacks the <b>Workflows</b> permission. Add it (Read and write) and press Retry.")}${VD_SETUP ? ` <small class="muted">(${esc(VD_SETUP)})</small>` : ""}</span></div>` : ""}
+      ${v.derr && !v.tr ? `<p class="muted" style="font-size:12px">${L2("Non sono riuscito a scaricare l'audio (Instagram a volte lo blocca). Uso la didascalia; se vuoi, aggiungi tu due righe.", "Couldn't download the audio (Instagram sometimes blocks it). Using the caption; add a short note if you like.")}</p>` : ""}
+      ${!a || v.st === "vuoto" || v.derr ? `<div class="vd-note"><textarea class="input" id="vd-note-${v.id}" rows="2" placeholder="${L2("Di cosa parlava il video? (facoltativo, aiuta Aris)", "What was the video about? (optional, helps Aris)")}">${esc(v.note || "")}</textarea><button class="btn" onclick="vdNote('${v.id}')">${L2("Analizza con questa nota", "Analyse with this note")}</button></div>` : ""}
+      ${v.tr ? `<details class="vd-tr"><summary>${L2("Trascrizione", "Transcript")}</summary><p>${esc(v.tr)}</p></details>` : ""}
+      ${v.cap ? `<details class="vd-tr"><summary>${L2("Didascalia", "Caption")}</summary><p>${esc(v.cap)}</p></details>` : ""}
+      <div class="vd-act"><a class="btn" href="${esc(v.u)}" target="_blank" rel="noopener">${L2("Apri il video", "Open video")} ↗</a>
+        ${["nowf", "err", "nogh"].includes(v.st) ? `<button class="btn" onclick="vdQueue.ok=0;vdQueue(S.vid.find(x=>x.id==='${v.id}'))">${L2("Riprova", "Retry")}</button>` : ""}
+        ${a ? `<button class="btn" onclick="vdAnalyze(S.vid.find(x=>x.id==='${v.id}'),true)">✨ ${L2("Rifai l'analisi", "Analyse again")}</button><button class="btn" onclick="abSend(${esc(JSON.stringify(L2("Parliamo del video \"", "Let's talk about the video \"") + a.titolo + "\": " + a.riassunto.slice(0, 300)))})">${L2("Chiedi ad Aris", "Ask Aris")}</button>` : ""}
+        <span class="sp" style="flex:1"></span><button class="btn gc-del" onclick="vdDel('${v.id}')">${ico("trash")}</button></div>
+    </div>` : ""}</div>`;
+}
+function vdView(){
+  if (S.vid.some(v => v.st === "attesa")) vdPoll();
+  S.vid.filter(v => v.st === "pronto" && !v.ai && !VD_BUSY[v.id]).forEach(v => vdAnalyze(v));
+  const base = location.origin + location.pathname, bm = `javascript:location.href='${base}?salva='+encodeURIComponent(location.href)`;
+  return head(L2("Video salvati", "Saved videos"), L2("Mandami i video che salvi: Aris li guarda per te, ti dice di cosa parlano, come metterli in pratica e li mette nel tuo Cervello.", "Send me the videos you save: Aris watches them for you, explains them, suggests how to use them and adds them to your Brain.")) + `
+    <div class="glass c"><div class="vd-add"><input class="input" id="vd-in" placeholder="${L2("Incolla il link di un video (Instagram, TikTok, YouTube…)", "Paste a video link (Instagram, TikTok, YouTube…)")}" onkeydown="if(event.key==='Enter'){vdAdd(this.value)&&reView()}">
+      <button class="btn blue" onclick="vdAdd(document.getElementById('vd-in').value)&&reView()">${L2("Salva", "Save")}</button><button class="btn" onclick="vdPaste()">📋 ${L2("Incolla", "Paste")}</button></div>
+      <details class="vd-how"><summary>${L2("Come mandarli velocemente da telefono, iPad e PC", "How to send them quickly from phone, iPad and PC")}</summary>
+        <p><b>${L2("Il modo più semplice, ovunque", "Simplest, everywhere")}:</b> ${L2("su Instagram tocca ✈️ Condividi → <i>Copia link</i>, apri la dashboard e premi <b>📋 Incolla</b>.", "in Instagram tap ✈️ Share → <i>Copy link</i>, open the dashboard and press <b>📋 Paste</b>.")}</p>
+        <p><b>iPhone / iPad (${L2("dal tasto Condividi", "from the Share button")}):</b> ${L2("app Comandi → nuovo comando “Manda alla dashboard” → attiva <i>Mostra nel foglio di condivisione</i> (tipo: URL) → azioni: <i>Codifica URL</i> (input del comando) → <i>Apri URL</i> con", "Shortcuts app → new shortcut “Send to dashboard” → turn on <i>Show in Share Sheet</i> (type: URLs) → actions: <i>URL Encode</i> (shortcut input) → <i>Open URLs</i> with")} <code>${esc(base)}?salva=</code>${L2("seguito dal testo codificato. Funziona al meglio aprendo la dashboard in Safari.", "followed by the encoded text. Works best with the dashboard opened in Safari.")}</p>
+        <p><b>PC:</b> ${L2("trascina questo pulsante nella barra dei preferiti, poi quando sei su un video premilo:", "drag this button to your bookmarks bar, then press it while on a video:")} <a class="btn" href="${esc(bm)}" onclick="event.preventDefault();toast('${L2("Trascinalo nella barra dei preferiti", "Drag it to the bookmarks bar")}')">➕ ${L2("Manda alla dashboard", "Send to dashboard")}</a></p></details></div>
+    ${S.vid.length ? S.vid.map(vdCard).join("") : `<div class="glass c"><p class="muted">${L2("Ancora nessun video. Incolla il primo link qui sopra.", "No videos yet. Paste the first link above.")}</p></div>`}
+    <p class="muted" style="font-size:11.5px">${L2("L'audio viene trascritto gratis da un'automazione nella tua repository privata su GitHub; l'analisi la fa Aris con Groq. Instagram a volte blocca il download: in quel caso Aris usa la didascalia e le tue note.", "Audio is transcribed for free by an automation in your private GitHub repository; Aris (Groq) does the analysis. Instagram sometimes blocks downloads: then Aris uses the caption and your notes.")}</p>`;
+}
+/* link arrivato da un Comando Rapido o da un segnalibro: ?salva=<link> */
+(() => { try { const p = new URLSearchParams(location.search), u = p.get("salva"); if (!u) return; history.replaceState(null, "", location.pathname + location.hash);
+  setTimeout(() => { vdAdd(u); go("video"); }, 900); } catch {} })();
+setTimeout(vdPoll, 4000);
 /* ---------------- MERCATI (prezzi dal ramo notizie, spiegazioni con Groq gratis) ---------------- */
 const MK_URL = NEWS_URL.replace("news.json", "mercati.json");
 let MK = null, mkErr = false, mkCls = "Tutti";
@@ -1482,7 +1673,7 @@ async function groqText(key, sys, msgs, maxTokens, opt = {}){
     const isWeb = GROQ_WEB.includes(model);
     for (let t = 0; t < (isWeb ? 1 : 2); t++){
       let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.4, ...(isWeb ? { max_completion_tokens: maxTokens + 1500, reasoning_effort: "low", tools: [{ type: "browser_search" }], tool_choice: "auto" } : groqOpt(model, maxTokens)), messages: [{ role: "system", content: sys + (isWeb ? WEB_SFX() : "") + LANG_SFX }, ...msgs] }) }); }
+        body: JSON.stringify({ model, temperature: 0.4, ...(isWeb ? { max_completion_tokens: maxTokens + 1500, reasoning_effort: "low", tools: [{ type: "browser_search" }], tool_choice: "auto" } : groqOpt(model, maxTokens)), messages: [{ role: "system", content: (isWeb ? sys.slice(0, 4500) + WEB_SFX() : sys) + LANG_SFX }, ...(isWeb ? msgs.slice(-4) : msgs)] }) }); }
       catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
       if (isWeb && !r.ok && r.status !== 401){ GROQ_WEB_OFF = Date.now() + (r.status === 429 || r.status === 413 ? 5 : 60) * 60e3; break; }
       if (r.status === 401) throw new Error(L2("la chiave Groq non è valida", "the Groq key is not valid"));
@@ -1651,7 +1842,7 @@ async function nwExplain(){
   NWD_AI[u] = { busy: true }; nwDraw();
   const sys = "Sei Aris, un giornalista esperto che spiega le notizie a una persona curiosa ma non esperta, in italiano semplice. Hai solo titoli e anteprime (non l'articolo completo): usali, e per il contesto usa le tue conoscenze generali, dicendo chiaramente quando qualcosa è contesto generale e non viene dalla notizia. Non inventare dettagli, numeri o dichiarazioni. Rispondi solo con JSON: {\"cosa\":\"cosa sta succedendo, 2-4 frasi\",\"contesto\":\"il retroscena per capirla, 2-4 frasi\",\"perche\":\"perché è importante e cosa può cambiare, 2-3 frasi\",\"punti\":[\"3-4 punti chiave brevi\"],\"domande\":[\"2 domande che potrebbe voler fare per approfondire\"]}";
   try { const o = await groqJSON(key, sys, nwCtx(x), 900); NWD_AI[u] = { cosa: String(o.cosa || ""), contesto: String(o.contesto || ""), perche: String(o.perche || ""), punti: (o.punti || []).map(String).slice(0, 5), domande: (o.domande || []).map(String).slice(0, 3) }; }
-  catch (e){ NWD_AI[u] = { err: e.message }; }
+  catch (e){ const lim = /limite|rate limit/i.test(e.message) && !nwExplain.retry; NWD_AI[u] = lim ? { busy: true, wait: true } : { err: e.message }; if (lim){ nwExplain.retry = 1; setTimeout(() => { nwExplain.retry = 0; if (NWD && NWD.u === u) nwExplain(); else delete NWD_AI[u]; }, 30000); } }
   if (NWD && NWD.u === u) nwDraw();
 }
 async function nwChatSend(q){
@@ -1679,7 +1870,7 @@ function nwDraw0(){
     ${nS(x) ? `<p class="nwd-s" data-tr="src">${esc(nS(x))}</p>` : ""}
     <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
       ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
-        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta leggendo la notizia…", "Aris is reading the story…")}</span></div>`
+        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${ai && ai.wait ? L2("Aris ha raggiunto il limite gratuito di questo minuto: riprovo da solo tra 30 secondi…", "Aris hit this minute's free limit: retrying by itself in 30 seconds…") : L2("Aris sta leggendo la notizia…", "Aris is reading the story…")}</span></div>`
         : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="nwExplain()">${L2("Riprova", "Retry")}</button>`
         : `${ai.cosa ? `<h5>${L2("Cosa sta succedendo", "What's happening")}</h5><p data-tr="ai">${esc(ai.cosa)}</p>` : ""}
            ${ai.contesto ? `<h5>${L2("Il contesto", "Background")}</h5><p data-tr="ai">${esc(ai.contesto)}</p>` : ""}
@@ -2352,10 +2543,10 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["gev", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim"];
+const SYNC_KEYS = ["vid", "gev", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
-const SY_LIST = ["rem", "alarms"];
+const SY_LIST = ["rem", "alarms", "vid"];
 const syId = x => x && (x.id || `${x.h}|${x.l || ""}`);
 function syMerge(k, loc, rem, remoteNewer){
   if (k === "del"){ const o = { ...(rem || {}), ...(loc || {}) }, lim = Date.now() - 90 * 864e5; for (const i in o) if (o[i] < lim) delete o[i]; return o; }
@@ -2622,7 +2813,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "39";
+const APP_V = "40";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
