@@ -86,6 +86,35 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .menu button:hover{background:rgba(255,255,255,.06)}
 
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px}
+/* benvenuto */
+.wel{position:relative;overflow:hidden;border-radius:28px;padding:34px 34px 30px;margin-bottom:26px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(20,26,44,.85),rgba(8,10,18,.9))}
+.wel-aura{position:absolute;inset:0;pointer-events:none;filter:blur(60px);opacity:.55}
+.wel-aura i{position:absolute;width:420px;height:420px;border-radius:50%;animation:welFloat 16s ease-in-out infinite alternate}
+.wel-aura i:nth-child(1){background:#3b82f6;left:-120px;top:-160px} .wel-aura i:nth-child(2){background:#a855f7;right:-100px;top:-120px;animation-duration:19s;animation-delay:-5s} .wel-aura i:nth-child(3){background:#10b981;left:35%;bottom:-260px;opacity:.6;animation-duration:22s;animation-delay:-9s}
+@keyframes welFloat{0%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,40px) scale(1.15)}100%{transform:translate(-40px,70px) scale(.9)}}
+.wel-top{position:relative;display:flex;align-items:center;gap:20px;margin-bottom:26px}
+.wel-orb{--s:64px}
+.wel-h{margin:0;font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.wel-h span{display:inline-block}
+.wel-in .wel-h span{opacity:0;transform:translateY(18px) rotate(4deg);filter:blur(6px);animation:welCh .55s cubic-bezier(.2,.9,.3,1.2) forwards;animation-delay:var(--d)}
+@keyframes welCh{to{opacity:1;transform:none;filter:none}}
+.wel-q{margin:8px 0 0;font-size:17px;color:var(--muted)}
+.wel-rot{position:relative;display:inline-grid;color:var(--ink);font-weight:600} .wel-rot span{grid-area:1/1;opacity:0;animation:welRot 9s infinite;background:linear-gradient(90deg,#60a5fa,#c084fc,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wel-rot span:nth-child(2){animation-delay:3s} .wel-rot span:nth-child(3){animation-delay:6s}
+@keyframes welRot{0%{opacity:0;transform:translateY(10px)}5%,30%{opacity:1;transform:none}35%,100%{opacity:0;transform:translateY(-10px)}}
+.wel-grid{position:relative;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.wel-c{--mx:50%;--my:50%;position:relative;display:flex;align-items:center;gap:14px;text-align:left;padding:16px 16px 16px 14px;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--ink);cursor:pointer;overflow:hidden;transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s,background .25s,box-shadow .25s;font:inherit}
+.wel-c::before{content:"";position:absolute;inset:0;background:radial-gradient(240px circle at var(--mx) var(--my),rgba(255,255,255,.10),transparent 60%);opacity:0;transition:opacity .25s}
+.wel-c:hover{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.06);box-shadow:0 14px 40px rgba(0,0,0,.35)} .wel-c:hover::before{opacity:1}
+.wel-in .wel-c{opacity:0;transform:translateY(22px) scale(.97);animation:welCard .6s cubic-bezier(.2,.9,.3,1.15) forwards;animation-delay:calc(.75s + var(--i) * .07s)}
+@keyframes welCard{to{opacity:1;transform:none}}
+.wel-ic{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:13px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)} .wel-ic .i{width:22px;height:22px}
+.wel-c:hover .wel-ic{animation:welPop .5s cubic-bezier(.2,.9,.3,1.6)} @keyframes welPop{40%{transform:scale(1.15) rotate(-6deg)}}
+.wel-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px} .wel-t b{font-size:14.5px;font-weight:600} .wel-t small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wel-ar{opacity:.35;font-size:18px;transition:transform .25s,opacity .25s} .wel-c:hover .wel-ar{opacity:1;transform:translateX(4px)}
+.wel-sep{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase} .wel-sep::before,.wel-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+html.no-anim .wel-in .wel-h span,html.no-anim .wel-in .wel-c{animation:none;opacity:1;transform:none;filter:none} html.no-anim .wel-aura i{animation:none}
+@media (prefers-reduced-motion:reduce){.wel-in .wel-h span,.wel-in .wel-c{animation:none;opacity:1;transform:none;filter:none}.wel-aura i,.wel-rot span{animation:none}.wel-rot span:first-child{opacity:1}}
 .c{padding:20px;min-width:0}
 .c h3{font-size:14px;font-weight:600}
 .c .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
@@ -368,13 +397,13 @@ html.no-anim *,html.no-anim *::before,html.no-anim *::after{animation:none !impo
 #ab>*{pointer-events:auto}
 .ab-row{display:flex;align-items:center;gap:7px;padding:4px 4px 4px 5px;border-radius:999px;background:rgba(14,18,28,.82);border:1px solid rgba(167,139,250,.32);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(0,0,0,.45),0 0 18px rgba(124,92,255,.15);transition:border-color .2s} .ab-row:focus-within{border-color:rgba(167,139,250,.6)}
 .ab-orb{flex:none;border:0;padding:0;background:none;cursor:pointer;display:grid;place-items:center;width:32px;height:32px} .ab-orb .orb{--s:26px;transition:transform .25s cubic-bezier(.2,.9,.3,1.4)} .ab-orb:hover .orb{transform:scale(1.1)}
-.ab-row input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:13px;padding:5px 2px}
+.ab-row input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:inherit;font-size:13px;padding:5px 2px}
 .ab-row input::placeholder{color:var(--muted)}
 .ab-go{flex:none;width:28px;height:28px;border-radius:50%;border:0;background:var(--blue);color:#fff;font-size:14px;cursor:pointer;display:grid;place-items:center} .ab-go:disabled{opacity:.45}
 .ab-pop{--pw:min(460px,calc(100vw - 24px));display:none;position:absolute;bottom:calc(100% + 10px);left:50%;margin-left:calc(var(--pw) / -2);width:var(--pw);border-radius:20px;background:rgba(14,18,28,.95);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 14px 44px rgba(0,0,0,.5);overflow:hidden;animation:secIn .25s ease both}
 #ab.open .ab-pop{display:block}
 .ab-hd{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600} .ab-hd>span{flex:1} .ab-hd .orb{flex:none}
-.ab-hd button{border:0;background:rgba(255,255,255,.06);color:var(--muted);border-radius:9px;height:28px;min-width:28px;padding:0 8px;font-size:12px;cursor:pointer} .ab-hd button:hover{color:var(--text);background:rgba(255,255,255,.12)}
+.ab-hd button{border:0;background:rgba(255,255,255,.06);color:var(--muted);border-radius:9px;height:28px;min-width:28px;padding:0 8px;font-size:12px;cursor:pointer} .ab-hd button:hover{color:var(--ink);background:rgba(255,255,255,.12)}
 .ab-msgs{max-height:min(300px,42vh);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
 .ab-msgs .ai-b{max-width:92%}
 html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
@@ -808,6 +837,44 @@ function areaChart(pts, { w = 760, h = 240, unit = "°" } = {}){
 
 /* ---------------- DASHBOARD PC ---------------- */
 let chartMode = "24h";
+/* ---------- benvenuto animato: Aris ti propone cosa guardare ---------- */
+let WEL_SEEN = false;
+function welHints(){
+  const n = NEWS && NEWS.items.filter(x => x.d > Date.now() - 864e5).sort((a, b) => b.n - a.n)[0];
+  const m = MK && MK.items.filter(mkFresh).slice().sort((a, b) => Math.abs(b.z || 0) - Math.abs(a.z || 0))[0];
+  const up = MK ? MK.items.filter(mkFresh).filter(x => x.pct > 0).length : 0, tot = MK ? MK.items.filter(mkFresh).length : 0;
+  let ev = null; try { const t = ymd(new Date()); ev = gvItems().filter(x => x.day >= t && x.imp >= 4).sort((a, b) => (a.day + a.time).localeCompare(b.day + b.time))[0]; } catch {}
+  const open = S.rem.filter(r => !r.done), diary = (BR.files || []).find(x => x.path === `${BR_DIR}diario/${brToday()}.md`);
+  const c = wOk() ? W.current : null, vids = (S.vid || []).filter(v => v.st === "fatto").length;
+  const ai = n => n && NEWS ? NEWS.items.filter(x => x.cats.includes("llm") && x.d > Date.now() - 864e5).length : 0;
+  return [
+    { go: "notizie", i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", q: "Vuoi vedere le ultime notizie?", h: n ? nT(n) : "Le più riprese dai giornali di oggi" },
+    { go: "mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", q: "Come stanno andando i mercati oggi?", h: m ? `${m.n} ${mkPct(m.pct)}: il movimento più insolito` : "Indici, azioni, valute e cripto" },
+    { go: "mercati", i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", q: "Vuoi vedere la mappa dei mercati?", h: tot ? `${up} su ${tot} in rialzo` : "Tutto il mercato a colori" },
+    { go: "globale", i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", q: "Cosa succede nel mondo nei prossimi giorni?", h: ev ? `${ev.title}${ev.day === ymd(new Date()) ? " · oggi" : ""}` : "Il calendario degli eventi importanti" },
+    { go: "notizie", cat: "llm", i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", q: "Novità sull'intelligenza artificiale?", h: ai(1) ? `${ai(1)} novità nelle ultime 24 ore` : "Nuovi modelli, funzioni e strumenti" },
+    { go: "conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", q: "Ti va di ripassare la tua conoscenza?", h: notes.length ? `${notes.length} note · fai un test` : "Esplora o fai un test" },
+    { go: "cervello", i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", q: diary ? "Riprendiamo il diario di oggi?" : "Scriviamo il diario di oggi?", h: diary ? "Hai già scritto qualcosa oggi" : "Due righe su com'è andata" },
+    { go: "promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)", q: "Promemoria e sveglie", h: open.length ? `${open.length} da fare${S.alarms[0] ? " · sveglia " + S.alarms[0].h : ""}` : "Niente in sospeso" },
+    { go: "video", i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)", q: "Riguardiamo i tuoi video salvati?", h: vids ? `${vids} video già analizzati da Aris` : "Manda un reel e Aris lo spiega" },
+    { go: "meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", q: "Che tempo fa?", h: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° a ${S.city.name}` : S.city.name },
+  ];
+}
+function welGo(i){ const x = welHints()[i]; if (!x) return; if (x.cat){ newsCat1 = x.cat; newsDay = 0; } go(x.go); if (x.cat) newsCat1 = x.cat; }
+function welcome(){
+  const first = !WEL_SEEN, hello = `${greet()}, ${S.name}.`;
+  if (first) setTimeout(() => { WEL_SEEN = true; }, 4000);
+  return `<section class="wel ${first ? "wel-in" : ""}" data-raw>
+    <div class="wel-aura"><i></i><i></i><i></i></div>
+    <div class="wel-top"><span class="orb wel-orb"><i></i></span>
+      <div><h1 class="wel-h">${[...hello].map((ch, i) => `<span style="--d:${(i * 0.035).toFixed(3)}s">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</h1>
+      <p class="wel-q">Sono Aris. <b class="wel-rot"><span>Cosa ti va di guardare?</span><span>Ecco qualche idea per te.</span><span>Scegli da dove partire.</span></b></p></div></div>
+    <div class="wel-grid">${welHints().map((x, i) => `<button class="wel-c" style="--i:${i}" onclick="welGo(${i})" onmousemove="welTilt(event,this)" onmouseleave="this.style.transform=''">
+      <span class="wel-ic" style="background:${x.g}">${ico(x.i)}</span><span class="wel-t"><b>${esc(x.q)}</b><small>${esc(x.h)}</small></span><span class="wel-ar">→</span></button>`).join("")}</div>
+  </section>`;
+}
+function welTilt(e, el){ if (S.anim === false) return; const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+  el.style.transform = `perspective(700px) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg) translateY(-3px)`; el.style.setProperty("--mx", (x + .5) * 100 + "%"); el.style.setProperty("--my", (y + .5) * 100 + "%"); }
 function DASH(){
   const now = new Date(), c = wOk() ? W.current : null, dly = wOk() ? W.daily : null;
   const [emo, desc] = c ? WMO(c.weather_code) : ["", "…"];
@@ -817,7 +884,7 @@ function DASH(){
   const hrs = nextHours(24);
   const dayBars = dly ? dly.temperature_2m_max : [];
   const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
-  return `<div class="grid">
+  return welcome() + `<div class="wel-sep"><span>Panoramica completa</span></div><div class="grid">
     <div class="span8 dash-l">${mkDashCard()}${mkMapCard()}</div>
     <div class="span4 dash-l">${mkNewsCard()}${mkFavCard()}</div>
     <div class="glass c span4">
@@ -2885,7 +2952,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "47";
+const APP_V = "48";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
