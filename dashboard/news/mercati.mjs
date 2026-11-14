@@ -12,6 +12,9 @@ const L = [
   // valute
   ["EURUSD=X", "EUR/USD", "Valute"], ["EURCHF=X", "EUR/CHF", "Valute"], ["USDCHF=X", "USD/CHF", "Valute"], ["USDJPY=X", "USD/JPY", "Valute"],
   ["GBPUSD=X", "GBP/USD", "Valute"], ["DX-Y.NYB", "Indice dollaro", "Valute"], ["USDCNY=X", "USD/CNY", "Valute"],
+  // futures (contratti che si scambiano quasi 24 ore su 24)
+  ["ES=F", "Future S&P 500", "Futures"], ["NQ=F", "Future Nasdaq 100", "Futures"], ["YM=F", "Future Dow Jones", "Futures"], ["RTY=F", "Future Russell 2000", "Futures"],
+  ["ZN=F", "Future Treasury 10 anni", "Futures"], ["6E=F", "Future Euro", "Futures"], ["ZC=F", "Future Mais", "Futures"], ["ZS=F", "Future Soia", "Futures"],
   // tassi
   ["^TNX", "Rendimento USA 10 anni", "Tassi"], ["^TYX", "Rendimento USA 30 anni", "Tassi"],
   // materie prime
