@@ -1268,7 +1268,7 @@ async function vdAnalyze(v, force){
   const key = mkKey(); if (!key || VD_BUSY[v.id] || (v.ai && !force)) return;
   if (!v.tr && !v.cap && !v.note){ v.st = "vuoto"; save(); if (cur === "video") reView(); return; }
   VD_BUSY[v.id] = 1; if (cur === "video") reView();
-  const sys = `Sei Aris, l'assistente di ${S.name}. ${S.name} salva video dai social e poi non li riguarda: tu li guardi al posto suo (hai trascrizione e didascalia) e lo aiuti a METTERLI IN PRATICA. Rispondi in italiano semplice. Non inventare cose che nel video non ci sono. Rispondi SOLO con JSON: {"titolo":"titolo breve e chiaro","tema":"una parola: categoria (es. fitness, soldi, cucina, AI, studio, viaggi, mindset, business, tecnologia)","riassunto":"di cosa parla, 3-5 frasi","punti":["3-6 cose chiave del video"],"idee":[{"idea":"cosa potrebbe fare ${S.name}","come":"passi concreti, 1-3 frasi"}],"primo_passo":"una cosa piccola da fare oggi o questa settimana","nota":"nota per il suo secondo cervello in Markdown (titolo con #, sezioni Riassunto, Idee da provare, Primo passo, Link)"}`;
+  const sys = `Sei Aris, l'assistente di ${S.name}. ${S.name} salva video dai social e poi non li riguarda: tu li guardi al posto suo (hai trascrizione e didascalia) e lo aiuti a METTERLI IN PRATICA. Rispondi in italiano semplice. Non inventare cose che nel video non ci sono. Rispondi SOLO con JSON: {"titolo":"nome breve di 1-4 parole che dice l'argomento (es. 'Siti 3D con AI', 'Jarvis', 'App personale'), mai parole generiche come Riassunto, Video, Idee","tema":"una parola: categoria (es. fitness, soldi, cucina, AI, studio, viaggi, mindset, business, tecnologia)","riassunto":"di cosa parla, 3-5 frasi","punti":["3-6 cose chiave del video"],"idee":[{"idea":"cosa potrebbe fare ${S.name}","come":"passi concreti, 1-3 frasi"}],"primo_passo":"una cosa piccola da fare oggi o questa settimana","nota":"nota per il suo secondo cervello in Markdown (titolo con #, sezioni Riassunto, Idee da provare, Primo passo, Link)"}`;
   const user = [`Link: ${v.u}`, v.by ? `Autore: ${v.by}` : "", v.title ? `Titolo: ${v.title}` : "", v.cap ? `Didascalia:\n${v.cap.slice(0, 2500)}` : "", v.tr ? `Trascrizione dell'audio (${v.lang || "?"}):\n${v.tr.slice(0, 5000)}` : "", v.note ? `Note di ${S.name} sul video:\n${v.note}` : ""].filter(Boolean).join("\n\n");
   try {
     const o = await groqJSON(key, sys, user, 1600);
@@ -1281,7 +1281,7 @@ async function vdAnalyze(v, force){
 async function vdBrain(v){
   if (!brCfg().gh || !v.ai || v.brain) return;
   const a = v.ai, path = `${BR_DIR}idee/${brSlug("video " + a.titolo)}.md`;
-  const md = a.nota && /^#/.test(a.nota.trim()) ? a.nota.trim() + `\n\n[Video originale](${v.u})\n` : `# ${a.titolo}\n\n${a.riassunto}\n\n## Idee da provare\n${a.idee.map(i => `- **${i.idea}**: ${i.come}`).join("\n")}\n\n## Primo passo\n${a.primo}\n\n[Video originale](${v.u})\n`;
+  const md = a.nota && a.nota.trim().length > 40 ? `# ${a.titolo}\n\n` + a.nota.trim().replace(/^#\s+[^\n]*\n+/, "") + `\n\n[Video originale](${v.u})\n` : `# ${a.titolo}\n\n${a.riassunto}\n\n## Idee da provare\n${a.idee.map(i => `- **${i.idea}**: ${i.come}`).join("\n")}\n\n## Primo passo\n${a.primo}\n\n[Video originale](${v.u})\n`;
   try { await brWrite(path, md + `\n_Salvato dalla sezione Video il ${new Date().toLocaleDateString("it-IT")}_\n`, "Cervello: idee dal video " + a.titolo); v.brain = path; save(); BR.at = 0; }
   catch (e){ v.berr = e.message; save(); }
 }
@@ -2066,6 +2066,25 @@ async function brLoad(force){
     BR.at = Date.now();
   } catch (e){ BR.err = e.message || String(e); }
   BR.busy = false; brRefresh();
+  if (BR.files && !(Date.now() - (S.brRen || 0) < 6 * 36e5) && BR.files.some(f => !/\/diario\//.test(f.path) && brBadTitle(f))) setTimeout(() => brRetitle(), 1500);
+}
+/* titoli delle note: brevi e sul contenuto (es. "Siti 3D con AI"), li sceglie Aris */
+const BR_GEN = /^(riassunto|sommario|summary|nota|note|idea|idee|appunti|video|senza titolo|untitled|primo passo|idee da provare|punti chiave)$/i;
+const brBadTitle = f => { const t = brTitle(f); return !/^#\s+/m.test(f.text) || BR_GEN.test(t) || t.split(/\s+/).length > 4 || /^(implementare|creare|come |video )/i.test(t); };
+async function brRetitle(force){
+  if (brRetitle.busy || !brCfg().gh) return; const key = mkKey(); if (!key) return;
+  const files = (BR.files || []).filter(f => !/\/diario\//.test(f.path) && (force || brBadTitle(f))).slice(0, 25); if (!files.length) return;
+  brRetitle.busy = true; if (force) toast("Aris rinomina le note…");
+  try {
+    const o = await groqJSON(key, `Dai un nome a ogni nota del secondo cervello di ${S.name}. Il nome è breve (1-4 parole) e dice di cosa parla la nota, come il titolo di una cartella: es. "Siti 3D con AI", "Jarvis", "Bot di trading", "Dieta proteica". Mai parole generiche (Riassunto, Nota, Idea, Video) e mai verbi all'inizio (Implementare, Creare). Se il titolo attuale va già bene, rimettilo uguale. Rispondi SOLO con JSON {"nomi":[{"i":0,"nome":"..."}]}.`,
+      files.map((f, i) => `${i}. titolo attuale: ${brTitle(f)}\n${f.text.replace(/^#\s+[^\n]*\n+/, "").slice(0, 350)}`).join("\n\n"), 900);
+    let n = 0;
+    for (const x of o.nomi || []){ const f = files[x.i], nome = String(x.nome || "").replace(/[#\n]/g, "").trim().slice(0, 60); if (!f || !nome || nome === brTitle(f)) continue;
+      const text = /^#\s+/m.test(f.text) && f.text.trim().startsWith("#") && !f.text.trim().startsWith("##") ? f.text.replace(/^#\s+[^\n]*/, "# " + nome) : `# ${nome}\n\n` + f.text.replace(/^\s+/, "");
+      try { await brWrite(f.path, text, "Cervello: nuovo nome " + nome); n++; } catch {} }
+    if (force) toast(n ? `Rinominate ${n} note` : "I nomi vanno già bene");
+  } catch (e){ if (force) toast("Non riesco adesso: " + e.message); }
+  S.brRen = Date.now(); save(); brRetitle.busy = false; brRefresh();
 }
 function brRefresh(){ if (cur === "cervello" && !BR.edit) reView(); else if (cur === "oggi") refresh(); }
 async function brWrite(path, text, msg){
@@ -2162,7 +2181,7 @@ async function brAsk(){
     let plan; const raw = await call([
       { role: "system", content: (EN ? "Write titles, notes and answers in English. " : "") + `Sei l'archivista del "secondo cervello" di ${S.name}: file Markdown nella cartella ${BR_DIR}, con sottocartelle ${BR_TYPES.map(t => t[0]).join(", ")}. Oggi è ${brToday()}.
 Decidi se la richiesta chiede di SCRIVERE qualcosa nell'archivio o di RISPONDERE a una domanda. Rispondi solo con JSON:
-{"azione":"scrivi","file":"${BR_DIR}<cartella>/<nome>.md","titolo":"...","testo":"riga o righe Markdown da aggiungere, in italiano, usando [[nome]] per collegare persone, progetti e idee"}
+{"azione":"scrivi","file":"${BR_DIR}<cartella>/<nome>.md","titolo":"nome breve di 1-4 parole che dice l'argomento (es. 'Siti 3D con AI', 'Jarvis', 'Bot di trading'), mai parole generiche come Riassunto, Nota, Idea, Implementare","testo":"riga o righe Markdown da aggiungere, in italiano, usando [[nome]] per collegare persone, progetti e idee"}
 oppure {"azione":"rispondi","cerca":["parole chiave per trovare i file giusti"]}.
 Regole: il diario del giorno è ${BR_DIR}diario/${brToday()}.md; se un file adatto esiste già usa quello; i nomi file nuovi sono minuscoli con trattini.
 File esistenti (percorso | titolo):
@@ -2238,7 +2257,7 @@ function brView(){
   return head("Cervello", BR.busy ? "Sincronizzo con GitHub…" : `${files.length} note · ${esc(c.repo)}/cervello`) + ai + `
     <div class="nw-bar"><div class="seg"><button class="${BR.tab === "elenco" ? "on" : ""}" onclick="BR.tab='elenco';reView()">Elenco</button><button class="${BR.tab === "grafo" ? "on" : ""}" onclick="BR.tab='grafo';reView()">Grafo</button></div>
       <button class="btn" onclick="brDiary()">${ico("cal")} Diario di oggi</button>
-      <span class="sp"></span><button class="btn" onclick="brNewAsk()">${ico("plus")} Nota</button><button class="btn" onclick="brLoad(true)" title="Aggiorna">↻</button></div>
+      <span class="sp"></span><button class="btn" onclick="brRetitle(true)" title="Aris dà a ogni nota un nome breve sul suo contenuto">✨ Rinomina</button><button class="btn" onclick="brNewAsk()">${ico("plus")} Nota</button><button class="btn" onclick="brLoad(true)" title="Aggiorna">↻</button></div>
     ${BR.err ? `<div class="soon">${ico("brain")}<span>Non riesco a leggere l'archivio: ${esc(BR.err)}.</span></div>` : ""}
     ${note}
     ${BR.tab === "grafo" ? `<div class="glass c" style="padding:0;overflow:hidden"><canvas id="br-graph" style="display:block;width:100%;height:${isPhone() ? 420 : 560}px"></canvas></div>`
@@ -2815,7 +2834,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "43";
+const APP_V = "44";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
