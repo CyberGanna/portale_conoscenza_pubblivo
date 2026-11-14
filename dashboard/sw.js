@@ -1,5 +1,5 @@
 /* Mia Dashboard: fa funzionare l'app anche senza connessione */
-const V = "mia-dashboard-52";
+const V = "mia-dashboard-53";
 const SHELL = ["./", "index.html", "sound.js", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith("mia-dashboard") && k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
