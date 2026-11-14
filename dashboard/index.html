@@ -2144,10 +2144,20 @@ function portalSync(){
   document.documentElement.classList.toggle("in-portal", !!slot);
   if (!slot){ if (host) host.style.display = "none"; return; }
   if (!host){ host = document.createElement("div"); host.id = "portal-host";
-    host.innerHTML = `<iframe src="../" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`; document.body.appendChild(host); }
+    host.innerHTML = `<iframe src="../?v=${Date.now()}" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`; document.body.appendChild(host); portalVer(false); }
+  else if (host.style.display === "none") portalVer(true);
   const r = slot.getBoundingClientRect();
   Object.assign(host.style, { display: "block", left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", borderRadius: getComputedStyle(slot).borderRadius });
 }
+/* se il portale è stato modificato (nuova versione su GitHub), lo ricarico quando ci rientri */
+let PORTAL_TAG = "", PORTAL_CK = 0;
+async function portalVer(reload){
+  if (Date.now() - PORTAL_CK < 20e3) return; PORTAL_CK = Date.now();
+  try { const r = await fetch("../", { method: "HEAD", cache: "no-store" }); const t = r.headers.get("etag") || r.headers.get("last-modified") || "";
+    if (!t) return; if (PORTAL_TAG && t !== PORTAL_TAG && reload){ const f = document.querySelector("#portal-host iframe"); if (f){ f.src = "../?v=" + Date.now(); toast("Portale aggiornato all'ultima versione"); } }
+    PORTAL_TAG = t; } catch {}
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && document.getElementById("portal-host")) portalVer(true); });
 addEventListener("resize", () => portalSync());
 addEventListener("scroll", () => portalSync(), true);
 function after(id, root, opt){ portalSync(); [0, 120, 340].forEach(t => setTimeout(portalSync, t)); if (id === "calendario"){ gcLoad(false); if (GC.form) setTimeout(() => root.querySelector("#gc-t")?.focus(), 200); } if (id === "cervello"){ if (BR.tab === "grafo") requestAnimationFrame(brGraph); brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
@@ -2983,7 +2993,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "52";
+const APP_V = "53";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
