@@ -882,6 +882,21 @@ async function brWrite(path, text, msg){
   }
   throw new Error("salvataggio non riuscito, riprova");
 }
+async function brDel(btn){
+  if (!btn.dataset.ok){ btn.dataset.ok = 1; btn.innerHTML = "Sicuro? Elimina"; btn.classList.add("danger"); setTimeout(() => { if (btn.isConnected){ delete btn.dataset.ok; btn.innerHTML = ico("trash"); btn.classList.remove("danger"); } }, 4000); return; }
+  const path = BR.open, f = (BR.files || []).find(x => x.path === path); if (!f) return;
+  try {
+    toast("Elimino…");
+    let sha = f.sha;
+    for (let i = 0; i < 2; i++){
+      const r = await brApi("contents/" + path.split("/").map(encodeURIComponent).join("/"), { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "Cervello: eliminata " + brName(path), sha }) });
+      if (r.ok || r.status === 404) break;
+      if ((r.status === 409 || r.status === 422) && i === 0){ const g = await brApi("contents/" + path + "?t=" + Date.now()); if (!g.ok) break; sha = (await g.json()).sha; continue; }
+      throw new Error("GitHub " + r.status);
+    }
+    BR.files = (BR.files || []).filter(x => x.path !== path); brSave(); BR.open = null; BR.edit = false; toast("Nota eliminata"); reView();
+  } catch (e){ toast("Non riesco a eliminarla: " + e.message); }
+}
 async function brAppend(path, line, title){
   const f = (BR.files || []).find(x => x.path === path);
   const base = f ? f.text.replace(/\s*$/, "") : `# ${title || brName(path)}\n`;
@@ -1017,7 +1032,7 @@ function brView(){
       <div class="br-row"><textarea id="br-q" class="input" rows="2" placeholder="Scrivi qui…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();brAsk()}"></textarea><button class="btn blue" onclick="brAsk()" ${BR.aiBusy ? "disabled" : ""}>Invia</button></div>
       ${BR.ai ? `<div class="br-ans">${brMd(BR.ai)}</div>` : ""}</div>`;
   const note = open ? `<div class="glass c br-note"><div class="hd"><div><h3>${esc(brTitle(open))}</h3><small><span class="br-dot" style="background:${BR_COL[brType(open.path)]}"></span>${esc(open.path.slice(BR_DIR.length))}</small></div>
-        <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
+        <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" title="Elimina la nota" onclick="brDel(this)">${ico("trash")}</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
       ${BR.edit ? `<textarea id="br-ta" class="input br-ta">${esc(open.text)}</textarea><small class="muted">Scrivi [[nome]] per collegare un'altra nota. Markdown: # titolo, **grassetto**, - elenco, - [ ] da fare.</small>`
         : `<div class="br-md">${brMd(open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
   const list = BR_TYPES.map(([k, t, col]) => { const L = shown.filter(f => brType(f.path) === k); if (!L.length) return "";
@@ -1448,7 +1463,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "16";
+const APP_V = "17";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
