@@ -266,6 +266,8 @@ a.nw-t,a.mk-nt{cursor:pointer}
   .cal-i{background:#fff!important;color:#111!important;display:flex!important;flex-direction:column;gap:0;align-items:center;justify-content:center}
   .cal-i small{font-size:9px;font-weight:700;color:var(--red);letter-spacing:.04em}
   .cal-i b{font-size:26px;font-weight:400;line-height:1}
+  .met-i{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#fff} .met-i i{font-style:normal;font-size:20px;line-height:1} .met-i b{font-size:15px;font-weight:600;line-height:1}
+  .app-i.big .met-i i{font-size:48px} .app-i.big .met-i b{font-size:34px}
   .dock{position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + 10px);z-index:5;display:flex;justify-content:space-around;padding:12px 10px;border-radius:30px}
   .dock .app-i span.lab{display:none}
   .sheet{display:block;position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 64px)}
@@ -459,7 +461,6 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <button class="wid glass cal-w" style="width:100%;text-align:left" onclick="go('calendario')" id="ph-cal"></button>
   <div id="ph-edit"></div>
   <div class="apps" id="ph-apps"></div>
-  <button class="wid glass wid-bottom" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
   <div class="dock glass" id="ph-dock"></div>
 </div>
 <div id="ab" data-raw><div class="ab-pop" id="ab-pop"></div><form class="ab-row" onsubmit="event.preventDefault();abSend()"><button type="button" class="ab-orb" title="Aris" aria-label="Aris" onclick="abToggle()"><span class="orb"><i></i></span></button><input id="ab-q" autocomplete="off" enterkeyhint="send"><button class="ab-go" id="ab-go" aria-label="Invia">↑</button></form></div>
@@ -2645,7 +2646,7 @@ function syncBox(){
 let homeEdit = false;
 function homeCfg(){ S.home = S.home || {}; S.home.big = S.home.big || {}; S.home.cols = S.home.cols || 4; return S.home; }
 function homeItems(){
-  const apps = APPS.filter(a => !a.pcOnly && !["collegamenti", "calendario", "meteo"].includes(a.id)).map(a => ({ k: a.id, a }));
+  const apps = APPS.filter(a => !a.pcOnly && !["collegamenti", "calendario"].includes(a.id)).map(a => ({ k: a.id, a }));
   const links = S.links.filter(l => /^https?:\/\/([\w-]+\.)*github\.com/i.test(l.u)).slice(0, 2).map(l => ({ k: "link:" + l.u, l }));
   const all = [...apps, ...links], order = homeCfg().order || [];
   const pos = k => { const i = order.indexOf(k); return i < 0 ? 1e3 + all.findIndex(x => x.k === k) : i; };
@@ -2660,7 +2661,8 @@ function homeTile(x){
   const big = !!homeCfg().big[x.k], now = new Date();
   let sq, lab, act;
   if (x.a){ const a = x.a;
-    sq = `<span class="sq ${a.id === "calendario" ? "cal-i" : ""}" style="background:${a.g}">${a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : ico(a.i)}</span>`;
+    const wc = a.id === "meteo" && wOk() ? W.current : null;
+    sq = `<span class="sq ${a.id === "calendario" ? "cal-i" : wc ? "met-i" : ""}" style="background:${a.g}">${a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : wc ? `<i>${WMO(wc.weather_code)[0]}</i><b>${Math.round(wc.temperature_2m)}°</b>` : ico(a.i)}</span>`;
     lab = a.s || a.t; act = `go('${a.id}')`; }
   else { const l = x.l;
     sq = `<span class="sq" style="background:linear-gradient(135deg,#1f2937,#0b1220);border:1px solid var(--line-2)">${ico(l.i || "link")}</span>`;
@@ -2767,10 +2769,7 @@ function renderPhone(){
   const now = new Date();
   $("#ph-date").textContent = dateLong(now);
   $("#ph-hello").textContent = `${greet()}, ${S.name}`;
-  const c = wOk() ? W.current : null, d = wOk() ? W.daily : null;
   $("#ph-cal").innerHTML = phCalWidget(now);
-  $("#ph-wid").innerHTML = c ? `<div><div class="city">${esc(S.city.name)}</div><div class="big">${Math.round(c.temperature_2m)}°</div><div class="desc">${WMO(c.weather_code)[1]}</div></div><div class="right"><div class="emo">${WMO(c.weather_code)[0]}</div>Max ${Math.round(d.temperature_2m_max[0])}° Min ${Math.round(d.temperature_2m_min[0])}°<br>Pioggia ${d.precipitation_probability_max[0] ?? 0}%</div>`
-    : `<div><div class="city">${esc(S.city.name)}</div><div class="desc">Carico il meteo…</div></div>`;
   renderHomeApps();
   $("#ph-dock").style.display = "none";
 }
@@ -2813,7 +2812,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "40";
+const APP_V = "41";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
