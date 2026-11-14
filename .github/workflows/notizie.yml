@@ -37,6 +37,7 @@ jobs:
           mkdir -p /tmp/out && cp dashboard/news/news.json dashboard/news/raw.json /tmp/out/
           cp dashboard/news/trad.json /tmp/out/ 2>/dev/null || true
           cp dashboard/news/mercati.json /tmp/out/ 2>/dev/null || (git show FETCH_HEAD:mercati.json > /tmp/m.json 2>/dev/null && mv /tmp/m.json /tmp/out/mercati.json) || true
+          cp dashboard/news/storia.json /tmp/out/ 2>/dev/null || (git show FETCH_HEAD:storia.json > /tmp/s.json 2>/dev/null && mv /tmp/s.json /tmp/out/storia.json) || true
           cd /tmp/out
           git init -q -b notizie
           git config user.name "notizie-bot"
