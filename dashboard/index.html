@@ -505,7 +505,7 @@ const DEF = {
   name: "Ale",
   city: { name: "Lugano", country: "Svizzera", lat: 46.0037, lon: 8.9511 },
   sound: { music: false, ui: true, vol: 0.6, style: "beat" },
-  news: { cats: ["politica", "economia", "ai", "tecnologia", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
+  news: { cats: ["politica", "economia", "ai", "llm", "tecnologia", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
   links: [
         { n: "karimvarini.com", u: "https://karimvarini.com", i: "globe" },
     { n: "OmniRoute (solo sul PC)", u: "http://localhost:20128", i: "server" },
@@ -513,6 +513,8 @@ const DEF = {
   ],
 };
 let S = load();
+// nuova categoria "LLM e novità AI": chi aveva tutte le categorie la vede subito
+if (S.news && Array.isArray(S.news.cats) && S.news.cats.length >= 8 && !S.news.cats.includes("llm")) S.news.cats.push("llm");
 if (S.name === "Karim") { S.name = "Ale"; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return structuredClone(DEF); } }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} if (window.syncMark) window.syncMark(); }
@@ -550,7 +552,7 @@ const I18N = {
 "Il titolo inizia con… (es. Verifica)": "Title starts with… (e.g. Test)", "Il tuo nome": "Your name", "Il tuo secondo cervello, in stile Obsidian": "Your second brain, Obsidian style",
 "Impostazioni": "Settings", "In alto tocca il nome e chiamalo esattamente": "At the top tap the name and call it exactly", "Incolla qui il tuo Client ID di Google": "Paste your Google Client ID here",
 "Indice dollaro": "Dollar index", "Indici": "Indices", "Indici, azioni, valute, materie prime e cripto": "Indices, stocks, currencies, commodities and crypto", "Indirizzo": "Address",
-"Input comando rapido": "Shortcut input", "Installa": "Install", "Installa come app": "Install as an app", "Intelligenza artificiale": "Artificial intelligence", "Invia": "Send", "Israele": "Israel", "Italia": "Italy",
+"Input comando rapido": "Shortcut input", "Installa": "Install", "Installa come app": "Install as an app", "Intelligenza artificiale": "Artificial intelligence", "LLM e novità AI": "LLMs and AI news", "Invia": "Send", "Israele": "Israel", "Italia": "Italy",
 "L'altro ieri": "Day before yesterday", "La mia conoscenza": "My knowledge", "La repository privata": "The private repository",
 "La salvi qui, poi con un tocco la metti sull'iPhone": "Save it here, then with one tap put it on the iPhone", "La trovi nel menu Start e puoi fissarla sulla barra delle applicazioni.": "You'll find it in the Start menu and can pin it to the taskbar.",
 "Le altre tue app e i tuoi siti": "Your other apps and sites", "Le altre tue cose": "Your other things", "Le modifiche vanno anche nel tuo Google Calendar": "Changes also go to your Google Calendar",
@@ -673,7 +675,7 @@ const ico = (n, st = "") => `<svg class="i" style="${st}"><use href="#i-${n}"/><
 const toast = t => { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2200); };
 
 const NEWS_CATS = [
-  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["tecnologia", "Tecnologia"],
+  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["llm", "LLM e novità AI"], ["tecnologia", "Tecnologia"],
   ["hacker", "Attacchi hacker"], ["esteri", "Esteri e geopolitica"], ["clima", "COP31 e clima"], ["altro", "Altro"],
 ];
 const COUNTRIES = [
@@ -2813,7 +2815,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "42";
+const APP_V = "43";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
