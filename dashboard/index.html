@@ -385,6 +385,7 @@ html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
   .ab-msgs{max-height:min(260px,38vh)}
   .sheet:not(.portal-open){padding-bottom:calc(var(--safe-b) + 120px) !important}
 }
+.mdl-r{display:flex;align-items:center;flex:none} .mdl-lang{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);margin-right:8px;vertical-align:middle} .mdl-lang button{border:0;background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;cursor:pointer} .mdl-lang button.on{background:var(--blue);color:#fff}
 #ai-panel{position:fixed;inset:0;z-index:65;background:rgba(3,6,12,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;justify-content:flex-end}
 #ai-panel.open{display:flex} .ai-p{width:min(520px,100%);height:100%;border-radius:0;display:flex;flex-direction:column;padding:20px 20px calc(var(--safe-b) + 16px);background:rgba(14,18,28,.97);border-left:1px solid var(--line)}
 .ai-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-top:var(--safe-t)} .ai-hd h3{margin:0 0 2px;display:flex;align-items:center;gap:10px;font-size:20px} .aris.aris-s{width:30px;height:30px} .aris.aris-s::before{inset:-3px} .aris.aris-s b{font-size:12px;letter-spacing:0;margin:0} .ai-hd .btn{white-space:nowrap}
@@ -502,7 +503,7 @@ function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStor
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} if (window.syncMark) window.syncMark(); }
 /* ---------------- LINGUA: italiano / inglese ----------------
    L'interfaccia è scritta in italiano; in inglese ogni testo mostrato viene sostituito al volo con questo dizionario. */
-const EN = S.lang === "en";
+let EN = S.lang === "en"; const EN0 = EN;
 const I18N = {
 "(2 minuti, una volta sola)": "(2 minutes, only once)", "(il quadrato con la freccia).": "(the square with the arrow).", "), nella cartella": "), in the folder",
 "+ Aggiungi": "+ Add", ", cerca": ", search for", ", poi": ", then",
@@ -559,7 +560,7 @@ const I18N = {
 "Spagna": "Spain", "Stile della musica": "Music style", "Sull'iPhone apri l'app": "On the iPhone open the app", "Sull'iPhone la musica parte al primo tocco: è una regola dei browser.": "On the iPhone the music starts at the first tap: it's a browser rule.",
 "Suoni": "Sounds", "Sveglia": "Alarm", "Sveglie": "Alarms", "Sveglie vere nell'Orologio dell'iPhone": "Real alarms in the iPhone Clock", "Svizzera": "Switzerland", "Tassi": "Rates", "Tecnologia": "Technology", "Testo": "Text",
 "Ti avvisa anche Google Calendar, sul telefono e sul PC": "Google Calendar alerts you too, on phone and PC", "Titolo": "Title", "Tocca": "Tap", "Tocca il tasto": "Tap the button", "Tocca per aprire il calendario": "Tap to open the calendar",
-"Tocca per attivare o togliere": "Tap to turn on or off", "Tocca per collegare Google Calendar": "Tap to connect Google Calendar", "Tocca ⏰ per crearla nell'app Orologio": "Tap ⏰ to create it in the Clock app", "Togli": "Remove", "Torna alla home": "Back to home",
+"Tocca per attivare o togliere": "Tap to turn on or off", "Una alla volta": "One at a time", "Uno alla volta": "One at a time", "Seleziona di più": "Select more", "Tutte": "All", "Tocca per collegare Google Calendar": "Tap to connect Google Calendar", "Tocca ⏰ per crearla nell'app Orologio": "Tap ⏰ to create it in the Clock app", "Togli": "Remove", "Torna alla home": "Back to home",
 "Torna qui e tocca ⏰ su una sveglia: la prima volta iOS chiede il permesso, rispondi": "Come back here and tap ⏰ on an alarm: the first time iOS asks permission, answer",
 "Trascina un'icona per spostarla · tocca + o − per ingrandirla o rimpicciolirla": "Drag an icon to move it · tap + or − to make it bigger or smaller", "Turchia": "Turkey", "Tutte": "All", "Tutti": "All", "Tutto": "All", "Tutto fatto.": "All done.",
 "Tutto il giorno": "All day", "Tutto il mondo": "Whole world", "Ucraina": "Ukraine", "Uguale su PC e telefono": "Same on PC and phone", "Una volta sola su ogni dispositivo": "Only once on each device", "Unione Europea": "European Union",
@@ -886,9 +887,9 @@ const VIEWS = {
   },
   _notizieFiltri(all){
     return `
-    <div class="glass c"><div class="hd"><div><h3>Categorie</h3><small>Tocca per attivare o togliere</small></div></div>
-      <div class="chips">${NEWS_CATS.map(([k, t]) => `<button class="chip ${S.news.cats.includes(k) ? "on" : ""}" onclick="tog('cats','${k}')">${t}</button>`).join("")}</div></div>
-    <div class="glass c"><div class="hd"><div><h3>Paesi</h3><small>${all ? "Tutto il mondo" : S.news.countries.length + " selezionati"}</small></div></div>
+    <div class="glass c"><div class="hd"><div><h3>Categorie</h3><small>${S.news.multiCats ? "Tocca per attivare o togliere" : "Una alla volta"}</small></div><button class="btn ${S.news.multiCats ? "blue" : ""}" onclick="togMulti('multiCats')">${S.news.multiCats ? "Una alla volta" : "Seleziona di più"}</button></div>
+      <div class="chips"><button class="chip ${S.news.cats.length === NEWS_CATS.length ? "on" : ""}" onclick="togAll()">Tutte</button>${NEWS_CATS.map(([k, t]) => `<button class="chip ${S.news.cats.includes(k) && S.news.cats.length < NEWS_CATS.length ? "on" : ""}" onclick="tog('cats','${k}')">${t}</button>`).join("")}</div></div>
+    <div class="glass c"><div class="hd"><div><h3>Paesi</h3><small>${all ? "Tutto il mondo" : S.news.countries.length + (S.news.countries.length === 1 ? " selezionato" : " selezionati")}</small></div><button class="btn ${S.news.multiCc ? "blue" : ""}" onclick="togMulti('multiCc')">${S.news.multiCc ? "Uno alla volta" : "Seleziona di più"}</button></div>
       <div class="chips">${COUNTRIES.map(([k, t]) => `<button class="chip ${S.news.countries.includes(k) ? "on" : ""}" onclick="tog('countries','${k}')">${t}</button>`).join("")}</div></div>`;
   },
   conoscenza(){
@@ -1165,7 +1166,7 @@ const mkPct1 = p => `${p > 0 ? "+" : ""}${p.toLocaleString("it-CH", { minimumFra
 const MK_PER = [["1M", 22, "d"], ["6M", 126, "d"], ["1A", 400, "d"], ["5A", 60, "m"], ["10A", 120, "m"], ["Max", 1e5, "m"]];
 function mkOpen(s){
   const x = MK && MK.items.find(i => i.s === s); if (!x) return;
-  MKD = { s, per: MKD && MKD.s === s ? MKD.per : "1A", live: null };
+  MKD = { s, per: MKD && MKD.s === s ? MKD.per : "1A", live: null }; MDL_EN = false;
   let el = document.getElementById("mk-modal");
   if (!el){ el = document.createElement("div"); el.id = "mk-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) mkClose(); }; document.body.appendChild(el); }
   el.classList.add("open"); document.documentElement.classList.add("noscroll");
@@ -1258,7 +1259,8 @@ async function mkAskNow(){
   catch (e){ MKD_AI[s] = { err: e.message }; }
   if (MKD && MKD.s === s) mkDraw();
 }
-function mkDraw(){
+function mkDraw(){ mdlRun(mkDraw0, "mk-modal"); }
+function mkDraw0(){
   const el = document.getElementById("mk-modal"); if (!el || !MKD) return;
   const x = MK.items.find(i => i.s === MKD.s), info = MK_INFO[x.s], h = STORIA && STORIA.s && STORIA.s[x.s], ai = mkAI(x), now = MKD_AI[x.s], [lv, lc] = mkLevel(x.z);
   const ser = h ? mkSeries(h, MKD.per) : null, chCol = ser && ser.length > 1 ? (ser.at(-1)[1] >= ser[0][1] ? "#34d399" : "#f43f5e") : "#5b9bff";
@@ -1267,15 +1269,15 @@ function mkDraw(){
   el.innerHTML = `<div class="mkd glass">
     <div class="mkd-hd"><div><div class="mkd-t"><button class="mk-star ${mkIsFav(x.s) ? "on" : ""}" onclick="mkFav('${esc(x.s)}');mkDraw()" title="${L2("Preferito", "Favourite")}">${mkIsFav(x.s) ? "★" : "☆"}</button><h2>${esc(EN ? (I18N[x.n] || x.n) : x.n)}</h2><span class="tag ${lc}" style="${lc ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${EN ? I18N[lv] || lv : lv}</span></div>
       <small class="muted">${esc(x.s)} · ${esc(EN ? I18N[x.cls] || x.cls : x.cls)}${h && h.ex ? " · " + esc(h.ex) : ""}${info ? ` · ${L2("nato nel", "since")} ${info[0]}` : ""}</small></div>
-      <button class="round" onclick="mkClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div>
+      <div class="mdl-r">${mdlBtn("mkDraw")}<button class="round" onclick="mkClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div></div>
     <div class="mkd-top">${mkLiveHtml()}${(d => `<div class="mkd-day"><b style="color:${mkCol(d)}">${mkPct(+d.toFixed(2))}</b>`)(MKD.live ? pctOf(MKD.live.v, x.prev) : x.pct)}<small>${L2("oggi", "today")}</small></div></div>
     <div class="chips mkd-per">${MK_PER.map(([p]) => `<button class="chip ${p === MKD.per ? "on" : ""}" onclick="MKD.per='${p}';mkDraw()">${EN ? p.replace("A", "Y") : p}</button>`).join("")}${perCh != null ? `<span class="mkd-perch" style="color:${mkCol(perCh)}">${mkPct1(perCh)}</span>` : ""}</div>
     ${STORIA ? mkChart(ser, chCol) : `<div class="muted mkd-ch-empty">${L2("Carico lo storico…", "Loading history…")}</div>`}
     ${h ? mkStats(x, h) : ""}
     ${info ? `<div class="mkd-sec"><h4>${L2("Cos'è", "What it is")}</h4><p>${esc(EN ? info[3] : info[1])}</p><h4>${L2("Cosa lo muove di solito", "What usually moves it")}</h4><p>${esc(EN ? info[4] : info[2])}</p></div>` : ""}
     <div class="mkd-sec"><h4>${L2("Cosa lo sta influenzando adesso", "What's driving it now")}</h4>
-      ${ai ? `<p>${esc(ai.perche)}</p>${ai.effetti ? `<p class="muted">${esc(ai.effetti)}</p>` : ""}` : ""}
-      ${now && now.txt ? `<p>${esc(now.txt)}</p>` : now && now.busy ? `<p class="muted">${L2("L'AI sta leggendo le notizie…", "The AI is reading the news…")}</p>` : now && now.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(now.err)}</p>` : ""}
+      ${ai ? `<p data-tr="src">${esc(ai.perche)}</p>${ai.effetti ? `<p class="muted" data-tr="src">${esc(ai.effetti)}</p>` : ""}` : ""}
+      ${now && now.txt ? `<p data-tr="ai">${esc(now.txt)}</p>` : now && now.busy ? `<p class="muted">${L2("L'AI sta leggendo le notizie…", "The AI is reading the news…")}</p>` : now && now.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(now.err)}</p>` : ""}
       ${mkKey() ? (!now || now.err ? `<button class="btn" onclick="mkAskNow()">✨ ${L2("Spiegamelo con l'AI", "Explain it with AI")}</button>` : "") : `<p class="muted">${L2("Con la chiave Groq gratuita l'AI ti spiega cosa lo muove in questi giorni.", "With the free Groq key the AI explains what's moving it these days.")}</p>`}</div>
     ${mkChatHtml(x)}
     ${h ? mkYears(h) : ""}
@@ -1334,7 +1336,7 @@ function aiOpen(){
 function aiClose(){ document.getElementById("ai-panel")?.classList.remove("open"); }
 addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("ai-panel")?.classList.contains("open")) aiClose(); });
 function aiChatHtml(msgs, busy, err, id, sugg, sendFn){
-  return `<div class="ai-msgs" id="${id}-m">${msgs.length ? msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content) + (m.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : "")}</div>`).join("")
+  return `<div class="ai-msgs" id="${id}-m">${msgs.length ? msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}"${m.role === "user" ? "" : ' data-tr="ai"'}>${m.role === "user" ? esc(m.content) : aiMd(m.content) + (m.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : "")}</div>`).join("")
       : `<div class="ai-sug">${sugg.map(s => `<button class="chip" onclick="${sendFn}(this.textContent)">${esc(s)}</button>`).join("")}</div>`}
     ${busy ? `<div class="ai-b ai muted">${L2("Sto pensando…", "Thinking…")}</div>` : ""}${err ? `<div class="ai-b ai err">${esc(err)}</div>` : ""}</div>
     ${mkKey() ? `<form class="ai-f" onsubmit="event.preventDefault();${sendFn}(this.q.value);this.q.value=''"><input class="input" name="q" id="${id}-q" autocomplete="off" placeholder="${L2("Scrivi una domanda…", "Ask a question…")}"><button class="btn blue" ${busy ? "disabled" : ""}>${L2("Invia", "Send")}</button></form>`
@@ -1368,7 +1370,7 @@ function abDraw(){
   pop.innerHTML = `<div class="ab-hd"><span style="display:flex;align-items:center;gap:9px"><span class="orb" style="--s:18px"><i></i></span>Aris</span>${AIC.msgs.length ? `<button type="button" onclick="AIC.msgs=[];AIC.err='';abDraw();aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button type="button" title="${L2("Apri grande", "Open large")}" onclick="abClose();aiOpen()">⤢</button><button type="button" aria-label="${L2("Chiudi", "Close")}" onclick="abClose()">✕</button></div>
     <div class="ab-msgs" id="ab-m">${!mkKey() ? `<p class="muted" style="font-size:12.5px;margin:0">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
       : empty ? `<div class="ai-sug">${sugg.map(t => `<button type="button" class="chip" onclick="abSend(this.textContent)">${esc(t)}</button>`).join("")}</div>`
-      : AIC.msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content) + (m.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : "")}</div>`).join("")}
+      : AIC.msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}"${m.role === "user" ? "" : ' data-tr="ai"'}>${m.role === "user" ? esc(m.content) : aiMd(m.content) + (m.web ? `<small class="ai-web">🌐 ${L2("cercato sul web", "searched the web")}</small>` : "")}</div>`).join("")}
       ${AIC.busy ? `<div class="ai-b ai muted">${L2("Sto pensando…", "Thinking…")}</div>` : ""}${AIC.err ? `<div class="ai-b ai err">${esc(AIC.err)}</div>` : ""}</div>`;
   const m = document.getElementById("ab-m"); if (m) m.scrollTop = m.scrollHeight;
 }
@@ -1410,6 +1412,23 @@ function mkChatHtml(x){
   return `<div class="mkd-sec mkd-chat"><h4>${L2("Chiedi ad Aris su", "Ask Aris about")} ${esc(n)}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "mkc",
     [L2(`Perché si è mosso così oggi?`, "Why did it move like this today?"), L2("Cosa lo può far salire o scendere nei prossimi mesi?", "What could push it up or down in the coming months?"), L2("Spiegamelo come se fossi un principiante", "Explain it to me like a beginner")], "mkChatSend")}</div>`;
 }
+/* lingua delle schede (strumento / notizia): di base italiano, pulsante per passare all'inglese e viceversa */
+let MDL_EN = false; const TR_C = {};
+function mdlBtn(fn){ return `<div class="mdl-lang" data-raw><button class="${MDL_EN ? "" : "on"}" onclick="MDL_EN=false;${fn}()">IT</button><button class="${MDL_EN ? "on" : ""}" onclick="MDL_EN=true;${fn}()">EN</button></div>`; }
+function mdlRun(fn, id){ const g = EN; EN = MDL_EN; try { fn(); } finally { EN = g; } const el = document.getElementById(id); if (el) mdlTr(el); }
+async function trText(t, tl){
+  const k = tl + "|" + t; if (k in TR_C) return TR_C[k];
+  try { const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(t)}`); const j = await r.json(); return TR_C[k] = (j[0] || []).map(x => x[0]).join("") || t; }
+  catch { return t; }
+}
+function mdlTr(el){
+  const tl = MDL_EN ? "en" : "it", nodes = [];
+  el.querySelectorAll("[data-tr]").forEach(e => { if (e.dataset.tr === "ai" && MDL_EN === EN0) return;
+    const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (/[a-zà-ù]{3}/i.test(n.nodeValue)) nodes.push(n); });
+  const miss = [];
+  nodes.forEach(n => { const t = n.nodeValue, c = TR_C[tl + "|" + t.trim()]; if (c != null) n.nodeValue = t.replace(t.trim(), c); else miss.push(n); });
+  miss.forEach(async n => { const t = n.nodeValue.trim(), out = await trText(t, tl); if (n.isConnected && n.nodeValue.trim() === t && (MDL_EN ? "en" : "it") === tl) n.nodeValue = n.nodeValue.replace(t, out); });
+}
 /* ---------------- SCHEDA DI UNA NOTIZIA (clic su un titolo: spiegazione AI + domande ad Aris) ---------------- */
 let NWD = null; const NWD_AI = {}, NWD_CHAT = {};
 document.addEventListener("click", e => {
@@ -1420,7 +1439,7 @@ document.addEventListener("click", e => {
 function nwFind(u){ return (NEWS && NEWS.items.find(x => x.u === u)) || (MKAI.news || []).find(x => x.u === u) || null; }
 function nwOpen(u){
   const x = nwFind(u); if (!x) return;
-  NWD = { u };
+  NWD = { u }; MDL_EN = false;
   let el = document.getElementById("nw-modal");
   if (!el){ el = document.createElement("div"); el.id = "nw-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) nwClose(); }; document.body.appendChild(el); }
   el.classList.add("open"); document.documentElement.classList.add("noscroll"); el.scrollTop = 0;
@@ -1459,7 +1478,8 @@ async function nwChatSend(q){
   C.busy = false; if (NWD && NWD.u === u){ nwDraw(); nwChatScroll(); setTimeout(() => document.getElementById("nwc-q")?.focus(), 30); }
 }
 function nwChatScroll(){ const m = document.getElementById("nwc-m"); if (m) m.scrollTop = m.scrollHeight; }
-function nwDraw(){
+function nwDraw(){ mdlRun(nwDraw0, "nw-modal"); }
+function nwDraw0(){
   const el = document.getElementById("nw-modal"); if (!el || !NWD) return;
   const x = nwFind(NWD.u); if (!x) return nwClose();
   const ai = NWD_AI[x.u], C = NWD_CHAT[x.u] || { msgs: [], busy: false, err: "" }, rel = nwRelated(x), srcs = (x.srcs || [[x.src, x.u]]).filter(s => s && s[0]);
@@ -1467,23 +1487,23 @@ function nwDraw(){
   el.innerHTML = `<div class="mkd glass nwd">
     <div class="mkd-hd"><div class="nwd-meta"><span class="tag ${lvl}">${x.n} ${x.n === 1 ? L2("testata", "outlet") : L2("testate", "outlets")}</span><span class="muted">${ago(x.d)} · ${esc(x.src || "")}</span>
       ${(x.cats || []).map(c => `<span class="nwd-c">${esc(EN ? I18N[CAT_T[c]] || CAT_T[c] || c : CAT_T[c] || c)}</span>`).join("")}</div>
-      <button class="round" onclick="nwClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div>
-    <h2 class="nwd-t">${esc(nT(x))}</h2>
+      <div class="mdl-r">${mdlBtn("nwDraw")}<button class="round" onclick="nwClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div></div>
+    <h2 class="nwd-t" data-tr="src">${esc(nT(x))}</h2>
     ${nT(x) !== x.t ? `<p class="muted nwd-orig">${L2("Titolo originale", "Original title")}: ${esc(x.t)}</p>` : ""}
-    ${nS(x) ? `<p class="nwd-s">${esc(nS(x))}</p>` : ""}
+    ${nS(x) ? `<p class="nwd-s" data-tr="src">${esc(nS(x))}</p>` : ""}
     <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
       ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
         : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta leggendo la notizia…", "Aris is reading the story…")}</span></div>`
         : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="nwExplain()">${L2("Riprova", "Retry")}</button>`
-        : `${ai.cosa ? `<h5>${L2("Cosa sta succedendo", "What's happening")}</h5><p>${esc(ai.cosa)}</p>` : ""}
-           ${ai.contesto ? `<h5>${L2("Il contesto", "Background")}</h5><p>${esc(ai.contesto)}</p>` : ""}
-           ${ai.perche ? `<h5>${L2("Perché è importante", "Why it matters")}</h5><p>${esc(ai.perche)}</p>` : ""}
-           ${ai.punti.length ? `<h5>${L2("In breve", "In short")}</h5><ul class="nwd-pts">${ai.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}`}
+        : `${ai.cosa ? `<h5>${L2("Cosa sta succedendo", "What's happening")}</h5><p data-tr="ai">${esc(ai.cosa)}</p>` : ""}
+           ${ai.contesto ? `<h5>${L2("Il contesto", "Background")}</h5><p data-tr="ai">${esc(ai.contesto)}</p>` : ""}
+           ${ai.perche ? `<h5>${L2("Perché è importante", "Why it matters")}</h5><p data-tr="ai">${esc(ai.perche)}</p>` : ""}
+           ${ai.punti.length ? `<h5>${L2("In breve", "In short")}</h5><ul class="nwd-pts" data-tr="ai">${ai.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}`}
     </div>
     <div class="mkd-sec mkd-chat"><h4>${L2("Chiedi ad Aris su questa notizia", "Ask Aris about this story")}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "nwc",
       (ai && ai.domande && ai.domande.length ? ai.domande : [L2("Spiegamela in parole semplici", "Explain it in simple words"), L2("Chi sono i protagonisti?", "Who are the main players?"), L2("Cosa può succedere adesso?", "What could happen next?")]), "nwChatSend")}</div>
-    ${x.alt && x.alt.length ? `<div class="mkd-sec"><h4>${L2("Come la raccontano gli altri giornali", "How other outlets tell it")}</h4>${x.alt.slice(0, 6).map(t => `<div class="nwd-alt">“${esc(t)}”</div>`).join("")}</div>` : ""}
-    ${rel.length ? `<div class="mkd-sec"><h4>${L2("Notizie collegate", "Related stories")}</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}"><b>${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
+    ${x.alt && x.alt.length ? `<div class="mkd-sec"><h4>${L2("Come la raccontano gli altri giornali", "How other outlets tell it")}</h4>${x.alt.slice(0, 6).map(t => `<div class="nwd-alt" data-tr="src">“${esc(t)}”</div>`).join("")}</div>` : ""}
+    ${rel.length ? `<div class="mkd-sec"><h4>${L2("Notizie collegate", "Related stories")}</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}"><b data-tr="src">${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
     <p class="muted mkd-note">${L2("Aris lavora su titoli e anteprime di più giornali, non sull'articolo completo (spesso a pagamento).", "Aris works from headlines and previews from several outlets, not the full article (often paywalled).")}
       ${srcs.length ? `${L2("Fonti", "Sources")}: ${srcs.slice(0, 6).map(([n, u]) => `<a class="mk-src" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join(" ")}` : ""}</p>
   </div>`;
@@ -1583,10 +1603,13 @@ async function sumNews(i){
 }
 function tog(field, k){
   let a = S.news[field];
-  if (field === "countries"){ if (k === "mondo") a = ["mondo"]; else { a = a.filter(x => x !== "mondo"); a = a.includes(k) ? a.filter(x => x !== k) : [...a, k]; if (!a.length) a = ["mondo"]; } }
-  else a = a.includes(k) ? a.filter(x => x !== k) : [...a, k];
+  if (field === "countries"){ if (k === "mondo") a = ["mondo"]; else if (!S.news.multiCc) a = a.length === 1 && a[0] === k ? ["mondo"] : [k]; else { a = a.filter(x => x !== "mondo"); a = a.includes(k) ? a.filter(x => x !== k) : [...a, k]; if (!a.length) a = ["mondo"]; } }
+  else if (!S.news.multiCats) a = a.length === 1 && a[0] === k ? NEWS_CATS.map(c => c[0]) : [k];
+  else { if (a.length === NEWS_CATS.length) a = []; a = a.includes(k) ? a.filter(x => x !== k) : [...a, k]; if (!a.length) a = NEWS_CATS.map(c => c[0]); }
   S.news[field] = a; save(); reView();
 }
+function togAll(){ S.news.cats = NEWS_CATS.map(c => c[0]); save(); reView(); }
+function togMulti(f){ S.news[f] = !S.news[f]; if (!S.news[f]){ if (f === "multiCats" && S.news.cats.length > 1 && S.news.cats.length < NEWS_CATS.length) S.news.cats = [S.news.cats[0]]; if (f === "multiCc" && S.news.countries.length > 1) S.news.countries = [S.news.countries[0]]; } save(); reView(); }
 function addLink(f){ let u = f.u.value.trim(); if (!/^(https?:|\.\.?\/)/.test(u)) u = "https://" + u; S.links.push({ n: f.n.value.trim(), u, i: "link" }); save(); toast("Collegamento aggiunto"); go("collegamenti"); }
 function delLink(i){ S.links.splice(i, 1); save(); go("collegamenti"); }
 let cityT;
@@ -2414,7 +2437,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "35";
+const APP_V = "36";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
