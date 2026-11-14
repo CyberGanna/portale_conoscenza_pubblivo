@@ -1088,7 +1088,40 @@ function gvOpen(k){
   let el = document.getElementById("gv-modal");
   if (!el){ el = document.createElement("div"); el.id = "gv-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) gvClose(); }; document.body.appendChild(el); }
   el.classList.add("open"); document.documentElement.classList.add("noscroll"); el.scrollTop = 0;
-  gvDraw(); if (mkKey() && !GVD_AI[k]) gvExplain();
+  gvDraw();
+}
+/* riassunto immediato di ogni evento, senza AI: per i dati economici una spiegazione fissa del tipo di dato */
+const GV_BRIEF = [
+  [/FOMC|Federal Funds Rate|Fed Chair|Powell/i, "Riunione o comunicazione della Federal Reserve, la banca centrale degli Stati Uniti: decide i tassi d'interesse del dollaro. È tra gli appuntamenti che muovono di più tutti i mercati."],
+  [/ECB|Main Refinancing|Lagarde|Deposit Facility/i, "Comunicazione della Banca Centrale Europea: decide i tassi d'interesse dell'euro. Influenza mutui, euro e borse europee."],
+  [/BOE|Official Bank Rate|MPC|Bailey/i, "Comunicazione della Bank of England: decide i tassi d'interesse della sterlina."],
+  [/BOJ|Ueda/i, "Comunicazione della Bank of Japan: decide i tassi d'interesse dello yen."],
+  [/SNB|Schlegel/i, "Comunicazione della Banca Nazionale Svizzera: decide i tassi del franco svizzero."],
+  [/Minutes/i, "Il verbale di una riunione della banca centrale: fa capire cosa pensano i banchieri su tassi e inflazione."],
+  [/Speaks|Testifies|Press Conference/i, "Un discorso o una conferenza stampa di un responsabile economico: le sue parole possono far capire le prossime mosse sui tassi."],
+  [/Core PCE|PCE Price/i, "L'indice dei prezzi preferito dalla Fed per misurare l'inflazione negli Stati Uniti."],
+  [/Core CPI|CPI|Consumer Price|Inflation/i, "Dato sull'inflazione: quanto sono aumentati i prezzi per i consumatori. Se è alto, la banca centrale può tenere i tassi più alti."],
+  [/PPI|Producer Price/i, "Prezzi alla produzione: quanto costano beni e materie prime alle aziende. Spesso anticipa l'inflazione dei consumatori."],
+  [/Non-Farm|NFP/i, "Il rapporto sul lavoro americano: quanti posti di lavoro sono stati creati nell'ultimo mese. È uno dei dati più seguiti al mondo."],
+  [/ADP/i, "Stima privata dei nuovi posti di lavoro negli Stati Uniti, esce prima del dato ufficiale."],
+  [/Unemployment Claims|Jobless Claims/i, "Quante persone hanno chiesto il sussidio di disoccupazione nell'ultima settimana: un termometro veloce del mercato del lavoro."],
+  [/Unemployment Rate|Claimant Count|Employment Change|Average Hourly Earnings|Wage|JOLTS|Job Openings/i, "Dato sul mercato del lavoro: occupazione, disoccupazione o salari. Un lavoro forte sostiene i consumi ma può tenere alta l'inflazione."],
+  [/GDP/i, "Il PIL: quanto è cresciuta (o calata) l'economia nel periodo. Il dato più generale sulla salute di un paese."],
+  [/Retail Sales/i, "Vendite al dettaglio: quanto spendono i consumatori nei negozi. Dice se le famiglie stanno spendendo o risparmiando."],
+  [/ISM|PMI/i, "Indice PMI: un sondaggio tra i responsabili acquisti delle aziende. Sopra 50 il settore cresce, sotto 50 si contrae."],
+  [/ZEW|Ifo|Sentiment|Confidence|Tankan/i, "Indice di fiducia: un sondaggio su come investitori, aziende o consumatori vedono l'economia nei prossimi mesi."],
+  [/Industrial Production|Factory Orders|Durable Goods|Manufacturing Production/i, "Dato sull'industria: quanto producono o quanti ordini ricevono le fabbriche."],
+  [/Trade Balance|Current Account|Exports|Imports/i, "Bilancia commerciale: la differenza tra quanto il paese vende e compra dall'estero."],
+  [/Housing|Home Sales|Building Permits|Building Approvals|Pending Home/i, "Dato sul mercato immobiliare: case vendute, costruite o permessi di costruzione."],
+  [/Crude Oil|Natural Gas Storage/i, "Scorte settimanali di petrolio o gas negli Stati Uniti: influenzano il prezzo dell'energia."],
+  [/Bank Holiday|Holiday/i, "Giorno festivo: le borse e le banche di questo paese restano chiuse, quindi i mercati sono più tranquilli."],
+  [/Auction|Bond/i, "Asta di titoli di stato: il governo prende soldi in prestito, e la domanda degli investitori dice quanto si fidano."],
+];
+function gvBrief(x){
+  if (x.src !== "ff") return x.extra || "";
+  const f = GV_BRIEF.find(([rx]) => rx.test(x.orig || x.title));
+  const base = f ? f[1] : `Appuntamento del calendario economico (${x.where || ""}): un dato o un evento che i mercati guardano per capire come va l'economia.`;
+  return base + (x.imp >= 4 ? " Questa volta è considerato molto importante." : "");
 }
 function gvClose(){ document.getElementById("gv-modal")?.classList.remove("open"); if (!document.querySelector("#mk-modal.open,#nw-modal.open")) document.documentElement.classList.remove("noscroll"); GVD = null; }
 addEventListener("keydown", e => { if (e.key === "Escape" && GVD && !NWD){ e.stopImmediatePropagation(); gvClose(); } }, true);
@@ -1140,10 +1173,11 @@ function gvDraw0(){
     <h2 class="nwd-t" data-tr="src">${esc(x.title)}</h2>
     <p class="muted nwd-orig">${when}${x.orig && x.orig !== x.title ? ` · ${esc(x.orig)}` : ""}</p>
     <div class="mkd-stats">${stats.map(([a, b, i]) => `<div><small>${a}</small><b>${b}</b>${i ? `<i>${i}</i>` : ""}</div>`).join("")}</div>
-    ${x.src === "ai" && x.extra ? `<p class="nwd-s" data-tr="ai" style="margin-top:14px">${esc(x.extra)}</p>` : ""}
+    ${gvBrief(x) ? `<div class="mkd-sec"><h4>${L2("In breve", "In short")}</h4><p class="nwd-s" data-tr="src" style="margin:0">${esc(gvBrief(x))}</p></div>` : ""}
     <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
       ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
-        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${ai && ai.wait ? L2("Aris ha raggiunto il limite gratuito di questo minuto: riprovo da solo tra 30 secondi…", "Aris hit this minute's free limit: retrying by itself in 30 seconds…") : L2("Aris sta studiando l'evento…", "Aris is looking into the event…")}</span></div>`
+        : !ai ? `<p class="muted" style="margin:0 0 10px">${L2("Vuoi capire meglio questo evento? Aris ti spiega cos'è, perché conta e cosa può cambiare.", "Want to understand it better? Aris explains what it is, why it matters and what it could change.")}</p><button class="btn blue" onclick="gvExplain()">✨ ${L2("Approfondisci con Aris", "Dig deeper with Aris")}</button>`
+        : ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${ai && ai.wait ? L2("Aris ha raggiunto il limite gratuito di questo minuto: riprovo da solo tra 30 secondi…", "Aris hit this minute's free limit: retrying by itself in 30 seconds…") : L2("Aris sta studiando l'evento…", "Aris is looking into the event…")}</span></div>`
         : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="gvExplain()">${L2("Riprova", "Retry")}</button>`
         : `${ai.cose ? `<h5>${L2("Cos'è", "What it is")}</h5><p data-tr="ai">${esc(ai.cose)}</p>` : ""}
            ${ai.perche ? `<h5>${L2("Perché è importante", "Why it matters")}</h5><p data-tr="ai">${esc(ai.perche)}</p>` : ""}
@@ -2851,7 +2885,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "46";
+const APP_V = "47";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
