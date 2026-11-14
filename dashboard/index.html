@@ -453,7 +453,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 </div>
 
 <!-- ============ TELEFONO ============ -->
-<div class="phone">
+<div class="phone anim-home">
   <button class="round lang-btn ph-lang" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
@@ -728,7 +728,7 @@ function go(id, opt = {}){
     window.scrollTo(0, 0);
   }
 }
-function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; if (S.anim !== false){ const ph = document.querySelector(".phone"); ph.classList.remove("anim-home"); void ph.offsetWidth; ph.classList.add("anim-home"); setTimeout(() => ph.classList.remove("anim-home"), 1000); } cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
+function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
 
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
@@ -2765,6 +2765,7 @@ function phCalWidget(now){
     : `<div class="cw-none">Nessun impegno nei prossimi giorni</div>`;
   return left + `<div class="cw-r">${body}</div>`;
 }
+setTimeout(() => document.querySelector(".phone").classList.remove("anim-home"), 1500); // animazione delle icone solo alla prima apertura
 function renderPhone(){
   const now = new Date();
   $("#ph-date").textContent = dateLong(now);
@@ -2812,7 +2813,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "41";
+const APP_V = "42";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
