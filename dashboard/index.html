@@ -112,6 +112,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wel-c:hover .wel-ic{animation:welPop .5s cubic-bezier(.2,.9,.3,1.6)} @keyframes welPop{40%{transform:scale(1.15) rotate(-6deg)}}
 .wel-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px} .wel-t b{font-size:14.5px;font-weight:600} .wel-t small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wel-ar{opacity:.35;font-size:18px;transition:transform .25s,opacity .25s} .wel-c:hover .wel-ar{opacity:1;transform:translateX(4px)}
+.wel-flash{animation:welFlash 2.2s ease} @keyframes welFlash{0%,100%{box-shadow:none}15%,55%{box-shadow:0 0 0 2px #60a5fa,0 0 40px rgba(96,165,250,.45)}}
 .wel-sep{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase} .wel-sep::before,.wel-sep::after{content:"";flex:1;height:1px;background:var(--line)}
 html.no-anim .wel-in .wel-h span,html.no-anim .wel-in .wel-c{animation:none;opacity:1;transform:none;filter:none} html.no-anim .wel-aura i{animation:none}
 @media (prefers-reduced-motion:reduce){.wel-in .wel-h span,.wel-in .wel-c{animation:none;opacity:1;transform:none;filter:none}.wel-aura i,.wel-rot span{animation:none}.wel-rot span:first-child{opacity:1}}
@@ -850,7 +851,7 @@ function welHints(){
   return [
     { go: "notizie", i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", q: "Vuoi vedere le ultime notizie?", h: n ? nT(n) : "Le più riprese dai giornali di oggi" },
     { go: "mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", q: "Come stanno andando i mercati oggi?", h: m ? `${m.n} ${mkPct(m.pct)}: il movimento più insolito` : "Indici, azioni, valute e cripto" },
-    { go: "mercati", i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", q: "Vuoi vedere la mappa dei mercati?", h: tot ? `${up} su ${tot} in rialzo` : "Tutto il mercato a colori" },
+    { go: "oggi", to: "mk-map-card", i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", q: "Vuoi vedere la mappa dei mercati?", h: tot ? `${up} su ${tot} in rialzo` : "Tutto il mercato a colori" },
     { go: "globale", i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", q: "Cosa succede nel mondo nei prossimi giorni?", h: ev ? `${ev.title}${ev.day === ymd(new Date()) ? " · oggi" : ""}` : "Il calendario degli eventi importanti" },
     { go: "notizie", cat: "llm", i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", q: "Novità sull'intelligenza artificiale?", h: ai(1) ? `${ai(1)} novità nelle ultime 24 ore` : "Nuovi modelli, funzioni e strumenti" },
     { go: "conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", q: "Ti va di ripassare la tua conoscenza?", h: notes.length ? `${notes.length} note · fai un test` : "Esplora o fai un test" },
@@ -860,7 +861,8 @@ function welHints(){
     { go: "meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", q: "Che tempo fa?", h: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° a ${S.city.name}` : S.city.name },
   ];
 }
-function welGo(i){ const x = welHints()[i]; if (!x) return; if (x.cat){ newsCat1 = x.cat; newsDay = 0; } go(x.go); if (x.cat) newsCat1 = x.cat; }
+function welGo(i){ const x = welHints()[i]; if (!x) return;
+  if (x.to){ const el = document.getElementById(x.to); if (el){ el.scrollIntoView({ behavior: S.anim === false ? "auto" : "smooth", block: "start" }); el.classList.remove("wel-flash"); void el.offsetWidth; el.classList.add("wel-flash"); setTimeout(() => el.classList.remove("wel-flash"), 2200); return; } x.go = "mercati"; } if (x.cat){ newsCat1 = x.cat; newsDay = 0; } go(x.go); if (x.cat) newsCat1 = x.cat; }
 function welcome(){
   const first = !WEL_SEEN, hello = `${greet()}, ${S.name}.`;
   if (first) setTimeout(() => { WEL_SEEN = true; }, 4000);
@@ -1560,7 +1562,7 @@ function mkMapCard(){
   if (!MK) return "";
   const L = MK.items.filter(mkFresh), cls = [...new Set(MK.items.map(x => x.cls))].filter(c => L.some(x => x.cls === c));
   const up = L.filter(x => x.pct > 0).length;
-  return `<div class="glass c"><div class="hd"><div><h3>Mappa dei mercati</h3><small>Tutti gli strumenti di oggi · ${up} su ${L.length} in rialzo</small></div><button class="lnk" onclick="go('mercati')">Apri</button></div>
+  return `<div class="glass c" id="mk-map-card" style="scroll-margin-top:20px"><div class="hd"><div><h3>Mappa dei mercati</h3><small>Tutti gli strumenti di oggi · ${up} su ${L.length} in rialzo</small></div><button class="lnk" onclick="go('mercati')">Apri</button></div>
     <div class="hm">${cls.map(c => `<div class="hm-g"><span>${esc(c)}</span><div class="hm-ts">${L.filter(x => x.cls === c).map(x => `<button class="hm-t ${mkIsFav(x.s) ? "fav" : ""}" style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}" onclick="mkOpen('${esc(x.s)}')"><b>${esc(x.n)}</b><i>${mkPct(x.pct)}</i></button>`).join("")}</div></div>`).join("")}</div>
     <div class="hm-leg"><span>Scende</span><span class="bar"></span><span>Sale</span><span style="margin-left:auto">Colore più acceso = movimento più insolito · ★ bordo giallo = preferito</span></div></div>`;
 }
@@ -2952,7 +2954,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "48";
+const APP_V = "49";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
