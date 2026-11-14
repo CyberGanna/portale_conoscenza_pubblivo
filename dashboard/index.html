@@ -452,6 +452,7 @@ html.noscroll #ab,html:has(#ai-panel.open) #ab,html.in-portal #ab{display:none}
 .tg.on{background:var(--green)}.tg.on::after{left:21px}
 input[type=range]{width:100%;accent-color:var(--blue)}
 .portal{display:block;width:100%;height:calc(100vh - 120px);border:1px solid var(--line);border-radius:var(--r);background:#000}
+.ait-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;font-size:12.5px} .sheet .ait-bar{padding:0 16px} .ait-slot{height:calc(100vh - 170px)} .sheet .ait-slot{height:calc(100dvh - var(--safe-t) - 112px)}
 .embed-host{position:fixed;z-index:31;display:none;overflow:hidden;background:#000;border:1px solid var(--line)} .embed-host iframe{display:block;width:100%;height:100%;border:0}
 @media (max-width:899px){.embed-host{border:0}}
 .is-portal .view{gap:0}
@@ -742,7 +743,6 @@ const isPhone = () => matchMedia("(max-width:899px)").matches;
 
 const AIT_URL = "https://ale-x.pages.dev/";
 function go(id, opt = {}){
-  if (id === "aitrading" && !opt.noOpen) window.open(AIT_URL, "_blank", "noopener");
   if (id !== "notizie" && typeof newsCat1 !== "undefined") newsCat1 = null;
   $("#new-menu").classList.remove("open");
   const changed = go.prev !== id; go.prev = id;
@@ -969,10 +969,7 @@ const VIEWS = {
     return `<div class="portal portal-slot"></div>`;
   },
   aitrading(){
-    return head("AI-TRADING", "Il tuo sito di trading") + `
-    <div class="glass c"><div class="hd"><div><h3>ale-x.pages.dev</h3><small>Si apre in una scheda a parte, così il login funziona</small></div></div>
-      <p class="muted" style="margin:6px 0 14px">Dentro la dashboard il sito non può tenere l'accesso (il browser blocca i cookie dei siti incorporati), per questo si apre da solo.</p>
-      <a class="btn blue" href="${AIT_URL}" target="_blank" rel="noopener">Apri AI-TRADING</a></div>`;
+    return `<div class="ait-bar"><span class="muted">Se non ti fa entrare qui dentro, aprilo a parte</span><a class="btn" href="${AIT_URL}" target="_blank" rel="noopener">Apri a parte ↗</a></div><div class="portal portal-slot ait-slot"></div>`;
   },
   promemoria(){ return remView(); },
   sveglie(){ return alarmView(); },
@@ -2127,6 +2124,7 @@ function useGeo(){
    così un test o una spiegazione in corso continua anche se vai in un'altra sezione. */
 const EMBEDS = {
   conoscenza: { host: "portal-host", t: "Portale conoscenza", src: () => "../?v=" + Date.now() },
+  aitrading: { host: "embed-aitrading", t: "AI-TRADING", src: () => AIT_URL },
 };
 function portalSync(){
   const slot = EMBEDS[cur] ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
@@ -2985,7 +2983,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "57";
+const APP_V = "58";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
