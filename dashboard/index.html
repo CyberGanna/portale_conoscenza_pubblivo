@@ -851,7 +851,7 @@ const b64e = str => { const u = new TextEncoder().encode(str); let b = ""; for (
 const b64d = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), c => c.charCodeAt(0)));
 async function brApi(path, opt = {}){
   const c = brCfg();
-  const r = await fetch(`https://api.github.com/repos/${c.repo}/${path}`, { cache: "no-store", ...opt, headers: { Authorization: "Bearer " + c.gh, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opt.headers || {}) } });
+  const r = await fetch(`https://api.github.com/repos/${c.repo}${path ? "/" + path : ""}`, { cache: "no-store", ...opt, headers: { Authorization: "Bearer " + c.gh, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opt.headers || {}) } });
   if (r.status === 401) throw new Error("la chiave GitHub non è valida o è scaduta");
   if (r.status === 403) throw new Error("la chiave GitHub non ha il permesso di scrivere nella repository");
   return r;
@@ -1422,11 +1422,31 @@ async function dsSync(){
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - SY.last > 20e3) dsSync(); });
 setInterval(() => { if (!document.hidden) dsSync(); }, 120e3);
+async function dsCreateRepo(btn){
+  const c = brCfg(), [owner, name] = c.repo.split("/"); if (!name) return toast("Nome della repository non valido");
+  btn.disabled = true; btn.textContent = "Creo…";
+  const H = { Authorization: "Bearer " + c.gh, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+  try {
+    const me = await fetch("https://api.github.com/user", { headers: H });
+    if (me.status === 401) throw new Error("la chiave GitHub non è valida o è scaduta");
+    const login = me.ok ? (await me.json()).login : owner;
+    const url = login.toLowerCase() === owner.toLowerCase() ? "https://api.github.com/user/repos" : `https://api.github.com/orgs/${owner}/repos`;
+    const r = await fetch(url, { method: "POST", headers: H, body: JSON.stringify({ name, private: true, auto_init: true, description: "Dati privati del portale e della dashboard" }) });
+    if (r.status === 422) toast("La repository c'è già: la chiave GitHub però non può vederla");
+    else if (!r.ok) throw new Error(r.status === 403 || r.status === 404 ? "la chiave GitHub non ha il permesso di creare repository" : "GitHub " + r.status);
+    else toast("Repository creata");
+    SY.err = ""; await dsSync(); brLoad(true);
+  } catch (e){ SY.err = "non trovo la repository " + c.repo; toast("Non riesco: " + e.message); SY.help = true; }
+  reView();
+}
 function syncBox(){
   const on = !!brCfg().gh;
   return `<div class="glass c"><div class="hd"><div><h3>Sincronizzazione PC e telefono</h3><small>${!on ? "Non attiva" : SY.err ? "Problema: " + esc(SY.err) : SY.busy ? "Sincronizzo…" : SY.last ? "Attiva · ultima alle " + hhmm(new Date(SY.last)) : "Attiva"}</small></div><span class="muted">${ico("git")}</span></div>
     <p class="muted" style="font-size:13px;line-height:1.6">${on ? `Nome, città, notizie, collegamenti, sveglie, promemoria e Google Calendar sono salvati nella tua repository privata <b>${esc(brCfg().repo)}</b> e restano uguali su tutti i dispositivi. Musica e volume restano per dispositivo.`
       : `Usa la stessa chiave GitHub del portale. Apri <b>Conoscenza</b>, tocca ⚙ e attiva la sincronizzazione (sul telefono basta "Collega telefono" dal PC): da quel momento anche la dashboard si sincronizza da sola.`}</p>
+    ${on && SY.err && /non trovo la repository/.test(SY.err) ? `<div class="soon" style="margin-top:10px">${ico("git")}<span>La repository privata <b>${esc(brCfg().repo)}</b> non esiste ancora (oppure la chiave GitHub non può vederla). Posso crearla io adesso, privata e vuota: lì finiscono i dati della dashboard e le note del Cervello.</span></div>
+      <button class="btn blue" style="margin-top:10px" onclick="dsCreateRepo(this)">Crea la repository</button>
+      ${SY.help ? `<p class="muted" style="font-size:13px;line-height:1.6;margin-top:10px">La chiave non ha il permesso di crearla. Creala a mano in un minuto: apri <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a>, scrivi il nome <b>${esc(brCfg().repo.split("/")[1] || "")}</b>, scegli <b>Private</b>, spunta <b>Add a README</b> e premi <b>Create repository</b>. Se la tua chiave GitHub vale solo per alcune repository, aggiungi anche questa alla chiave. Poi qui tocca "Sincronizza adesso".</p>` : ""}` : ""}
     ${on ? `<button class="btn" style="margin-top:10px" onclick="dsSync()">Sincronizza adesso</button>` : `<button class="btn blue" style="margin-top:10px" onclick="go('conoscenza')">Apri Conoscenza</button>`}</div>`;
 }
 
@@ -1603,7 +1623,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "20";
+const APP_V = "21";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
