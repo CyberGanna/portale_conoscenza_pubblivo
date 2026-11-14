@@ -176,6 +176,16 @@ a.wl{color:#fbbf24;text-decoration:none;border-bottom:1px dashed rgba(251,191,36
 button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);cursor:pointer} .rows button.ev-r:first-child{border-top:0} .ev-ic{border:0}
 @media (max-width:560px){.gc-dt{display:none}}
 .mk-list{display:flex;flex-direction:column} .mk-r{display:grid;grid-template-columns:1fr auto 84px;gap:6px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)} .mk-r:first-child{border-top:0}
+.mk-star{background:none;border:0;padding:0 2px 0 0;font-size:16px;line-height:1;color:var(--faint);cursor:pointer} .mk-star:hover{color:#fcd34d} .mk-star.on{color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,.5)}
+.mk-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start} .mk-side{position:sticky;top:16px} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{position:static;order:-1}}
+.mk-fav{padding:12px 0;border-top:1px solid var(--line)} .mk-fav:first-child{border-top:0;padding-top:4px} .mk-fav .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px} .mk-fav .px{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mk-fav .p{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums} .mk-fav svg,.mk-fav .mk-sp{display:block !important;width:100%;height:40px;margin-top:6px} .mk-fav .w{font-size:12px;line-height:1.4;color:var(--muted);margin-top:4px}
+.dash-l{display:flex;flex-direction:column;gap:20px;align-self:start} .dash-l>.glass{margin:0}
+.hm{display:flex;flex-direction:column;gap:10px} .hm-g{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:start} .hm-g>span{font-size:11px;color:var(--muted);padding-top:9px;text-transform:uppercase;letter-spacing:.06em}
+.hm-ts{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px} .hm-t{border-radius:10px;padding:7px 8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;text-align:left;color:#fff;min-height:48px;transition:transform .15s}
+.hm-t:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.25)} .hm-t b{display:block;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .hm-t i{font-style:normal;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.hm-t.fav{box-shadow:inset 0 0 0 1.5px #fbbf24} .hm-leg{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:12px} .hm-leg .bar{flex:1;max-width:220px;height:6px;border-radius:3px;background:linear-gradient(90deg,#be123c,#3f1d2b,#1f2937,#14532d,#16a34a)}
+@media (max-width:560px){.hm-g{grid-template-columns:1fr} .hm-g>span{padding-top:0}}
 .mk-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .mk-n b{font-size:14px} .mk-l small{display:block;margin-top:3px;font-size:11.5px}
 .mk-p{font-size:17px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums} .mk-why{grid-column:1/-1;font-size:12.5px;line-height:1.45;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .mk-why p{margin:2px 0} .mk-why b{color:var(--ink)} .tag.red{background:rgba(244,63,94,.16);color:#fb7185} .mk-kv span:nth-child(even){text-align:right}
@@ -198,6 +208,7 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
   .orbs .o1{width:300px;height:300px;right:-90px;top:-90px}
   .orbs .o2{width:380px;height:380px;left:-180px;bottom:20%}
   .phone .ph-music{display:grid;position:absolute;right:16px;top:calc(var(--safe-t) + 12px);z-index:3}
+  .phone .ph-lang{display:grid;position:absolute;right:62px;top:calc(var(--safe-t) + 12px);z-index:3}
   .ph-date{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
   .ph-hello{font-size:13px;text-align:center;margin-top:2px}
   .phone{display:flex!important;flex-direction:column;padding-bottom:calc(var(--safe-b) + 64px)!important}
@@ -279,7 +290,9 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .music-btn.on{background:rgba(47,123,255,.25);border-color:var(--blue);color:#fff;box-shadow:0 0 18px rgba(47,123,255,.5)}
 .music-btn.on svg{animation:pulse 2.6s ease-in-out infinite}
 @keyframes pulse{50%{transform:scale(1.15)}}
-.ph-music{display:none}
+.ph-music,.ph-lang{display:none}
+.lang-btn{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--ink);cursor:pointer} .lang-btn:hover{border-color:var(--blue);color:#fff}
+.acts .lang-btn{margin-right:8px}
 .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
 .switch:first-of-type{border-top:0}
 .switch b{font-size:13px;font-weight:500;display:block}.switch small{font-size:11.5px;color:var(--muted)}
@@ -308,6 +321,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <header class="top">
       <div><h1 id="hello">Buongiorno</h1><div class="sub"><span class="dot"></span><span id="sub"></span></div></div>
       <div class="acts">
+        <button class="round lang-btn" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
         <button class="round music-btn" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
         <div class="menu glass" id="new-menu">
           <button onclick="go('collegamenti',{add:true})"><svg class="i"><use href="#i-link"/></svg>Nuovo collegamento</button>
@@ -322,6 +336,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 
 <!-- ============ TELEFONO ============ -->
 <div class="phone">
+  <button class="round lang-btn ph-lang" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
   <div class="ph-hello" id="ph-hello"></div>
@@ -461,7 +476,11 @@ const I18N = {
 "Perché:": "Why:", "Cosa può comportare:": "What it can mean:", "Riassunto non disponibile adesso, riprova tra poco.": "Summary not available right now, try again soon.", "Sto riassumendo…": "Summarizing…",
 "Hai già l'ultima versione": "You already have the latest version", "Aggiorno l'app…": "Updating the app…", "Nessuna connessione": "No connection", "Musica rilassante accesa": "Relaxing music on", "Musica spenta": "Music off",
 "Giorno": "Day", "Settimana": "Week", "Mese": "Month", "Anno": "Year", "Alba": "Sunrise", "Tramonto": "Sunset", "Temperatura": "Temperature", "Umidità": "Humidity", "Vento": "Wind", "Percepiti": "Feels like", "24 ore": "24 hours",
-"Home": "Home", "Nuovo": "New", "Brasile": "Brazil", "Obiettivi": "Goals", "Progetti": "Projects", "Persone": "People", "Risorse": "Resources", "Libri": "Books", "Libri e film": "Books and films", "Liste": "Lists", "Note": "Notes", "In italiano": "In Italian", "COP31 e clima": "COP31 and climate", "Client ID inserito": "Client ID entered", "Elimina evento": "Delete event", "Apri in Google": "Open in Google", "Nessuna": "None", "Attiva": "On",
+"Home": "Home", "Nuovo": "New", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
+"Per esempio salva Oro, S&P 500 o Bitcoin: li vedrai sempre in questo riquadro, anche quando non sono tra i movimenti più forti.": "For example save Gold, S&P 500 or Bitcoin: you'll always see them in this box, even when they're not among the strongest moves.",
+"Togli dai preferiti": "Remove from favourites", "Salva nei preferiti": "Save to favourites", "Tolto dai preferiti": "Removed from favourites", "Salvato nei preferiti": "Saved to favourites",
+"Mappa dei mercati": "Market map", "Scende": "Down", "Sale": "Up", "Colore più acceso = movimento più insolito · ★ bordo giallo = preferito": "Brighter colour = more unusual move · yellow border = favourite",
+"L'AI non ha trovato un motivo chiaro nelle notizie di oggi.": "The AI found no clear reason in today's news.", "Passa all'italiano": "Switch to Italian", "Switch to English": "Switch to English", "Brasile": "Brazil", "Obiettivi": "Goals", "Progetti": "Projects", "Persone": "People", "Risorse": "Resources", "Libri": "Books", "Libri e film": "Books and films", "Liste": "Lists", "Note": "Notes", "In italiano": "In Italian", "COP31 e clima": "COP31 and climate", "Client ID inserito": "Client ID entered", "Elimina evento": "Delete event", "Apri in Google": "Open in Google", "Nessuna": "None", "Attiva": "On",
 };
 const I18N_RX = [
   [/^(\d+) testat[ae]$/, (m, n) => `${n} ${n === "1" ? "outlet" : "outlets"}`],
@@ -481,6 +500,8 @@ const I18N_RX = [
   [/^Problema: (.+)$/, (m, r) => `Problem: ${r.replace("non trovo la repository", "can't find the repository")}`], [/^Attiva · ultima alle (.+)$/, (m, t) => `On · last at ${t}`],
   [/^Carico il meteo di (.+)…$/, (m, c) => `Loading the weather for ${c}…`], [/^Ora: (.+)$/, (m, c) => `Now: ${c}`],
   [/^Spiegazioni non disponibili: (.+)$/, (m, r) => `Explanations not available: ${r.replace("l'AI non risponde adesso", "the AI isn't answering right now").replace("limite di richieste raggiunto", "rate limit reached")}`],
+  [/^Tutti gli strumenti di oggi · (\d+) su (\d+) in rialzo$/, (m, a, b) => `All instruments today · ${a} of ${b} up`], [/^(\d+) giorni fa$/, (m, n) => `${n} days ago`],
+  [/^(.+) · 5 giorni (.+)$/, (m, a, b) => `${a} · 5 days ${b}`],
   [/^Solo (.+) ✕$/, (m, c) => `Only ${I18N[c] || c} ✕`], [/^Max (-?\d+)° Min (-?\d+)°$/, (m, a, b) => `High ${a}° Low ${b}°`], [/^Pioggia (\d+)%$/, (m, p) => `Rain ${p}%`],
   [/^Max (.+)° · Min (.+)° · Umidità (.+)% · Vento (.+)$/, (m, a, b, h, w) => `High ${a}° · Low ${b}° · Humidity ${h}% · Wind ${w}`],
   [/^(.+) alle (\d\d:\d\d)(.*)$/, (m, d, t, r) => `${d} at ${t}${r}`],
@@ -515,6 +536,7 @@ if (EN){
   addEventListener("DOMContentLoaded", () => trTree(document.body));
   trTree(document.body);
 }
+function paintLang(){ document.querySelectorAll(".lang-btn").forEach(b => { b.textContent = EN ? "IT" : "EN"; b.title = EN ? "Passa all'italiano" : "Switch to English"; }); }
 function setLang(l){ if (S.lang === l) return; S.lang = l; save(); setTimeout(() => location.reload(), 150); }
 const LANG_SFX = EN ? " IMPORTANT: write every text value of your answer in English (keep JSON keys as they are)." : "";
 const $ = s => document.querySelector(s);
@@ -658,8 +680,8 @@ function DASH(){
   const dayBars = dly ? dly.temperature_2m_max : [];
   const bmax = Math.max(...dayBars, 1), bmin = Math.min(...dayBars, 0);
   return `<div class="grid">
-    ${mkDashCard()}
-    ${mkNewsCard()}
+    <div class="span8 dash-l">${mkDashCard()}${mkMapCard()}</div>
+    <div class="span4 dash-l">${mkNewsCard()}${mkFavCard()}</div>
     <div class="glass c span4">
       <div class="hd"><div><h3>Notizie</h3><small>Le più riprese dai giornali${NEWS ? " · aggiornate alle " + hhmm(new Date(NEWS.updated)) : ""}</small></div><button class="lnk" onclick="go('notizie')">Tutte</button></div>
       ${newsMini(5)}
@@ -843,21 +865,26 @@ function mkSpark(a, col, w = 90, h = 28){
   const pts = a.map((v, i) => `${(i / (a.length - 1) * w).toFixed(1)},${(h - 2 - (v - lo) / k * (h - 4)).toFixed(1)}`).join(" ");
   return `<svg class="mk-sp" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
+const mkNorm = s => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+function mkAI(x){ const it = MKAI.items || {}; if (it[x.s]) return it[x.s]; const a = mkNorm(x.s), b = mkNorm(x.n); for (const k in it){ const n = mkNorm(k); if (n && (n === a || n === b || a.startsWith(n) || n.startsWith(b))) return it[k]; } return null; }
+const mkFavs = () => S.mkFav || (S.mkFav = []);
+const mkIsFav = s => mkFavs().includes(s);
+function mkFav(s){ const f = mkFavs(), i = f.indexOf(s); if (i >= 0) f.splice(i, 1); else f.push(s); save(); toast(i >= 0 ? "Tolto dai preferiti" : "Salvato nei preferiti"); reView(); }
 function mkRow(x, why){
-  const ai = MKAI.items[x.s], [lv, lc] = mkLevel(x.z);
+  const ai = mkAI(x), [lv, lc] = mkLevel(x.z), done = MKAI.v === 2 && MK && MKAI.at === MK.updated;
   return `<div class="mk-r">
-    <div class="mk-l"><div class="mk-n"><b>${esc(x.n)}</b><span class="tag ${lc}" style="${lc ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${lv}</span></div>
+    <div class="mk-l"><div class="mk-n"><button class="mk-star ${mkIsFav(x.s) ? "on" : ""}" title="${mkIsFav(x.s) ? "Togli dai preferiti" : "Salva nei preferiti"}" onclick="event.stopPropagation();mkFav('${esc(x.s)}')">${mkIsFav(x.s) ? "★" : "☆"}</button><b>${esc(x.n)}</b><span class="tag ${lc}" style="${lc ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${lv}</span></div>
       <small class="muted">${esc(x.cls)} · ${mkFmt(x)}${x.cls === "Tassi" ? "%" : " " + esc(x.cur)}${x.wk != null ? ` · 5 giorni ${mkPct(x.wk)}` : ""} · di solito si muove ±${x.vol.toLocaleString("it-CH")}% al giorno</small></div>
     ${mkSpark(x.spark, mkCol(x.pct))}
     <div class="mk-p" style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</div>
-    ${why ? `<div class="mk-why">${ai ? `<p><b>Perché:</b> ${esc(ai.perche)}</p><p><b>Cosa può comportare:</b> ${esc(ai.effetti)}</p>` : `<p class="muted">${MKAI.busy ? "L'AI sta cercando il motivo nelle notizie…" : MKAI.err ? "Spiegazione non disponibile adesso: tocca Riprova qui sotto." : mkKey() ? "Spiegazione in arrivo…" : "Per il motivo serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)."}</p>`}</div>` : ""}
+    ${why ? `<div class="mk-why">${ai ? `<p><b>Perché:</b> ${esc(ai.perche)}</p><p><b>Cosa può comportare:</b> ${esc(ai.effetti)}</p>` : `<p class="muted">${MKAI.busy ? "L'AI sta cercando il motivo nelle notizie…" : MKAI.err ? "Spiegazione non disponibile adesso: tocca Riprova qui sotto." : done ? "L'AI non ha trovato un motivo chiaro nelle notizie di oggi." : mkKey() ? "Spiegazione in arrivo…" : "Per il motivo serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)."}</p>`}</div>` : ""}
   </div>`;
 }
 function mkKey(){ try { return localStorage.getItem("pc_groq") || ""; } catch { return ""; } }
 const mkStrong = x => Math.abs(x.z) >= 2;
 async function mkExplain(force){
   const key = mkKey();
-  if (!key || !MK || !NEWS || MKAI.busy || isPhone()) return;
+  if (!key || !MK || !NEWS || MKAI.busy) return;
   if (!force && MKAI.v === 2 && MKAI.at === MK.updated && (MKAI.lang || "it") === (S.lang || "it")) return;
   const strong = MK.items.filter(x => mkFresh(x) && mkStrong(x)).slice(0, 8);
   MKAI.busy = true; MKAI.err = "";
@@ -886,7 +913,7 @@ function mkNewsCard(){
   const since = Date.now() - 36 * 3600e3;
   const L = ai ? MKAI.news : (NEWS ? NEWS.items.filter(x => x.d > since && x.cats.includes("economia")).sort((a, b) => b.n - a.n).slice(0, 5) : []);
   const srcs = x => (x.srcs || [[x.src, x.u]]).filter(s => s && s[0]).slice(0, 4).map(([n, u]) => `<a class="mk-src" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("");
-  return `<div class="glass c span4"><div class="hd"><div><h3><a href="#notizie" class="mk-hl" onclick="event.preventDefault();newsCat1='economia';newsDay=0;go('notizie')">Notizie che muovono i mercati ›</a></h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div>${EN ? "" : `<button class="lnk" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "In italiano" : "Lingua originale"}</button>`}</div>
+  return `<div class="glass c"><div class="hd"><div><h3><a href="#notizie" class="mk-hl" onclick="event.preventDefault();newsCat1='economia';newsDay=0;go('notizie')">Notizie che muovono i mercati ›</a></h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div>${EN ? "" : `<button class="lnk" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "In italiano" : "Lingua originale"}</button>`}</div>
     ${L.length ? `<div class="mk-news">${L.map(x => `<div class="mk-nw"><a class="mk-nt" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(nT(x))}</a>
       ${x.effetto ? `<p>${esc(x.effetto)}</p>` : ""}<div class="mk-srcs"><span class="muted">Fonti:</span>${srcs(x)}</div></div>`).join("")}</div>` : `<div class="muted">${NEWS ? "Nessuna notizia di economia nelle ultime ore." : "Carico le notizie…"}</div>`}
     ${!mkKey() ? `<div class="muted" style="font-size:11.5px;margin-top:8px">Con la chiave Groq gratuita l'AI sceglie quelle che muovono davvero i mercati e spiega l'effetto.</div>` : ""}
@@ -900,7 +927,7 @@ function mkMainCard(){
 }
 function mkDashCard(){
   const top = mkTop(5);
-  return `<div class="glass c span8">
+  return `<div class="glass c">
     <div class="hd"><div><h3>Mercati: i movimenti più forti</h3><small>${MK ? `Oggi, rispetto a quanto si muovono di solito · aggiornato alle ${hhmm(new Date(MK.updated))}` : "Indici, azioni, valute, materie prime e cripto"}</small></div><button class="lnk" onclick="go('mercati')">Vedi tutto</button></div>
     ${top.length ? `<div class="mk-list">${top.map(x => mkRow(x, mkStrong(x))).join("")}</div>${MKAI.err ? `<div class="muted" style="font-size:12px;margin-top:8px">Spiegazioni non disponibili: ${esc(MKAI.err)}. <button class="lnk" onclick="mkExplain(true)">Riprova</button></div>` : ""}`
       : `<div class="muted">${mkErr ? "Non riesco a leggere i prezzi adesso: riprovo tra poco." : "Carico i prezzi… (i dati si aggiornano ogni ora)"}</div>`}
@@ -915,7 +942,26 @@ function mkView(){
   return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + `
     <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
-    <div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>`;
+    <div class="mk-wrap"><div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>
+      <div class="mk-side">${mkFavCard()}</div></div>`;
+}
+function mkFavCard(){
+  const F = mkFavs().map(s => MK && MK.items.find(x => x.s === s)).filter(Boolean);
+  return `<div class="glass c"><div class="hd"><div><h3>★ I miei preferiti</h3><small>${F.length ? "Sempre qui, uguali su PC e telefono" : "Tocca ☆ accanto a uno strumento per salvarlo"}</small></div></div>
+    ${F.length ? F.map(x => { const ai = mkAI(x); return `<div class="mk-fav"><div class="t"><span><button class="mk-star on" title="Togli dai preferiti" onclick="mkFav('${esc(x.s)}')">★</button><b>${esc(x.n)}</b></span><span class="p" style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</span></div>
+      <div class="t"><span class="px">${mkFmt(x)}${x.cls === "Tassi" ? "%" : " " + esc(x.cur)}${x.wk != null ? ` · 5 giorni ${mkPct(x.wk)}` : ""}</span><span class="tag ${mkLevel(x.z)[1]}" style="${mkLevel(x.z)[1] ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${mkLevel(x.z)[0]}</span></div>
+      ${mkSpark(x.spark, mkCol(x.pct), 320, 44)}${ai ? `<div class="w">${esc(ai.perche)}</div>` : ""}</div>`; }).join("")
+      : `<div class="muted" style="font-size:12.5px">Per esempio salva Oro, S&P 500 o Bitcoin: li vedrai sempre in questo riquadro, anche quando non sono tra i movimenti più forti.</div>`}</div>`;
+}
+/* mappa colorata di tutti gli strumenti: verde sale, rosso scende, più intenso = movimento più insolito */
+function mkHeat(x){ const k = Math.min(1, Math.abs(x.z) / 3), a = 0.18 + k * 0.72; return x.pct >= 0 ? `rgba(22,163,74,${a.toFixed(2)})` : `rgba(225,29,72,${a.toFixed(2)})`; }
+function mkMapCard(){
+  if (!MK) return "";
+  const L = MK.items.filter(mkFresh), cls = [...new Set(MK.items.map(x => x.cls))].filter(c => L.some(x => x.cls === c));
+  const up = L.filter(x => x.pct > 0).length;
+  return `<div class="glass c"><div class="hd"><div><h3>Mappa dei mercati</h3><small>Tutti gli strumenti di oggi · ${up} su ${L.length} in rialzo</small></div><button class="lnk" onclick="go('mercati')">Apri</button></div>
+    <div class="hm">${cls.map(c => `<div class="hm-g"><span>${esc(c)}</span><div class="hm-ts">${L.filter(x => x.cls === c).map(x => `<button class="hm-t ${mkIsFav(x.s) ? "fav" : ""}" style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}" onclick="mkCls='${esc(c)}';go('mercati')"><b>${esc(x.n)}</b><i>${mkPct(x.pct)}</i></button>`).join("")}</div></div>`).join("")}</div>
+    <div class="hm-leg"><span>Scende</span><span class="bar"></span><span>Sale</span><span style="margin-left:auto">Colore più acceso = movimento più insolito · ★ bordo giallo = preferito</span></div></div>`;
 }
 const nT = x => (!EN && !S.newsOrig && x.ti) || x.t, nS = x => (!EN && !S.newsOrig && x.si) || x.s || "";
 function newsLangBtn(){ return !EN && NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
@@ -1572,7 +1618,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home"];
+const SYNC_KEYS = ["name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav"];
 const SY = { snap: {}, busy: false, again: false, timer: null, last: 0, err: "" };
 S._t = S._t || {};
 const snapOf = k => JSON.stringify(S[k] ?? null);
@@ -1819,10 +1865,10 @@ document.addEventListener("pointerdown", e => {
   if (!unlocked){ unlocked = true; Sound.unlock(); }
 }, { capture: true });
 document.addEventListener("visibilitychange", () => document.hidden ? Sound.pause() : Sound.resume());
-paintMusic();
+paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "25";
+const APP_V = "26";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
