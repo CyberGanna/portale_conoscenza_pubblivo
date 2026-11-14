@@ -190,7 +190,18 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .mk-r,.mk-fav{cursor:pointer} .mk-r:hover .mk-n b,.mk-fav:hover b{color:var(--blue-2)}
 html.noscroll,html.noscroll body{overflow:hidden}
 #mk-modal{position:fixed;inset:0;z-index:60;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
-#mk-modal.open{display:flex} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
+#mk-modal.open,#nw-modal.open{display:flex}
+#nw-modal{position:fixed;inset:0;z-index:62;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+#nw-modal.open .mkd{animation:secIn .4s cubic-bezier(.2,.8,.2,1) both}
+.nwd-meta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px} .nwd-c{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.nwd-t{font-size:22px;line-height:1.3;margin:14px 0 6px} .nwd-orig{font-size:12px;margin:0 0 6px} .nwd-s{font-size:14px;line-height:1.55;color:#cbd5e1;margin:8px 0 0}
+.nwd-ai{background:linear-gradient(135deg,rgba(124,92,255,.10),rgba(47,123,255,.06));border:1px solid rgba(124,92,255,.25);border-radius:16px;padding:6px 16px 12px}
+.nwd-ai h4{display:flex;align-items:center;gap:8px;color:#c4b5fd} .nwd-ai h5{margin:12px 0 3px;font-size:13px;color:var(--ink)} .nwd-pts{margin:4px 0 0;padding-left:18px;font-size:13.5px;line-height:1.55}
+.nwd-load{display:flex;align-items:center;gap:5px;padding:10px 0;font-size:13px;color:var(--muted)} .nwd-load i{width:7px;height:7px;border-radius:50%;background:#a78bfa;animation:nwDot 1s ease-in-out infinite} .nwd-load i:nth-child(2){animation-delay:.15s} .nwd-load i:nth-child(3){animation-delay:.3s} .nwd-load span{margin-left:6px}
+@keyframes nwDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.nwd-alt{font-size:13px;line-height:1.45;padding:7px 0;border-top:1px solid var(--line);color:#cbd5e1} .nwd-alt:first-of-type{border-top:0}
+a.nw-t,a.mk-nt{cursor:pointer}
+@media (max-width:700px){#nw-modal{padding:0} #nw-modal .mkd{border-radius:0;min-height:100%;padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 30px)} .nwd-t{font-size:19px}} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
 .mkd-hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start} .mkd-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .mkd-t h2{margin:0;font-size:22px} .mkd-t .mk-star{font-size:20px}
 .mkd-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:16px 0 10px} .mkd-px b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums} .mkd-px span{color:var(--muted);font-size:13px} .mkd-px i{font-style:normal;font-weight:700;margin-left:6px}
 .mkd-px small,.mkd-day small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px} .mkd-day{text-align:right} .mkd-day b{font-size:20px}
@@ -1335,6 +1346,84 @@ function mkChatHtml(x){
   return `<div class="mkd-sec mkd-chat"><h4>${L2("Chiedi ad Aris su", "Ask Aris about")} ${esc(n)}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "mkc",
     [L2(`Perché si è mosso così oggi?`, "Why did it move like this today?"), L2("Cosa lo può far salire o scendere nei prossimi mesi?", "What could push it up or down in the coming months?"), L2("Spiegamelo come se fossi un principiante", "Explain it to me like a beginner")], "mkChatSend")}</div>`;
 }
+/* ---------------- SCHEDA DI UNA NOTIZIA (clic su un titolo: spiegazione AI + domande ad Aris) ---------------- */
+let NWD = null; const NWD_AI = {}, NWD_CHAT = {};
+document.addEventListener("click", e => {
+  const a = e.target.closest("a.nw-t, a.mk-nt, a.mkd-n, .nw-mini a.r"); if (!a) return;
+  const u = a.getAttribute("href"); if (!u || !nwFind(u)) return;
+  e.preventDefault(); e.stopPropagation(); nwOpen(u);
+}, true);
+function nwFind(u){ return (NEWS && NEWS.items.find(x => x.u === u)) || (MKAI.news || []).find(x => x.u === u) || null; }
+function nwOpen(u){
+  const x = nwFind(u); if (!x) return;
+  NWD = { u };
+  let el = document.getElementById("nw-modal");
+  if (!el){ el = document.createElement("div"); el.id = "nw-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) nwClose(); }; document.body.appendChild(el); }
+  el.classList.add("open"); document.documentElement.classList.add("noscroll"); el.scrollTop = 0;
+  nwDraw();
+  if (mkKey() && !NWD_AI[u]) nwExplain();
+}
+function nwClose(){ document.getElementById("nw-modal")?.classList.remove("open"); if (!document.querySelector("#mk-modal.open")) document.documentElement.classList.remove("noscroll"); NWD = null; }
+addEventListener("keydown", e => { if (e.key === "Escape" && NWD){ e.stopImmediatePropagation(); nwClose(); } }, true);
+const NW_STOP = new Set("the and for with from that this have will says said after over into about their more than what when were been also new news live update video della delle degli dello sulla sulle nella nelle dopo come anche sono stato essere oggi ieri contro verso perché quando quale".split(" "));
+const nwWords = t => [...new Set(String(t || "").toLowerCase().replace(/[^a-zà-ù0-9 ]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !NW_STOP.has(w)))];
+function nwRelated(x){
+  if (!NEWS) return []; const w = new Set([...nwWords(x.t), ...nwWords(x.ti)]);
+  return NEWS.items.filter(n => n.u !== x.u).map(n => [n, [...new Set([...nwWords(n.t), ...nwWords(n.ti)])].filter(k => w.has(k)).length]).filter(p => p[1] >= 2).sort((a, b) => b[1] - a[1] || b[0].n - a[0].n).slice(0, 5).map(p => p[0]);
+}
+function nwCtx(x){
+  const rel = nwRelated(x);
+  return [`Titolo: ${x.t}`, x.ti && x.ti !== x.t ? `Titolo tradotto: ${x.ti}` : "", x.s ? `Anteprima: ${x.s}` : "", x.alt && x.alt.length ? `Come la titolano altri giornali:\n- ${x.alt.slice(0, 8).join("\n- ")}` : "",
+    `Testate (${x.n}): ${(x.srcs || [[x.src]]).map(s => s[0]).join(", ")}`, `Pubblicata: ${new Date(x.d).toLocaleString("it-IT")}`, x.cats ? `Categorie: ${x.cats.map(c => CAT_T[c] || c).join(", ")}` : "",
+    rel.length ? `Notizie collegate di questi giorni:\n- ${rel.map(n => n.t).join("\n- ")}` : ""].filter(Boolean).join("\n");
+}
+async function nwExplain(){
+  if (!NWD) return; const u = NWD.u, x = nwFind(u), key = mkKey(); if (!x || !key) return;
+  NWD_AI[u] = { busy: true }; nwDraw();
+  const sys = "Sei Aris, un giornalista esperto che spiega le notizie a una persona curiosa ma non esperta, in italiano semplice. Hai solo titoli e anteprime (non l'articolo completo): usali, e per il contesto usa le tue conoscenze generali, dicendo chiaramente quando qualcosa è contesto generale e non viene dalla notizia. Non inventare dettagli, numeri o dichiarazioni. Rispondi solo con JSON: {\"cosa\":\"cosa sta succedendo, 2-4 frasi\",\"contesto\":\"il retroscena per capirla, 2-4 frasi\",\"perche\":\"perché è importante e cosa può cambiare, 2-3 frasi\",\"punti\":[\"3-4 punti chiave brevi\"],\"domande\":[\"2 domande che potrebbe voler fare per approfondire\"]}";
+  try { const o = await groqJSON(key, sys, nwCtx(x), 900); NWD_AI[u] = { cosa: String(o.cosa || ""), contesto: String(o.contesto || ""), perche: String(o.perche || ""), punti: (o.punti || []).map(String).slice(0, 5), domande: (o.domande || []).map(String).slice(0, 3) }; }
+  catch (e){ NWD_AI[u] = { err: e.message }; }
+  if (NWD && NWD.u === u) nwDraw();
+}
+async function nwChatSend(q){
+  if (!NWD) return; const u = NWD.u, x = nwFind(u), key = mkKey(); q = String(q || "").trim(); if (!q || !key || !x) return;
+  const C = NWD_CHAT[u] = NWD_CHAT[u] || { msgs: [], busy: false, err: "" }; if (C.busy) return;
+  C.msgs.push({ role: "user", content: q }); C.busy = true; C.err = ""; nwDraw(); nwChatScroll();
+  const ai = NWD_AI[u], sp = ai && ai.cosa ? `\n\nSpiegazione che hai già dato:\n${ai.cosa}\n${ai.contesto}\n${ai.perche}` : "";
+  try { const a = await groqText(key, AI_BASE() + " Hai solo titoli e anteprime della notizia, non l'articolo completo: se serve dillo.\n\nLa domanda riguarda questa notizia:\n" + nwCtx(x) + sp, C.msgs.slice(-10), 800); C.msgs.push({ role: "assistant", content: a }); }
+  catch (e){ C.err = e.message; }
+  C.busy = false; if (NWD && NWD.u === u){ nwDraw(); nwChatScroll(); setTimeout(() => document.getElementById("nwc-q")?.focus(), 30); }
+}
+function nwChatScroll(){ const m = document.getElementById("nwc-m"); if (m) m.scrollTop = m.scrollHeight; }
+function nwDraw(){
+  const el = document.getElementById("nw-modal"); if (!el || !NWD) return;
+  const x = nwFind(NWD.u); if (!x) return nwClose();
+  const ai = NWD_AI[x.u], C = NWD_CHAT[x.u] || { msgs: [], busy: false, err: "" }, rel = nwRelated(x), srcs = (x.srcs || [[x.src, x.u]]).filter(s => s && s[0]);
+  const lvl = x.n >= 8 ? "red" : x.n >= 4 ? "orange" : "blue";
+  el.innerHTML = `<div class="mkd glass nwd">
+    <div class="mkd-hd"><div class="nwd-meta"><span class="tag ${lvl}">${x.n} ${x.n === 1 ? L2("testata", "outlet") : L2("testate", "outlets")}</span><span class="muted">${ago(x.d)} · ${esc(x.src || "")}</span>
+      ${(x.cats || []).map(c => `<span class="nwd-c">${esc(EN ? I18N[CAT_T[c]] || CAT_T[c] || c : CAT_T[c] || c)}</span>`).join("")}</div>
+      <button class="round" onclick="nwClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div>
+    <h2 class="nwd-t">${esc(nT(x))}</h2>
+    ${nT(x) !== x.t ? `<p class="muted nwd-orig">${L2("Titolo originale", "Original title")}: ${esc(x.t)}</p>` : ""}
+    ${nS(x) ? `<p class="nwd-s">${esc(nS(x))}</p>` : ""}
+    <div class="mkd-sec nwd-ai"><h4><span class="aris aris-s"><b>A</b></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
+      ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
+        : !ai || ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta leggendo la notizia…", "Aris is reading the story…")}</span></div>`
+        : ai.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(ai.err)}</p><button class="btn" onclick="nwExplain()">${L2("Riprova", "Retry")}</button>`
+        : `${ai.cosa ? `<h5>${L2("Cosa sta succedendo", "What's happening")}</h5><p>${esc(ai.cosa)}</p>` : ""}
+           ${ai.contesto ? `<h5>${L2("Il contesto", "Background")}</h5><p>${esc(ai.contesto)}</p>` : ""}
+           ${ai.perche ? `<h5>${L2("Perché è importante", "Why it matters")}</h5><p>${esc(ai.perche)}</p>` : ""}
+           ${ai.punti.length ? `<h5>${L2("In breve", "In short")}</h5><ul class="nwd-pts">${ai.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}`}
+    </div>
+    <div class="mkd-sec mkd-chat"><h4>${L2("Chiedi ad Aris su questa notizia", "Ask Aris about this story")}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "nwc",
+      (ai && ai.domande && ai.domande.length ? ai.domande : [L2("Spiegamela in parole semplici", "Explain it in simple words"), L2("Chi sono i protagonisti?", "Who are the main players?"), L2("Cosa può succedere adesso?", "What could happen next?")]), "nwChatSend")}</div>
+    ${x.alt && x.alt.length ? `<div class="mkd-sec"><h4>${L2("Come la raccontano gli altri giornali", "How other outlets tell it")}</h4>${x.alt.slice(0, 6).map(t => `<div class="nwd-alt">“${esc(t)}”</div>`).join("")}</div>` : ""}
+    ${rel.length ? `<div class="mkd-sec"><h4>${L2("Notizie collegate", "Related stories")}</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}"><b>${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
+    <p class="muted mkd-note">${L2("Aris lavora su titoli e anteprime di più giornali, non sull'articolo completo (spesso a pagamento).", "Aris works from headlines and previews from several outlets, not the full article (often paywalled).")}
+      ${srcs.length ? `${L2("Fonti", "Sources")}: ${srcs.slice(0, 6).map(([n, u]) => `<a class="mk-src" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join(" ")}` : ""}</p>
+  </div>`;
+}
 const nT = x => (!EN && !S.newsOrig && x.ti) || x.t, nS = x => (!EN && !S.newsOrig && x.si) || x.s || "";
 function newsLangBtn(){ return !EN && NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
 /* modelli Groq: li legge dal tuo account (cambiano nel tempo) e sceglie i migliori disponibili */
@@ -2261,7 +2350,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "31";
+const APP_V = "32";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
