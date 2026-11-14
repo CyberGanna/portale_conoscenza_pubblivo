@@ -186,7 +186,26 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .hm-t:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.25)} .hm-t b{display:block;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .hm-t i{font-style:normal;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
 .hm-t.fav{box-shadow:inset 0 0 0 1.5px #fbbf24} .hm-leg{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:12px} .hm-leg .bar{flex:1;max-width:220px;height:6px;border-radius:3px;background:linear-gradient(90deg,#be123c,#3f1d2b,#1f2937,#14532d,#16a34a)}
 @media (max-width:560px){.hm-g{grid-template-columns:1fr} .hm-g>span{padding-top:0}}
-.mk-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .mk-n b{font-size:14px} .mk-l small{display:block;margin-top:3px;font-size:11.5px}
+.mk-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mk-r,.mk-fav{cursor:pointer} .mk-r:hover .mk-n b,.mk-fav:hover b{color:var(--blue-2)}
+html.noscroll,html.noscroll body{overflow:hidden}
+#mk-modal{position:fixed;inset:0;z-index:60;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+#mk-modal.open{display:flex} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
+.mkd-hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start} .mkd-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .mkd-t h2{margin:0;font-size:22px} .mkd-t .mk-star{font-size:20px}
+.mkd-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:16px 0 10px} .mkd-px b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums} .mkd-px span{color:var(--muted);font-size:13px} .mkd-px i{font-style:normal;font-weight:700;margin-left:6px}
+.mkd-px small,.mkd-day small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px} .mkd-day{text-align:right} .mkd-day b{font-size:20px}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#34d399;margin-right:5px;box-shadow:0 0 8px #34d399;animation:pulse 1.6s infinite}
+.mkd-per{align-items:center} .mkd-per .chip{padding:5px 11px;font-size:12px} .mkd-perch{margin-left:auto;font-weight:700;font-size:13px}
+.mkd-ch{position:relative;height:200px;margin-top:10px;touch-action:pan-y} .mkd-ch svg{width:100%;height:100%;display:block}
+.mkd-ax{position:absolute;right:4px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-size:10.5px;color:var(--muted);pointer-events:none}
+.mkd-dates{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px} .mkd-ch-empty{padding:40px 0;text-align:center}
+.mkd-hl{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.35);opacity:0;pointer-events:none} .mkd-tip{position:absolute;top:-6px;width:150px;text-align:center;font-size:11.5px;padding:4px 6px;border-radius:8px;background:rgba(0,0,0,.75);opacity:0;pointer-events:none}
+.mkd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px} .mkd-stats div{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.mkd-stats small{display:block;font-size:11px;color:var(--muted)} .mkd-stats b{font-size:15px;font-variant-numeric:tabular-nums} .mkd-stats i{display:block;font-style:normal;font-size:10.5px;color:var(--faint)}
+.mkd-sec{margin-top:18px} .mkd-sec h4{margin:12px 0 5px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)} .mkd-sec p{margin:4px 0;font-size:13.5px;line-height:1.5}
+.mkd-yrs{display:flex;flex-direction:column;gap:4px} .mkd-y{display:grid;grid-template-columns:48px 1fr 70px;gap:10px;align-items:center;font-size:12.5px} .mkd-y .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.04)} .mkd-y .bar i{display:block;height:100%;border-radius:4px;opacity:.85} .mkd-y b{text-align:right;font-variant-numeric:tabular-nums}
+.mkd-n{display:block;padding:8px 0;border-top:1px solid var(--line)} .mkd-n b{display:block;font-size:13px;font-weight:600;color:var(--ink)} .mkd-n:hover b{color:var(--blue-2)} .mkd-n small{color:var(--muted);font-size:11px} .mkd-note{font-size:11px;margin-top:14px}
+@media (max-width:700px){#mk-modal{padding:0} .mkd{border-radius:0;min-height:100%;padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 30px)} .mkd-stats{grid-template-columns:repeat(2,1fr)} .mkd-px b{font-size:26px}} .mk-n b{font-size:14px} .mk-l small{display:block;margin-top:3px;font-size:11.5px}
 .mk-p{font-size:17px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums} .mk-why{grid-column:1/-1;font-size:12.5px;line-height:1.45;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .mk-why p{margin:2px 0} .mk-why b{color:var(--ink)} .tag.red{background:rgba(244,63,94,.16);color:#fb7185} .mk-kv span:nth-child(even){text-align:right}
 @media (max-width:560px){.mk-sp{display:none} .mk-r{grid-template-columns:1fr auto}}
@@ -872,7 +891,7 @@ const mkIsFav = s => mkFavs().includes(s);
 function mkFav(s){ const f = mkFavs(), i = f.indexOf(s); if (i >= 0) f.splice(i, 1); else f.push(s); save(); toast(i >= 0 ? "Tolto dai preferiti" : "Salvato nei preferiti"); reView(); }
 function mkRow(x, why){
   const ai = mkAI(x), [lv, lc] = mkLevel(x.z), done = MKAI.v === 2 && MK && MKAI.at === MK.updated;
-  return `<div class="mk-r">
+  return `<div class="mk-r" onclick="mkOpen('${esc(x.s)}')">
     <div class="mk-l"><div class="mk-n"><button class="mk-star ${mkIsFav(x.s) ? "on" : ""}" title="${mkIsFav(x.s) ? "Togli dai preferiti" : "Salva nei preferiti"}" onclick="event.stopPropagation();mkFav('${esc(x.s)}')">${mkIsFav(x.s) ? "★" : "☆"}</button><b>${esc(x.n)}</b><span class="tag ${lc}" style="${lc ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${lv}</span></div>
       <small class="muted">${esc(x.cls)} · ${mkFmt(x)}${x.cls === "Tassi" ? "%" : " " + esc(x.cur)}${x.wk != null ? ` · 5 giorni ${mkPct(x.wk)}` : ""} · di solito si muove ±${x.vol.toLocaleString("it-CH")}% al giorno</small></div>
     ${mkSpark(x.spark, mkCol(x.pct))}
@@ -948,7 +967,7 @@ function mkView(){
 function mkFavCard(){
   const F = mkFavs().map(s => MK && MK.items.find(x => x.s === s)).filter(Boolean);
   return `<div class="glass c"><div class="hd"><div><h3>★ I miei preferiti</h3><small>${F.length ? "Sempre qui, uguali su PC e telefono" : "Tocca ☆ accanto a uno strumento per salvarlo"}</small></div></div>
-    ${F.length ? F.map(x => { const ai = mkAI(x); return `<div class="mk-fav"><div class="t"><span><button class="mk-star on" title="Togli dai preferiti" onclick="mkFav('${esc(x.s)}')">★</button><b>${esc(x.n)}</b></span><span class="p" style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</span></div>
+    ${F.length ? F.map(x => { const ai = mkAI(x); return `<div class="mk-fav" onclick="if(!event.target.closest('.mk-star'))mkOpen('${esc(x.s)}')"><div class="t"><span><button class="mk-star on" title="Togli dai preferiti" onclick="event.stopPropagation();mkFav('${esc(x.s)}')">★</button><b>${esc(x.n)}</b></span><span class="p" style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</span></div>
       <div class="t"><span class="px">${mkFmt(x)}${x.cls === "Tassi" ? "%" : " " + esc(x.cur)}${x.wk != null ? ` · 5 giorni ${mkPct(x.wk)}` : ""}</span><span class="tag ${mkLevel(x.z)[1]}" style="${mkLevel(x.z)[1] ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${mkLevel(x.z)[0]}</span></div>
       ${mkSpark(x.spark, mkCol(x.pct), 320, 44)}${ai ? `<div class="w">${esc(ai.perche)}</div>` : ""}</div>`; }).join("")
       : `<div class="muted" style="font-size:12.5px">Per esempio salva Oro, S&P 500 o Bitcoin: li vedrai sempre in questo riquadro, anche quando non sono tra i movimenti più forti.</div>`}</div>`;
@@ -960,8 +979,210 @@ function mkMapCard(){
   const L = MK.items.filter(mkFresh), cls = [...new Set(MK.items.map(x => x.cls))].filter(c => L.some(x => x.cls === c));
   const up = L.filter(x => x.pct > 0).length;
   return `<div class="glass c"><div class="hd"><div><h3>Mappa dei mercati</h3><small>Tutti gli strumenti di oggi · ${up} su ${L.length} in rialzo</small></div><button class="lnk" onclick="go('mercati')">Apri</button></div>
-    <div class="hm">${cls.map(c => `<div class="hm-g"><span>${esc(c)}</span><div class="hm-ts">${L.filter(x => x.cls === c).map(x => `<button class="hm-t ${mkIsFav(x.s) ? "fav" : ""}" style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}" onclick="mkCls='${esc(c)}';go('mercati')"><b>${esc(x.n)}</b><i>${mkPct(x.pct)}</i></button>`).join("")}</div></div>`).join("")}</div>
+    <div class="hm">${cls.map(c => `<div class="hm-g"><span>${esc(c)}</span><div class="hm-ts">${L.filter(x => x.cls === c).map(x => `<button class="hm-t ${mkIsFav(x.s) ? "fav" : ""}" style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}" onclick="mkOpen('${esc(x.s)}')"><b>${esc(x.n)}</b><i>${mkPct(x.pct)}</i></button>`).join("")}</div></div>`).join("")}</div>
     <div class="hm-leg"><span>Scende</span><span class="bar"></span><span>Sale</span><span style="margin-left:auto">Colore più acceso = movimento più insolito · ★ bordo giallo = preferito</span></div></div>`;
+}
+/* schede degli strumenti: [anno di nascita, cos'è, cosa lo muove] in italiano e in inglese */
+const MK_INFO = {
+"^GSPC": [1957, "Indice delle 500 più grandi aziende quotate negli Stati Uniti, pesate per valore di borsa. È il termometro principale di Wall Street.", "Utili delle grandi aziende tecnologiche, tassi della Fed, inflazione USA, dati sul lavoro.", "Index of the 500 largest US listed companies, weighted by market value. The main gauge of Wall Street.", "Big tech earnings, Fed rates, US inflation, jobs data."],
+"^IXIC": [1971, "Indice di tutte le azioni del Nasdaq, la borsa americana delle aziende tecnologiche (Apple, Microsoft, Nvidia…).", "Tassi d'interesse (la tecnologia soffre se salgono), intelligenza artificiale, risultati dei colossi tech.", "Index of all Nasdaq stocks, the US exchange of tech companies (Apple, Microsoft, Nvidia…).", "Interest rates (tech suffers when they rise), artificial intelligence, big tech results."],
+"^DJI": [1896, "Il più antico indice americano: 30 grandi aziende, pesate per prezzo dell'azione e non per dimensione.", "Economia reale USA, industria, banche, consumi; meno sensibile alla tecnologia dell'S&P 500.", "The oldest US index: 30 large companies, weighted by share price rather than size.", "US real economy, industry, banks, consumers; less tech-driven than the S&P 500."],
+"^RUT": [1984, "Indice di 2000 piccole aziende americane: misura la salute delle imprese più legate all'economia interna.", "Tassi (le piccole aziende hanno più debiti), credito bancario, crescita economica USA.", "Index of 2,000 small US companies: tracks firms most tied to the domestic economy.", "Rates (small firms carry more debt), bank lending, US growth."],
+"^STOXX50E": [1998, "Le 50 aziende più grandi dell'area euro (ASML, LVMH, SAP, TotalEnergies…).", "BCE e tassi europei, economia tedesca e francese, prezzo dell'energia, dazi con USA e Cina.", "The 50 largest eurozone companies (ASML, LVMH, SAP, TotalEnergies…).", "ECB and euro rates, German and French economy, energy prices, tariffs with the US and China."],
+"FTSEMIB.MI": [2004, "Le 40 principali azioni della Borsa di Milano. Molto pesate le banche e l'energia.", "Banche (Intesa, UniCredit), spread BTP-Bund, BCE, petrolio (Eni), politica italiana.", "The 40 main stocks of the Milan Stock Exchange, heavy in banks and energy.", "Banks (Intesa, UniCredit), BTP-Bund spread, ECB, oil (Eni), Italian politics."],
+"^GDAXI": [1988, "Le 40 maggiori aziende tedesche. È un indice 'total return': include i dividendi reinvestiti.", "Industria ed export tedesco, auto, Cina, energia, BCE.", "Germany's 40 largest companies. It's a total-return index: dividends are reinvested.", "German industry and exports, cars, China, energy, ECB."],
+"^FCHI": [1987, "Le 40 principali aziende francesi, con molto lusso (LVMH, Hermès) ed energia.", "Domanda di lusso dalla Cina e dagli USA, politica francese, BCE.", "France's 40 main companies, with lots of luxury (LVMH, Hermès) and energy.", "Luxury demand from China and the US, French politics, ECB."],
+"^FTSE": [1984, "Le 100 maggiori aziende della Borsa di Londra, piene di petrolio, miniere e farmaceutica.", "Materie prime, sterlina (se scende l'indice tende a salire), Banca d'Inghilterra.", "The 100 largest London-listed companies, rich in oil, mining and pharma.", "Commodities, the pound (a weaker pound tends to lift it), Bank of England."],
+"^SSMI": [1988, "Le 20 maggiori aziende svizzere: Nestlé, Novartis e Roche pesano moltissimo.", "Farmaceutica e beni di consumo, franco svizzero, BNS. È considerato un indice 'difensivo'.", "Switzerland's 20 largest companies: Nestlé, Novartis and Roche weigh heavily.", "Pharma and consumer goods, the Swiss franc, SNB. Seen as a defensive index."],
+"^N225": [1950, "Le 225 principali aziende giapponesi della Borsa di Tokyo, pesate per prezzo.", "Yen (se si indebolisce l'export giapponese guadagna), Banca del Giappone, tecnologia e auto.", "The 225 main Japanese companies on the Tokyo exchange, price-weighted.", "The yen (a weaker yen helps exporters), Bank of Japan, tech and cars."],
+"^HSI": [1969, "Principali aziende quotate a Hong Kong, molte cinesi (Tencent, Alibaba).", "Economia e politica cinese, stimoli di Pechino, rapporti Cina-USA, immobiliare cinese.", "Main companies listed in Hong Kong, many Chinese (Tencent, Alibaba).", "Chinese economy and policy, Beijing stimulus, China-US relations, Chinese property."],
+"000001.SS": [1991, "Indice di tutte le azioni della Borsa di Shanghai, il mercato interno cinese.", "Politiche del governo cinese, banca centrale cinese, crescita del PIL, credito.", "Index of all stocks on the Shanghai exchange, China's domestic market.", "Chinese government policy, PBoC, GDP growth, credit."],
+"^VIX": [1993, "L'indice della paura: misura quanto gli investitori si aspettano che l'S&P 500 oscilli nei prossimi 30 giorni.", "Sale quando le borse scendono bruscamente o c'è incertezza (guerre, crisi, dati a sorpresa).", "The 'fear index': how much investors expect the S&P 500 to swing over the next 30 days.", "Spikes when stocks fall sharply or uncertainty rises (wars, crises, surprise data)."],
+"EURUSD=X": [1999, "Quanti dollari servono per comprare un euro. È la coppia di valute più scambiata al mondo.", "Differenza di tassi tra BCE e Fed, crescita USA contro Europa, ricerca di beni rifugio.", "How many dollars buy one euro. The most traded currency pair in the world.", "ECB vs Fed rate gap, US vs euro-area growth, safe-haven demand."],
+"EURCHF=X": [1999, "Quanti franchi svizzeri vale un euro. Se scende, il franco si rafforza.", "Paura sui mercati (il franco è un rifugio), interventi della Banca nazionale svizzera, BCE.", "How many Swiss francs one euro is worth. When it falls, the franc strengthens.", "Market fear (the franc is a haven), Swiss National Bank interventions, ECB."],
+"USDCHF=X": [1971, "Quanti franchi svizzeri vale un dollaro.", "Tassi della Fed, paura sui mercati, interventi della BNS.", "How many Swiss francs one dollar is worth.", "Fed rates, market fear, SNB interventions."],
+"USDJPY=X": [1971, "Quanti yen vale un dollaro. Lo yen è anche una moneta rifugio.", "Differenza di tassi USA-Giappone, mosse della Banca del Giappone, possibili interventi del governo giapponese.", "How many yen one dollar is worth. The yen is also a safe haven.", "US-Japan rate gap, Bank of Japan moves, possible Tokyo interventions."],
+"GBPUSD=X": [1971, "Quanti dollari vale una sterlina, detto anche 'cable'.", "Banca d'Inghilterra contro Fed, inflazione e politica britannica.", "How many dollars one pound is worth, nicknamed 'cable'.", "Bank of England vs Fed, UK inflation and politics."],
+"DX-Y.NYB": [1973, "Valore del dollaro contro sei valute principali (soprattutto l'euro).", "Tassi della Fed, dati economici USA, paura sui mercati (il dollaro sale nelle crisi).", "The dollar's value against six major currencies (mostly the euro).", "Fed rates, US data, market fear (the dollar rises in crises)."],
+"USDCNY=X": [1994, "Quanti yuan cinesi vale un dollaro. Lo yuan non è libero: la banca centrale cinese fissa ogni giorno un riferimento.", "Decisioni della banca centrale cinese, dazi e rapporti commerciali Cina-USA.", "How many Chinese yuan one dollar is worth. The yuan is managed: China's central bank sets a daily fixing.", "PBoC decisions, tariffs and China-US trade relations."],
+"ES=F": [1982, "Contratto future sull'S&P 500: si scambia quasi 24 ore su 24 e anticipa l'apertura di Wall Street.", "Le stesse cose dell'S&P 500, più le notizie che arrivano di notte o nel weekend.", "Futures contract on the S&P 500: trades almost 24 hours a day and previews Wall Street's open.", "Same drivers as the S&P 500, plus news arriving overnight or at weekends."],
+"NQ=F": [1996, "Future sul Nasdaq 100, le 100 maggiori aziende non finanziarie del Nasdaq.", "Tecnologia, intelligenza artificiale, tassi.", "Future on the Nasdaq 100, the 100 largest non-financial Nasdaq companies.", "Tech, artificial intelligence, rates."],
+"YM=F": [2002, "Future sul Dow Jones.", "Economia reale USA, industria e banche.", "Future on the Dow Jones.", "US real economy, industry and banks."],
+"RTY=F": [2017, "Future sul Russell 2000, le piccole aziende americane.", "Tassi e crescita economica USA.", "Future on the Russell 2000, small US companies.", "Rates and US growth."],
+"ZN=F": [1982, "Future sul titolo di Stato americano a 10 anni. Se sale, i rendimenti scendono.", "Inflazione, decisioni della Fed, debito pubblico USA, paura sui mercati.", "Future on the 10-year US Treasury note. When it rises, yields fall.", "Inflation, Fed decisions, US public debt, market fear."],
+"6E=F": [1999, "Future sul cambio euro-dollaro scambiato a Chicago.", "Gli stessi fattori dell'EUR/USD.", "Euro-dollar exchange-rate future traded in Chicago.", "Same drivers as EUR/USD."],
+"ZC=F": [1877, "Future sul mais della borsa di Chicago (CBOT), in centesimi di dollaro per staio.", "Meteo e raccolti negli USA e in Brasile, biocarburanti, export verso la Cina.", "Corn future on the Chicago Board of Trade (CBOT), in US cents per bushel.", "Weather and harvests in the US and Brazil, biofuels, exports to China."],
+"ZS=F": [1936, "Future sulla soia della borsa di Chicago.", "Domanda cinese, raccolti in Brasile e Argentina, meteo, dazi.", "Soybean future on the Chicago exchange.", "Chinese demand, harvests in Brazil and Argentina, weather, tariffs."],
+"^TNX": [1962, "Il rendimento del titolo di Stato americano a 10 anni: il tasso di riferimento per mutui e borse di tutto il mondo.", "Inflazione, Fed, deficit pubblico USA, crescita economica.", "The yield on the 10-year US Treasury: the benchmark for mortgages and stock markets worldwide.", "Inflation, the Fed, US deficit, economic growth."],
+"^TYX": [1977, "Il rendimento del titolo di Stato americano a 30 anni.", "Aspettative di inflazione di lungo periodo e debito pubblico USA.", "The yield on the 30-year US Treasury bond.", "Long-term inflation expectations and US public debt."],
+"GC=F": [1974, "Future sull'oro (dollari per oncia). Bene rifugio per eccellenza.", "Tassi reali (se scendono l'oro sale), dollaro, guerre e crisi, acquisti delle banche centrali.", "Gold future (dollars per ounce). The classic safe haven.", "Real rates (gold rises when they fall), the dollar, wars and crises, central-bank buying."],
+"SI=F": [1933, "Future sull'argento: metà bene rifugio, metà metallo industriale.", "Oro, domanda industriale (pannelli solari, elettronica), dollaro.", "Silver future: half safe haven, half industrial metal.", "Gold, industrial demand (solar panels, electronics), the dollar."],
+"CL=F": [1983, "Future sul petrolio americano WTI (dollari al barile).", "Decisioni OPEC+, scorte USA, guerre in Medio Oriente, crescita mondiale.", "US WTI crude oil future (dollars per barrel).", "OPEC+ decisions, US inventories, Middle East conflicts, global growth."],
+"BZ=F": [1988, "Future sul petrolio Brent del Mare del Nord, il riferimento per Europa e mondo.", "OPEC+, tensioni in Medio Oriente e Russia, domanda cinese.", "North Sea Brent crude future, the benchmark for Europe and the world.", "OPEC+, Middle East and Russia tensions, Chinese demand."],
+"NG=F": [1990, "Future sul gas naturale americano (Henry Hub).", "Meteo (freddo e caldo), scorte, export di gas liquefatto.", "US natural gas future (Henry Hub).", "Weather (cold and heat), storage, LNG exports."],
+"HG=F": [1988, "Future sul rame, detto 'Dottor Rame' perché anticipa la salute dell'economia.", "Costruzioni e industria in Cina, auto elettriche e reti elettriche, miniere in Cile e Perù.", "Copper future, nicknamed 'Dr Copper' because it signals the economy's health.", "Chinese construction and industry, EVs and power grids, mines in Chile and Peru."],
+"ZW=F": [1877, "Future sul grano della borsa di Chicago, in centesimi per staio.", "Raccolti, meteo, guerra in Ucraina (grande esportatore), Russia.", "Wheat future on the Chicago exchange, in cents per bushel.", "Harvests, weather, the war in Ukraine (a big exporter), Russia."],
+"BTC-USD": [2009, "La prima criptovaluta, creata da Satoshi Nakamoto. Ne esisteranno al massimo 21 milioni.", "Flussi negli ETF, tassi della Fed, regole sulle cripto, propensione al rischio.", "The first cryptocurrency, created by Satoshi Nakamoto. At most 21 million will ever exist.", "ETF flows, Fed rates, crypto regulation, risk appetite."],
+"ETH-USD": [2015, "La moneta della rete Ethereum, la piattaforma dei contratti intelligenti e della finanza decentralizzata.", "Bitcoin, uso della rete, ETF, aggiornamenti tecnici, regole.", "The coin of the Ethereum network, the platform for smart contracts and decentralized finance.", "Bitcoin, network use, ETFs, upgrades, regulation."],
+"SOL-USD": [2020, "La moneta della rete Solana, una blockchain molto veloce.", "Mercato cripto in generale, uso delle app sulla rete, notizie sugli ETF.", "The coin of the Solana network, a very fast blockchain.", "The overall crypto market, app usage on the network, ETF news."],
+"AAPL": [1976, "Apple: iPhone, Mac, iPad e servizi. Fondata da Steve Jobs e Steve Wozniak.", "Vendite di iPhone (Cina compresa), servizi, dazi sulla produzione in Asia, intelligenza artificiale.", "Apple: iPhone, Mac, iPad and services. Founded by Steve Jobs and Steve Wozniak.", "iPhone sales (including China), services, tariffs on Asian production, AI."],
+"MSFT": [1975, "Microsoft: Windows, Office, il cloud Azure e grande socio di OpenAI.", "Crescita del cloud, intelligenza artificiale, spese per i data center.", "Microsoft: Windows, Office, the Azure cloud and a major OpenAI partner.", "Cloud growth, AI, data-centre spending."],
+"NVDA": [1993, "Nvidia: produce i chip (GPU) usati per addestrare l'intelligenza artificiale.", "Spese dei giganti tech in data center, limiti all'export verso la Cina, nuovi chip.", "Nvidia: makes the chips (GPUs) used to train AI.", "Big tech data-centre spending, export limits to China, new chips."],
+"AMZN": [1994, "Amazon: commercio online e il cloud AWS, fondata da Jeff Bezos.", "Consumi, crescita di AWS, costi della logistica.", "Amazon: online retail and the AWS cloud, founded by Jeff Bezos.", "Consumer spending, AWS growth, logistics costs."],
+"GOOGL": [1998, "Alphabet, la società di Google, YouTube e Android.", "Pubblicità online, concorrenza dell'AI, cause antitrust, cloud.", "Alphabet, the parent of Google, YouTube and Android.", "Online ads, AI competition, antitrust cases, cloud."],
+"META": [2004, "Meta: Facebook, Instagram, WhatsApp. Fondata da Mark Zuckerberg.", "Pubblicità, spese per l'AI e la realtà virtuale, regole sulla privacy.", "Meta: Facebook, Instagram, WhatsApp. Founded by Mark Zuckerberg.", "Advertising, AI and VR spending, privacy rules."],
+"TSLA": [2003, "Tesla: auto elettriche, batterie e robotaxi, guidata da Elon Musk.", "Consegne di auto, margini, guida autonoma, notizie su Elon Musk.", "Tesla: electric cars, batteries and robotaxis, led by Elon Musk.", "Deliveries, margins, self-driving, Elon Musk news."],
+"AVGO": [1961, "Broadcom: chip per reti e data center e chip su misura per l'AI.", "Ordini di chip AI dai giganti tech, software (VMware).", "Broadcom: networking and data-centre chips and custom AI chips.", "AI chip orders from big tech, software (VMware)."],
+"JPM": [1799, "JPMorgan Chase, la più grande banca americana.", "Tassi d'interesse, salute dell'economia, crediti in sofferenza, regole bancarie.", "JPMorgan Chase, the largest US bank.", "Interest rates, economic health, bad loans, banking rules."],
+"NFLX": [1997, "Netflix, il servizio di streaming di film e serie.", "Nuovi abbonati, prezzi, pubblicità, concorrenza.", "Netflix, the film and series streaming service.", "Subscriber growth, pricing, advertising, competition."],
+"NESN.SW": [1866, "Nestlé, il più grande gruppo alimentare al mondo, con sede a Vevey.", "Prezzi di cacao e caffè, franco svizzero, consumi.", "Nestlé, the world's largest food company, based in Vevey.", "Cocoa and coffee prices, the Swiss franc, consumer spending."],
+"NOVN.SW": [1996, "Novartis, farmaceutica di Basilea nata dalla fusione di Ciba-Geigy e Sandoz.", "Risultati dei nuovi farmaci, brevetti in scadenza, prezzi dei farmaci negli USA.", "Novartis, Basel pharma group born from the Ciba-Geigy and Sandoz merger.", "New drug results, patent expiries, US drug pricing."],
+"ROG.SW": [1896, "Roche, farmaceutica e diagnostica di Basilea.", "Studi clinici, brevetti, prezzi dei farmaci negli USA.", "Roche, Basel pharma and diagnostics group.", "Clinical trials, patents, US drug pricing."],
+"UBSG.SW": [1862, "UBS, la più grande banca svizzera (dal 2023 ha assorbito Credit Suisse).", "Regole sul capitale delle banche in Svizzera, mercati finanziari, gestione patrimoniale.", "UBS, Switzerland's largest bank (absorbed Credit Suisse in 2023).", "Swiss bank capital rules, financial markets, wealth management."],
+"ASML.AS": [1984, "ASML, olandese, l'unica al mondo a costruire le macchine più avanzate per produrre chip.", "Ordini dai produttori di chip, limiti all'export verso la Cina.", "ASML, Dutch, the only maker of the most advanced chip-making machines.", "Orders from chipmakers, export limits to China."],
+"SAP.DE": [1972, "SAP, il più grande gruppo di software europeo (gestionali per aziende).", "Passaggio dei clienti al cloud, spese IT delle aziende, AI.", "SAP, Europe's largest software company (business software).", "Customers moving to the cloud, corporate IT spending, AI."],
+"MC.PA": [1987, "LVMH: Louis Vuitton, Dior, Moët, Bulgari e decine di marchi di lusso.", "Domanda di lusso in Cina e USA, turismo, dazi.", "LVMH: Louis Vuitton, Dior, Moët, Bulgari and dozens of luxury brands.", "Luxury demand in China and the US, tourism, tariffs."],
+"NOVO-B.CO": [1923, "Novo Nordisk, danese: insulina e farmaci per il diabete e l'obesità (Ozempic, Wegovy).", "Vendite dei farmaci per dimagrire, concorrenza di Eli Lilly, prezzi negli USA.", "Novo Nordisk, Danish: insulin and diabetes and obesity drugs (Ozempic, Wegovy).", "Weight-loss drug sales, Eli Lilly competition, US pricing."],
+"ENI.MI": [1953, "Eni, il gruppo energetico italiano fondato da Enrico Mattei.", "Prezzo di petrolio e gas, scoperte di giacimenti, dividendi.", "Eni, the Italian energy group founded by Enrico Mattei.", "Oil and gas prices, new discoveries, dividends."],
+"ISP.MI": [2007, "Intesa Sanpaolo, la più grande banca italiana.", "Tassi della BCE, spread BTP-Bund, economia italiana, dividendi.", "Intesa Sanpaolo, Italy's largest bank.", "ECB rates, BTP-Bund spread, Italian economy, dividends."],
+"UCG.MI": [1998, "UniCredit, grande banca italiana attiva in tutta Europa.", "Tassi della BCE, acquisizioni di altre banche, spread, dividendi.", "UniCredit, a large Italian bank active across Europe.", "ECB rates, bank acquisitions, spread, dividends."],
+"RACE.MI": [1939, "Ferrari, auto sportive di lusso di Maranello (in borsa dal 2015).", "Ordini e listino dei nuovi modelli, domanda dei clienti più ricchi, Formula 1.", "Ferrari, luxury sports cars from Maranello (listed since 2015).", "Order book and new models, demand from the wealthiest buyers, Formula 1."],
+"STLAM.MI": [2021, "Stellantis, nata dalla fusione di FCA e PSA: Fiat, Peugeot, Jeep, Alfa Romeo…", "Vendite di auto in Europa e USA, dazi, auto elettriche, margini.", "Stellantis, born from the FCA-PSA merger: Fiat, Peugeot, Jeep, Alfa Romeo…", "Car sales in Europe and the US, tariffs, EVs, margins."],
+};
+/* ---------------- SCHEDA DI UNO STRUMENTO (clic su un financial instrument) ---------------- */
+const L2 = (it, en) => EN ? en : it;
+const ST_URL = NEWS_URL.replace("news.json", "storia.json");
+let STORIA = null, MKD = null; const MKD_AI = {};
+async function loadStoria(){
+  if (STORIA && Date.now() - STORIA._at < 30 * 6e4) return STORIA;
+  try { let r; try { r = await fetch(ST_URL, { cache: "no-cache" }); if (!r.ok) throw 0; } catch { r = await fetch("news/storia.json", { cache: "no-cache" }); }
+    if (r.ok){ STORIA = await r.json(); STORIA._at = Date.now(); } } catch {}
+  return STORIA;
+}
+const dDate = d => new Date(d * 864e5);
+const mY = d => { const x = dDate(d); return `${MESI[x.getUTCMonth()].slice(0, 3)} ${x.getUTCFullYear()}`; };
+const dFull = d => { const x = dDate(d); return `${x.getUTCDate()} ${MESI[x.getUTCMonth()]} ${x.getUTCFullYear()}`; };
+const pctOf = (a, b) => b ? (a / b - 1) * 100 : null;
+const mkPct1 = p => `${p > 0 ? "+" : ""}${p.toLocaleString("it-CH", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const MK_PER = [["1M", 22, "d"], ["6M", 126, "d"], ["1A", 400, "d"], ["5A", 60, "m"], ["10A", 120, "m"], ["Max", 1e5, "m"]];
+function mkOpen(s){
+  const x = MK && MK.items.find(i => i.s === s); if (!x) return;
+  MKD = { s, per: MKD && MKD.s === s ? MKD.per : "1A", live: null };
+  let el = document.getElementById("mk-modal");
+  if (!el){ el = document.createElement("div"); el.id = "mk-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) mkClose(); }; document.body.appendChild(el); }
+  el.classList.add("open"); document.documentElement.classList.add("noscroll");
+  mkDraw();
+  loadStoria().then(() => { if (MKD && MKD.s === s) mkDraw(); });
+  clearInterval(mkOpen.t); mkLive(); mkOpen.t = setInterval(mkLive, 15000);
+}
+function mkClose(){ const el = document.getElementById("mk-modal"); if (el) el.classList.remove("open"); document.documentElement.classList.remove("noscroll"); clearInterval(mkOpen.t); MKD = null; }
+addEventListener("keydown", e => { if (e.key === "Escape" && MKD) mkClose(); });
+/* prezzo in tempo reale: gratis solo per le cripto (Coinbase); il resto arriva ogni ora da Yahoo */
+async function mkLive(){
+  if (!MKD) return; const s = MKD.s; if (!/-USD$/.test(s)) return;
+  try { const r = await fetch(`https://api.coinbase.com/v2/prices/${s}/spot`); if (!r.ok) return; const v = +(await r.json()).data.amount;
+    if (MKD && MKD.s === s && v){ MKD.live = { v, at: Date.now() }; mkDraw(); } } catch {}
+}
+function mkLiveHtml(){
+  const x = MK.items.find(i => i.s === MKD.s), lv = MKD.live;
+  if (!lv) return `<div id="mkd-live" class="mkd-px"><b>${mkFmt(x)}</b> <span>${x.cls === "Tassi" ? "%" : esc(x.cur)}</span><small>${L2("ultimo prezzo", "last price")} · ${hhmm(new Date(x.t))} · ${L2("si aggiorna ogni ora", "updated hourly")}</small></div>`;
+  const ch = pctOf(lv.v, x.prev);
+  return `<div id="mkd-live" class="mkd-px"><b>${lv.v.toLocaleString("it-CH", { maximumFractionDigits: lv.v >= 1000 ? 0 : 2, minimumFractionDigits: lv.v >= 1000 ? 0 : 2 })}</b> <span>USD</span><small><span class="live-dot"></span>${L2("in tempo reale", "live")} · Coinbase · ${hhmm(new Date(lv.at))}</small></div>`;
+}
+function mkSeries(h, per){
+  const [, n, k] = MK_PER.find(p => p[0] === per) || MK_PER[2];
+  const a = (k === "d" ? h.d : h.m) || []; return a.slice(-n);
+}
+function mkChart(ser, col){
+  if (!ser || ser.length < 2) return `<div class="muted mkd-ch-empty">${L2("Storico in arrivo: si scarica con il prossimo aggiornamento orario.", "History coming: it downloads with the next hourly update.")}</div>`;
+  const W = 640, H = 200, P = 6, v = ser.map(p => p[1]), lo = Math.min(...v), hi = Math.max(...v), k = (hi - lo) || 1;
+  const X = i => P + i / (ser.length - 1) * (W - 2 * P), Y = y => H - P - (y - lo) / k * (H - 2 * P);
+  const pts = ser.map((p, i) => `${X(i).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
+  return `<div class="mkd-ch" onmousemove="mkHover(event)" ontouchmove="mkHover(event.touches[0], this)" onmouseleave="mkHover(null)">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="mkg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".35"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="${P},${H} ${pts} ${W - P},${H}" fill="url(#mkg)"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>
+    <div class="mkd-hl" id="mkd-hl"></div><div class="mkd-tip" id="mkd-tip"></div>
+    <div class="mkd-ax"><span>${hi.toLocaleString("it-CH", { maximumFractionDigits: hi >= 100 ? 0 : 2 })}</span><span>${lo.toLocaleString("it-CH", { maximumFractionDigits: lo >= 100 ? 0 : 2 })}</span></div></div>
+    <div class="mkd-dates"><span>${MKD.per === "1M" || MKD.per === "6M" || MKD.per === "1A" ? dFull(ser[0][0]) : mY(ser[0][0])}</span><span>${dFull(ser.at(-1)[0])}</span></div>`;
+}
+function mkHover(e, box){
+  const c = document.querySelector("#mk-modal .mkd-ch"), tip = document.getElementById("mkd-tip"), hl = document.getElementById("mkd-hl"); if (!c || !tip) return;
+  if (!e){ tip.style.opacity = 0; hl.style.opacity = 0; return; }
+  const h = STORIA && STORIA.s[MKD.s]; const ser = h && mkSeries(h, MKD.per); if (!ser) return;
+  const r = c.getBoundingClientRect(), f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), i = Math.round(f * (ser.length - 1)), p = ser[i];
+  const daily = ["1M", "6M", "1A"].includes(MKD.per);
+  tip.innerHTML = `<b>${p[1].toLocaleString("it-CH", { maximumFractionDigits: p[1] >= 100 ? 2 : 4 })}</b> · ${daily ? dFull(p[0]) : mY(p[0])}`;
+  const px = i / (ser.length - 1) * r.width; tip.style.left = Math.min(r.width - 150, Math.max(0, px - 75)) + "px"; tip.style.opacity = 1; hl.style.left = px + "px"; hl.style.opacity = 1;
+}
+function mkStats(x, h){
+  const out = [], m = h.m || [], d = h.d || [], last = x.px;
+  const back = n => m.length > n ? m[m.length - 1 - n][1] : null;
+  const row = (t, v, sub) => out.push(`<div><small>${t}</small><b ${v != null && typeof v === "number" ? `style="color:${mkCol(v)}"` : ""}>${v == null ? "–" : typeof v === "number" ? mkPct1(v) : v}</b>${sub ? `<i>${sub}</i>` : ""}</div>`);
+  if (d.length > 200){ const y1 = d.slice(-252).map(p => p[1]); row(L2("1 anno", "1 year"), pctOf(last, y1[0])); }
+  row(L2("5 anni", "5 years"), back(60) && pctOf(last, back(60)));
+  row(L2("10 anni", "10 years"), back(120) && pctOf(last, back(120)));
+  if (m.length > 2) row(L2("Da inizio storia", "Since start"), pctOf(last, m[0][1]), L2("dal ", "since ") + mY(m[0][0]));
+  if (m.length){ let mx = m[0]; for (const p of m) if (p[1] > mx[1]) mx = p;
+    for (const p of d) if (p[1] > mx[1]) mx = p;
+    row(L2("Massimo storico", "All-time high"), mx[1].toLocaleString("it-CH", { maximumFractionDigits: mx[1] >= 100 ? 0 : 2 }), mY(mx[0]));
+    row(L2("Distanza dal massimo", "From the high"), pctOf(last, mx[1])); }
+  if (d.length > 200){ const y1 = d.slice(-252).map(p => p[1]); row(L2("Min - max 52 settimane", "52-week low - high"), `${Math.min(...y1).toLocaleString("it-CH", { maximumFractionDigits: 2 })} – ${Math.max(...y1).toLocaleString("it-CH", { maximumFractionDigits: 2 })}`); }
+  row(L2("Oscillazione tipica al giorno", "Typical daily move"), `±${x.vol.toLocaleString("it-CH")}%`);
+  return `<div class="mkd-stats">${out.join("")}</div>`;
+}
+/* cronologia: rendimento anno per anno dalla storia mensile */
+function mkYears(h){
+  const m = h.m || []; if (m.length < 14) return "";
+  const end = {}; for (const p of m) end[dDate(p[0]).getUTCFullYear()] = p[1];
+  const ys = Object.keys(end).map(Number).sort(); const rows = [];
+  for (let i = 1; i < ys.length; i++) rows.push([ys[i], pctOf(end[ys[i]], end[ys[i - 1]])]);
+  const all = rows.filter(r => r[1] != null), best = all.reduce((a, b) => b[1] > a[1] ? b : a, all[0]), worst = all.reduce((a, b) => b[1] < a[1] ? b : a, all[0]);
+  const show = rows.slice(-12), mx = Math.max(...show.map(r => Math.abs(r[1] || 0)), 1);
+  return `<div class="mkd-sec"><h4>${L2("Anno per anno", "Year by year")}</h4>
+    <div class="mkd-yrs">${show.map(([y, v]) => `<div class="mkd-y"><span>${y}${y === new Date().getFullYear() ? "*" : ""}</span><div class="bar"><i style="width:${Math.abs(v) / mx * 100}%;background:${mkCol(v)}"></i></div><b style="color:${mkCol(v)}">${mkPct1(v)}</b></div>`).join("")}</div>
+    <p class="muted mkd-note">${L2(`Anno migliore: <b>${best[0]}</b> (${mkPct1(best[1])}) · anno peggiore: <b>${worst[0]}</b> (${mkPct1(worst[1])}) · * anno in corso`, `Best year: <b>${best[0]}</b> (${mkPct1(best[1])}) · worst year: <b>${worst[0]}</b> (${mkPct1(worst[1])}) · * year to date`)}</p></div>`;
+}
+function mkWords(x){ return (x.n + " " + x.s).replace(/\(.*?\)|=X|=F|-USD|\.[A-Z]+$|\^/g, " ").split(/[\s/]+/).filter(w => w.length > 2 && !/^(future|anni|indice|usa|the|del|di)$/i.test(w)); }
+function mkRelNews(x){
+  if (!NEWS) return [];
+  const ws = mkWords(x).map(w => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i"));
+  if (!ws.length) return [];
+  return NEWS.items.filter(n => ws.some(r => r.test(n.t) || r.test(n.ti || ""))).sort((a, b) => b.d - a.d).slice(0, 5);
+}
+async function mkAskNow(){
+  if (!MKD) return; const s = MKD.s, x = MK.items.find(i => i.s === s), key = mkKey(); if (!key) return;
+  MKD_AI[s] = { busy: true }; mkDraw();
+  const rel = mkRelNews(x), info = MK_INFO[s];
+  const eco = NEWS ? NEWS.items.filter(n => n.cats.includes("economia")).sort((a, b) => b.n - a.n).slice(0, 15) : [];
+  const sys = "Sei un analista finanziario che spiega a una persona non esperta, in italiano semplice. In 3-4 frasi spiega cosa sta influenzando di più questo strumento in questo periodo, usando i titoli delle notizie se c'entrano davvero e il suo andamento recente. Se le notizie non bastano dillo e indica i fattori più probabili come ipotesi. Non inventare numeri o fatti. Niente consigli di comprare o vendere. Rispondi solo con JSON: {\"adesso\":\"...\"}";
+  const user = `Strumento: ${x.n} (${x.s}, ${x.cls})\nCos'è: ${info ? info[1] : "-"}\nOggi ${mkPct(x.pct)} (di solito ±${x.vol}% al giorno), 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}\n\nNotizie che lo citano:\n${rel.map(n => "- " + n.t).join("\n") || "(nessuna)"}\n\nNotizie di economia più importanti:\n${eco.map(n => "- " + n.t).join("\n") || "(nessuna)"}`;
+  try { const o = await groqJSON(key, sys, user, 500); MKD_AI[s] = { at: MK.updated, txt: String(o.adesso || "").trim() || L2("Nessuna risposta.", "No answer.") }; }
+  catch (e){ MKD_AI[s] = { err: e.message }; }
+  if (MKD && MKD.s === s) mkDraw();
+}
+function mkDraw(){
+  const el = document.getElementById("mk-modal"); if (!el || !MKD) return;
+  const x = MK.items.find(i => i.s === MKD.s), info = MK_INFO[x.s], h = STORIA && STORIA.s && STORIA.s[x.s], ai = mkAI(x), now = MKD_AI[x.s], [lv, lc] = mkLevel(x.z);
+  const ser = h ? mkSeries(h, MKD.per) : null, chCol = ser && ser.length > 1 ? (ser.at(-1)[1] >= ser[0][1] ? "#34d399" : "#f43f5e") : "#5b9bff";
+  const perCh = ser && ser.length > 1 ? pctOf(ser.at(-1)[1], ser[0][1]) : null;
+  const rel = mkRelNews(x);
+  el.innerHTML = `<div class="mkd glass">
+    <div class="mkd-hd"><div><div class="mkd-t"><button class="mk-star ${mkIsFav(x.s) ? "on" : ""}" onclick="mkFav('${esc(x.s)}');mkDraw()" title="${L2("Preferito", "Favourite")}">${mkIsFav(x.s) ? "★" : "☆"}</button><h2>${esc(EN ? (I18N[x.n] || x.n) : x.n)}</h2><span class="tag ${lc}" style="${lc ? "" : "background:rgba(255,255,255,.06);color:var(--muted)"}">${EN ? I18N[lv] || lv : lv}</span></div>
+      <small class="muted">${esc(x.s)} · ${esc(EN ? I18N[x.cls] || x.cls : x.cls)}${h && h.ex ? " · " + esc(h.ex) : ""}${info ? ` · ${L2("nato nel", "since")} ${info[0]}` : ""}</small></div>
+      <button class="round" onclick="mkClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div>
+    <div class="mkd-top">${mkLiveHtml()}${(d => `<div class="mkd-day"><b style="color:${mkCol(d)}">${mkPct(+d.toFixed(2))}</b>`)(MKD.live ? pctOf(MKD.live.v, x.prev) : x.pct)}<small>${L2("oggi", "today")}</small></div></div>
+    <div class="chips mkd-per">${MK_PER.map(([p]) => `<button class="chip ${p === MKD.per ? "on" : ""}" onclick="MKD.per='${p}';mkDraw()">${EN ? p.replace("A", "Y") : p}</button>`).join("")}${perCh != null ? `<span class="mkd-perch" style="color:${mkCol(perCh)}">${mkPct1(perCh)}</span>` : ""}</div>
+    ${STORIA ? mkChart(ser, chCol) : `<div class="muted mkd-ch-empty">${L2("Carico lo storico…", "Loading history…")}</div>`}
+    ${h ? mkStats(x, h) : ""}
+    ${info ? `<div class="mkd-sec"><h4>${L2("Cos'è", "What it is")}</h4><p>${esc(EN ? info[3] : info[1])}</p><h4>${L2("Cosa lo muove di solito", "What usually moves it")}</h4><p>${esc(EN ? info[4] : info[2])}</p></div>` : ""}
+    <div class="mkd-sec"><h4>${L2("Cosa lo sta influenzando adesso", "What's driving it now")}</h4>
+      ${ai ? `<p>${esc(ai.perche)}</p>${ai.effetti ? `<p class="muted">${esc(ai.effetti)}</p>` : ""}` : ""}
+      ${now && now.txt ? `<p>${esc(now.txt)}</p>` : now && now.busy ? `<p class="muted">${L2("L'AI sta leggendo le notizie…", "The AI is reading the news…")}</p>` : now && now.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(now.err)}</p>` : ""}
+      ${mkKey() ? (!now || now.err ? `<button class="btn" onclick="mkAskNow()">✨ ${L2("Chiedi all'AI", "Ask the AI")}</button>` : "") : `<p class="muted">${L2("Con la chiave Groq gratuita l'AI ti spiega cosa lo muove in questi giorni.", "With the free Groq key the AI explains what's moving it these days.")}</p>`}</div>
+    ${h ? mkYears(h) : ""}
+    ${rel.length ? `<div class="mkd-sec"><h4>${L2("Nelle notizie", "In the news")}</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}" target="_blank" rel="noopener"><b>${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
+    <p class="muted mkd-note">${L2("Dati Yahoo Finance (storico mensile, ultimo anno giorno per giorno). Solo le cripto hanno il prezzo in tempo reale gratis; gli altri strumenti si aggiornano ogni ora. Non sono consigli di investimento.", "Yahoo Finance data (monthly history, last year daily). Only crypto has a free live price; other instruments update hourly. Not investment advice.")}</p>
+  </div>`;
 }
 const nT = x => (!EN && !S.newsOrig && x.ti) || x.t, nS = x => (!EN && !S.newsOrig && x.si) || x.s || "";
 function newsLangBtn(){ return !EN && NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
@@ -1868,7 +2089,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "26";
+const APP_V = "27";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
