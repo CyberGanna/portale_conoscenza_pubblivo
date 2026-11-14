@@ -228,9 +228,9 @@ html.noscroll,html.noscroll body{overflow:hidden}
   .orbs .o2{width:380px;height:380px;left:-180px;bottom:20%}
   .phone .ph-music{display:grid;position:absolute;right:16px;top:calc(var(--safe-t) + 12px);z-index:3}
   .phone .ph-lang{display:grid;position:absolute;right:62px;top:calc(var(--safe-t) + 12px);z-index:3}
-  .phone .ph-ai{display:grid;position:absolute;right:108px;top:calc(var(--safe-t) + 12px);z-index:3;font-size:16px}
-  .ph-date{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
-  .ph-hello{font-size:13px;text-align:center;margin-top:2px}
+  .phone .ph-ai{display:grid;position:absolute;right:108px;top:calc(var(--safe-t) + 12px);z-index:3;font-size:15px;color:#fff;border:0;background:radial-gradient(circle at 30% 28%,#fff 0,#c4b5fd 14%,#7c5cff 45%,#2f7bff 75%,#0b1a4a 100%);animation:aiPulse 2.8s ease-in-out infinite}
+  .ph-date{font-size:13px;color:var(--muted);text-align:left;font-weight:500;padding:6px 150px 0 4px}
+  .ph-hello{font-size:15px;font-weight:600;text-align:left;margin-top:2px;padding:0 150px 0 4px}
   .phone{display:flex!important;flex-direction:column;padding-bottom:calc(var(--safe-b) + 64px)!important}
   .wid-bottom{margin:26px 0 0!important;margin-top:auto!important} .apps{margin-bottom:26px}
   .cal-w{justify-content:flex-start!important;gap:16px!important;align-items:stretch!important}
@@ -311,8 +311,39 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .music-btn.on svg{animation:pulse 2.6s ease-in-out infinite}
 @keyframes pulse{50%{transform:scale(1.15)}}
 .ph-music,.ph-lang,.ph-ai{display:none}
-.ai-side{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;text-align:left;width:100%;margin-bottom:10px;padding:11px 12px;border-radius:14px;cursor:pointer;color:var(--ink);background:linear-gradient(135deg,rgba(47,123,255,.22),rgba(167,139,250,.18));border:1px solid rgba(91,155,255,.35);box-shadow:0 0 22px rgba(47,123,255,.15);transition:transform .15s,box-shadow .15s}
-.ai-side:hover{transform:translateY(-1px);box-shadow:0 0 28px rgba(47,123,255,.3)} .ai-side span{grid-row:span 2;font-size:20px} .ai-side b{font-size:13.5px} .ai-side small{font-size:11px;color:var(--muted)}
+.ai-side{position:relative;display:block;width:100%;margin-bottom:12px;padding:1.5px;border:0;border-radius:18px;cursor:pointer;overflow:hidden;isolation:isolate;background:rgba(255,255,255,.08);box-shadow:0 8px 30px -8px rgba(124,92,255,.55),0 0 0 1px rgba(255,255,255,.04);transition:transform .25s cubic-bezier(.2,.9,.3,1.3),box-shadow .25s}
+.ai-side::before{content:"";position:absolute;inset:-60%;z-index:-1;background:conic-gradient(from 0deg,#2f7bff,#a78bfa,#f472b6,#fbbf24,#22d3ee,#2f7bff);animation:aiSpin 5s linear infinite}
+.ai-side:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 14px 38px -8px rgba(124,92,255,.75)} .ai-side:active{transform:scale(.98)}
+.ai-in{position:relative;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:16.5px;background:linear-gradient(135deg,rgba(18,22,40,.96),rgba(30,22,52,.94));overflow:hidden;text-align:left}
+.ai-in::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-18deg);animation:aiShine 4.5s ease-in-out infinite}
+.ai-orb{position:relative;flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 28%,#fff 0,#c4b5fd 14%,#7c5cff 45%,#2f7bff 75%,#0b1a4a 100%);box-shadow:0 0 18px rgba(124,92,255,.8),inset 0 -4px 10px rgba(0,0,0,.35);animation:aiPulse 2.8s ease-in-out infinite}
+.ai-orb i{font-style:normal;font-size:15px;color:#fff;text-shadow:0 0 8px #fff;animation:aiTwinkle 2.8s ease-in-out infinite}
+.ai-orb::after{content:"✦";position:absolute;top:-3px;right:-4px;font-size:10px;color:#fde68a;text-shadow:0 0 6px #fbbf24;animation:aiTwinkle 2s ease-in-out .7s infinite}
+.ai-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px} .ai-tx b{font-size:14px;font-weight:700;background:linear-gradient(90deg,#fff,#c4b5fd 55%,#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ai-tx small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .ai-go{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#c4b5fd;font-size:16px;transition:transform .25s}
+.ai-side:hover .ai-go{transform:translateX(3px);background:rgba(167,139,250,.25)}
+@keyframes aiSpin{to{transform:rotate(360deg)}} @keyframes aiShine{0%,55%{left:-60%}85%,100%{left:130%}}
+@keyframes aiPulse{0%,100%{box-shadow:0 0 14px rgba(124,92,255,.6),inset 0 -4px 10px rgba(0,0,0,.35)}50%{box-shadow:0 0 26px rgba(124,92,255,1),0 0 44px rgba(47,123,255,.35),inset 0 -4px 10px rgba(0,0,0,.35)}}
+@keyframes aiTwinkle{0%,100%{opacity:1;transform:scale(1) rotate(0)}50%{opacity:.55;transform:scale(.8) rotate(20deg)}}
+/* animazioni di cambio sezione (si spengono in Impostazioni) */
+@keyframes secIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes popIn{0%{opacity:0;transform:scale(.6)}70%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes navPop{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes titleIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.anim-in>.grid>*,.anim-in>.view>*,.anim-in>.grid>.dash-l>*{animation:secIn .55s cubic-bezier(.2,.8,.2,1) both}
+.anim-in>.grid>*:nth-child(2),.anim-in>.view>*:nth-child(2){animation-delay:.06s} .anim-in>.grid>*:nth-child(3),.anim-in>.view>*:nth-child(3){animation-delay:.12s}
+.anim-in>.grid>*:nth-child(4),.anim-in>.view>*:nth-child(4){animation-delay:.18s} .anim-in>.grid>*:nth-child(5),.anim-in>.view>*:nth-child(5){animation-delay:.24s}
+.anim-in>.grid>*:nth-child(n+6),.anim-in>.view>*:nth-child(n+6){animation-delay:.3s} .anim-in>.grid>.dash-l>*:nth-child(2){animation-delay:.14s}
+.anim-in .head h2,.anim-in .head h1{animation:titleIn .45s cubic-bezier(.2,.8,.2,1) both}
+.anim-nav .nav a.on{animation:navPop .4s cubic-bezier(.2,.9,.3,1.4)}
+.anim-home .apps>*{animation:popIn .45s cubic-bezier(.2,.9,.3,1.3) both} .anim-home .apps>*:nth-child(2){animation-delay:.03s} .anim-home .apps>*:nth-child(3){animation-delay:.06s} .anim-home .apps>*:nth-child(4){animation-delay:.09s} .anim-home .apps>*:nth-child(5){animation-delay:.12s} .anim-home .apps>*:nth-child(6){animation-delay:.15s} .anim-home .apps>*:nth-child(7){animation-delay:.18s} .anim-home .apps>*:nth-child(n+8){animation-delay:.21s}
+.anim-home .wid{animation:secIn .5s cubic-bezier(.2,.8,.2,1) both}
+.spark{position:fixed;z-index:80;width:7px;height:7px;border-radius:50%;pointer-events:none;animation:sparkFly .6s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes sparkFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
+#mk-modal.open .mkd,#ai-panel.open .ai-p{animation:secIn .4s cubic-bezier(.2,.8,.2,1) both} #ai-panel.open .ai-p{animation-name:aiSlide} @keyframes aiSlide{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+.ai-b{animation:secIn .3s ease both}
+html.no-anim *,html.no-anim *::before,html.no-anim *::after{animation:none !important;transition:none !important}
+@media (prefers-reduced-motion:reduce){.anim-in *,.anim-home *,.spark{animation:none !important}}
 #ai-panel{position:fixed;inset:0;z-index:65;background:rgba(3,6,12,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;justify-content:flex-end}
 #ai-panel.open{display:flex} .ai-p{width:min(520px,100%);height:100%;border-radius:0;display:flex;flex-direction:column;padding:20px 20px calc(var(--safe-b) + 16px);background:rgba(14,18,28,.97);border-left:1px solid var(--line)}
 .ai-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-top:var(--safe-t)} .ai-hd h3{margin:0 0 2px} .ai-hd .btn{white-space:nowrap}
@@ -345,7 +376,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
     <nav class="nav" id="nav"></nav>
     <div class="grow"></div>
-    <button class="ai-side" onclick="aiOpen()"><span>✨</span><b>Chiedi all'AI</b><small>Domande su mercati, notizie, calendario…</small></button>
+    <button class="ai-side" onclick="aiOpen()"><span class="ai-in"><span class="ai-orb"><i>✦</i></span><span class="ai-tx"><b>Chiedi all'AI</b><small>Il tuo assistente</small></span><span class="ai-go">›</span></span></button>
     <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small id="me-sync">Dati salvati su questo dispositivo</small></div></div>
   </aside>
   <main class="main">
@@ -367,7 +398,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 
 <!-- ============ TELEFONO ============ -->
 <div class="phone">
-  <button class="round ph-ai" title="Chiedi all'AI" onclick="aiOpen()">✨</button>
+  <button class="round ph-ai" title="Chiedi all'AI" onclick="aiOpen()">✦</button>
   <button class="round lang-btn ph-lang" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
@@ -508,7 +539,7 @@ const I18N = {
 "Perché:": "Why:", "Cosa può comportare:": "What it can mean:", "Riassunto non disponibile adesso, riprova tra poco.": "Summary not available right now, try again soon.", "Sto riassumendo…": "Summarizing…",
 "Hai già l'ultima versione": "You already have the latest version", "Aggiorno l'app…": "Updating the app…", "Nessuna connessione": "No connection", "Musica rilassante accesa": "Relaxing music on", "Musica spenta": "Music off",
 "Giorno": "Day", "Settimana": "Week", "Mese": "Month", "Anno": "Year", "Alba": "Sunrise", "Tramonto": "Sunset", "Temperatura": "Temperature", "Umidità": "Humidity", "Vento": "Wind", "Percepiti": "Feels like", "24 ore": "24 hours",
-"Home": "Home", "Nuovo": "New", "Chiedi all'AI": "Ask the AI", "Domande su mercati, notizie, calendario…": "Questions about markets, news, calendar…", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
+"Home": "Home", "Nuovo": "New", "Chiedi all'AI": "Ask the AI", "Il tuo assistente": "Your assistant", "Animazioni": "Animations", "Effetti quando cambi sezione": "Effects when you switch section", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
 "Per esempio salva Oro, S&P 500 o Bitcoin: li vedrai sempre in questo riquadro, anche quando non sono tra i movimenti più forti.": "For example save Gold, S&P 500 or Bitcoin: you'll always see them in this box, even when they're not among the strongest moves.",
 "Togli dai preferiti": "Remove from favourites", "Salva nei preferiti": "Save to favourites", "Tolto dai preferiti": "Removed from favourites", "Salvato nei preferiti": "Saved to favourites",
 "Mappa dei mercati": "Market map", "Scende": "Down", "Sale": "Up", "Colore più acceso = movimento più insolito · ★ bordo giallo = preferito": "Brighter colour = more unusual move · yellow border = favourite",
@@ -569,6 +600,15 @@ if (EN){
   trTree(document.body);
 }
 function paintLang(){ document.querySelectorAll(".lang-btn").forEach(b => { b.textContent = EN ? "IT" : "EN"; b.title = EN ? "Passa all'italiano" : "Switch to English"; }); }
+/* piccole scintille colorate quando tocchi una voce del menu o un'app */
+document.addEventListener("click", e => {
+  if (S.anim === false) return; const t = e.target.closest(".nav a, .apps .app-i, .ai-side, .ph-ai, .mk-star"); if (!t) return;
+  const cols = ["#5b9bff", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#22d3ee"];
+  for (let i = 0; i < 8; i++){ const s = document.createElement("i"), a = Math.PI * 2 * i / 8 + Math.random() * .5, d = 22 + Math.random() * 22;
+    s.className = "spark"; s.style.cssText = `left:${e.clientX - 3}px;top:${e.clientY - 3}px;background:${cols[i % cols.length]};box-shadow:0 0 8px ${cols[i % cols.length]};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px`;
+    document.body.appendChild(s); setTimeout(() => s.remove(), 650); }
+}, true);
+if (S.anim === false) document.documentElement.classList.add("no-anim");
 function setLang(l){ if (S.lang === l) return; S.lang = l; save(); setTimeout(() => location.reload(), 150); }
 const LANG_SFX = EN ? " IMPORTANT: write every text value of your answer in English (keep JSON keys as they are)." : "";
 const $ = s => document.querySelector(s);
@@ -608,11 +648,14 @@ const isPhone = () => matchMedia("(max-width:899px)").matches;
 function go(id, opt = {}){
   if (id !== "notizie" && typeof newsCat1 !== "undefined") newsCat1 = null;
   $("#new-menu").classList.remove("open");
+  const changed = go.prev !== id; go.prev = id;
   cur = id; renderStatic();
+  const anim = changed && S.anim !== false;
   if (isPhone()){
     if (id === "oggi") return closeSheet();
     $("#sheet-t").textContent = appById(id).t;
     $("#sheet-body").innerHTML = VIEWS[id](opt);
+    if (anim){ const sb = $("#sheet-body"); sb.classList.remove("anim-in"); void sb.offsetWidth; sb.classList.add("anim-in"); clearTimeout(go.t2); go.t2 = setTimeout(() => sb.classList.remove("anim-in"), 1000); }
     $("#sheet").classList.toggle("portal-open", id === "conoscenza");
     $("#sheet").classList.add("open"); $("#sheet").scrollTop = 0;
     history.replaceState(null, "", "#" + id);
@@ -621,12 +664,13 @@ function go(id, opt = {}){
     renderNav();
     const body = $("#pc-body");
     body.innerHTML = id === "oggi" ? DASH() : `<div class="view">${VIEWS[id](opt)}</div>`;
+    if (anim){ body.classList.remove("anim-in"); void body.offsetWidth; body.classList.add("anim-in"); document.body.classList.add("anim-nav"); clearTimeout(go.t1); go.t1 = setTimeout(() => { body.classList.remove("anim-in"); document.body.classList.remove("anim-nav"); }, 1000); }
     history.replaceState(null, "", id === "oggi" ? location.pathname : "#" + id);
     after(id, body, opt);
     window.scrollTo(0, 0);
   }
 }
-function closeSheet(){ $("#sheet").classList.remove("open"); cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
+function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; if (S.anim !== false){ const ph = document.querySelector(".phone"); ph.classList.remove("anim-home"); void ph.offsetWidth; ph.classList.add("anim-home"); setTimeout(() => ph.classList.remove("anim-home"), 1000); } cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); }
 
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
@@ -826,6 +870,7 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3 data-raw>Lingua · Language</h3><small>${EN ? "Menus, dates, news and AI explanations" : "Menu, date, notizie e spiegazioni dell'AI"}</small></div><span class="muted">🌐</span></div>
       <div class="chips"><button class="chip ${EN ? "" : "on"}" data-raw onclick="setLang('it')">🇮🇹 Italiano</button><button class="chip ${EN ? "on" : ""}" data-raw onclick="setLang('en')">🇬🇧 English</button></div></div>
+    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
     ${syncBox()}
@@ -1947,7 +1992,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig"];
+const SYNC_KEYS = ["del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms"];
@@ -2218,7 +2263,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "29";
+const APP_V = "30";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
