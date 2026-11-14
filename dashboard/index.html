@@ -1125,7 +1125,7 @@ function gvRows(list, empty){
       <div class="t"><b>${esc(e.title)}</b><small>${e.time || L2("Tutto il giorno", "All day")} · <span style="color:${col};font-weight:600">${L2(...GV_LAB[e.imp])}</span> · ${L2(c[0], I18N[c[0]] || c[0])}${e.where ? " · " + esc(e.where) : ""}${e.extra ? " · " + esc(e.extra) : ""}</small></div></button>`; }).join("")}</div>`;
 }
 function gvView(){
-  if (!EVS) loadEv(); if (mkKey()) setTimeout(() => gvSearch(false), 50);
+  if (!EVS) loadEv(); if (mkKey()) setTimeout(() => gvSearch(false), 50); if (mkKey()) setTimeout(gvBriefs, 2500);
   const today = ymd(new Date()), sel = gvSel || today, dayEv = gvOn(sel), week = [];
   for (let i = 0; i < 7; i++){ const k = ymd(new Date(Date.now() + i * 864e5)), L = gvOn(k); if (L.length) week.push([k, L]); }
   const dLong = k => cap(new Date(k + "T12:00:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { weekday: "long", day: "numeric", month: "long" }));
@@ -1160,7 +1160,7 @@ function gvOpen(k){
   let el = document.getElementById("gv-modal");
   if (!el){ el = document.createElement("div"); el.id = "gv-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) gvClose(); }; document.body.appendChild(el); }
   el.classList.add("open"); document.documentElement.classList.add("noscroll"); el.scrollTop = 0;
-  gvDraw();
+  gvDraw(); if (!(S.gvb && S.gvb[k])) gvBriefs();
 }
 /* riassunto immediato di ogni evento, senza AI: per i dati economici una spiegazione fissa del tipo di dato */
 const GV_BRIEF = [
@@ -1189,7 +1189,27 @@ const GV_BRIEF = [
   [/Bank Holiday|Holiday/i, "Giorno festivo: le borse e le banche di questo paese restano chiuse, quindi i mercati sono più tranquilli."],
   [/Auction|Bond/i, "Asta di titoli di stato: il governo prende soldi in prestito, e la domanda degli investitori dice quanto si fidano."],
 ];
+/* panoramica di ogni evento scritta da Aris in automatico: una sola richiesta per ~40 eventi, salvata e sincronizzata */
+let GVB_BUSY = false, GVB_OFF = 0;
+async function gvBriefs(){
+  const key = mkKey(); if (!key || GVB_BUSY || Date.now() < GVB_OFF) return;
+  S.gvb = S.gvb || {}; const t0 = ymd(new Date(Date.now() - 2 * 864e5)), t1 = ymd(new Date(Date.now() + 14 * 864e5));
+  let all = []; try { all = gvItems(); } catch { return; }
+  const live = new Set(all.map(x => x.k)); for (const k of Object.keys(S.gvb)) if (!live.has(k)) delete S.gvb[k];
+  const todo = all.filter(x => x.day >= t0 && x.day <= t1 && !S.gvb[x.k]).sort((a, b) => b.imp - a.imp || a.day.localeCompare(b.day)).slice(0, 40);
+  if (!todo.length) return;
+  GVB_BUSY = true;
+  try {
+    const o = await groqJSON(key, `Sei Aris. Per ogni evento del calendario mondiale scrivi una panoramica breve (2 frasi, massimo 45 parole) in italiano semplice: di cosa si tratta QUESTA volta e perché può interessare. Usa i dati forniti (paese, data, previsto, precedente); non inventare risultati o numeri che non hai. Rispondi SOLO con JSON {"p":[{"i":0,"t":"..."}]}.`,
+      todo.map((x, i) => `${i}. ${x.day}${x.time ? " " + x.time : ""} · ${x.where || ""} · ${x.orig || x.title}${x.orig && x.orig !== x.title ? " (" + x.title + ")" : ""}${x.extra ? " · " + x.extra : ""}`).join("\n"), 2500);
+    for (const y of o.p || []){ const x = todo[y.i]; if (x && y.t) S.gvb[x.k] = String(y.t).slice(0, 400); }
+    save();
+  } catch (e){ GVB_OFF = Date.now() + (/limite/.test(e.message) ? 2 : 15) * 60e3; }
+  GVB_BUSY = false;
+  if (GVD) gvDraw(); else if (cur === "globale") reView();
+}
 function gvBrief(x){
+  if (S.gvb && S.gvb[x.k]) return S.gvb[x.k];
   if (x.src !== "ff") return x.extra || "";
   const f = GV_BRIEF.find(([rx]) => rx.test(x.orig || x.title));
   const base = f ? f[1] : `Appuntamento del calendario economico (${x.where || ""}): un dato o un evento che i mercati guardano per capire come va l'economia.`;
@@ -2689,7 +2709,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["vid", "gev", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim"];
+const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -2963,7 +2983,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "51";
+const APP_V = "52";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
