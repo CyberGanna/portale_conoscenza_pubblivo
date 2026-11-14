@@ -520,7 +520,6 @@ body.side-hidden #show-side{opacity:1;pointer-events:auto;transform:none}
 
 <div id="hud">
   <button id="h-all" aria-pressed="false" title="Mostra tutte le categorie, sottocategorie, voci e collegamenti">✦ Mostra tutto</button>
-  <button id="h-less" title="Chiudi tutto e lascia solo le categorie">◌ Riduci tutto</button>
   <button id="h-fit" title="Inquadra tutto">⤢</button>
 </div>
 
@@ -988,7 +987,7 @@ function resize(){
   canvas.width = W * DPR; canvas.height = H * DPR;
 }
 
-function buildGraph(){
+function buildGraph(){ try { updAllBtn(); } catch {}
   const prev = G.nodes, next = new Map(), links = [];
   const mk = (id, base) => { const o = prev.get(id); const n = Object.assign(o || {}, { id }, base); next.set(id, n); return n; };
   const core = mk("core", { kind: "core", label: "Conoscenza", color: "#c9b2ff", r: 16, charge: -900 });
@@ -2784,12 +2783,16 @@ q.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.p
 $("#compose").addEventListener("submit", e => { e.preventDefault(); explore(q.value); });
 $("#sugg").addEventListener("click", e => { const c = e.target.closest("[data-q]"); if (c) { q.value = c.dataset.q; explore(c.dataset.q); } });
 
+function updAllBtn(){
+  const b = $("#h-all"); if (!b) return;
+  const open = !!(G.all || G.expanded.size);
+  b.setAttribute("aria-pressed", open);
+  b.textContent = open ? "◌ Riduci tutto" : "✦ Mostra tutto";
+  b.title = open ? "Chiudi tutto e lascia solo le categorie" : "Mostra tutte le categorie, sottocategorie, voci e collegamenti";
+}
 $("#h-all").addEventListener("click", e => {
-  G.all = true; e.currentTarget.setAttribute("aria-pressed", true);
-  buildGraph(); setTimeout(() => fit(), 500);
-});
-$("#h-less").addEventListener("click", () => {
-  G.all = false; $("#h-all").setAttribute("aria-pressed", false); G.expanded.clear();
+  const b = e.currentTarget, open = !(G.all || G.expanded.size);
+  G.all = open; if (!open) G.expanded.clear();
   buildGraph(); setTimeout(() => fit(), 500);
 });
 $("#h-fit").addEventListener("click", () => fit());
