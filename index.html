@@ -599,20 +599,36 @@ async function call(p, o){
 async function call1(p, model, { prompt, images = [], tier = "default", json = false, signal, onText }){
   const content = images.length ? [{ type: "text", text: prompt }, ...images.map(u => ({ type: "image_url", image_url: { url: u } }))] : prompt;
   const sys = "Sei l'assistente di un portale di conoscenza personale. Scrivi sempre in italiano corretto e naturale. Sii preciso: non inventare fatti, nomi o numeri." + (json ? " Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo e senza blocchi di codice." : "");
-  const body = { model, messages: [{ role: "system", content: sys }, { role: "user", content }], temperature: json ? 0.4 : 0.6, max_tokens: tier === "complex" ? 6000 : 4000 };
+  const body = { model, messages: [{ role: "system", content: sys }, { role: "user", content }], temperature: json ? 0.4 : 0.6, max_tokens: json || tier === "complex" ? 8000 : 4000 };
+  // i modelli gpt-oss "ragionano" prima di rispondere: con poco ragionamento sono molto più veloci e non esauriscono i token
+  if (/gpt-oss/.test(model)) body.reasoning_effort = json ? "low" : "medium";
   if (json) body.response_format = { type: "json_object" };
   const stream = !!onText && !json;
   if (stream) body.stream = true;
   const headers = { "Content-Type": "application/json", ...(p.key ? { Authorization: "Bearer " + p.key } : {}), ...(p.extra || {}) };
   let res;
-  try { res = await fetch(p.url, { method: "POST", headers, body: JSON.stringify(body), signal }); }
-  catch (e) { if (e.name === "AbortError") throw err("cancelled"); throw err("network", p.name + " non raggiungibile (" + (e.message || e.name) + ")" + (/claude|usercontent/i.test(location.host) || location.origin === "null" && window.top !== window ? ". Sembra aperto dentro un'anteprima che blocca internet: scarica il file e aprilo con Chrome." : "")); }
+  // timeout: se il modello non risponde in 70 secondi si passa al successivo
+  const tc = new AbortController(), tid = setTimeout(() => tc.abort(), 70000);
+  signal?.addEventListener?.("abort", () => tc.abort());
+  try {
+    for (let w = 0; ; w++) {
+      res = await fetch(p.url, { method: "POST", headers, body: JSON.stringify(body), signal: tc.signal });
+      if (res.status !== 429 || w >= 2) break;
+      // limite al minuto del piano gratuito: aspetta quanto chiede Groq (max 20 s) e riprova
+      const ra = parseFloat(res.headers.get("retry-after")) || parseFloat(((await res.clone().text().catch(() => "")).match(/try again in ([\d.]+)s/) || [])[1]) || 6;
+      if (ra > 20) break;
+      await new Promise(r => setTimeout(r, ra * 1000 + 300));
+    }
+  }
+  catch (e) { clearTimeout(tid); if (signal?.aborted) throw err("cancelled"); if (e.name === "AbortError") throw err("rate_limited", p.name + " " + model + ": nessuna risposta in 70 secondi"); throw err("network", p.name + " non raggiungibile (" + (e.message || e.name) + ")" + (/claude|usercontent/i.test(location.host) || location.origin === "null" && window.top !== window ? ". Sembra aperto dentro un'anteprima che blocca internet: scarica il file e aprilo con Chrome." : "")); }
+  clearTimeout(tid);
   if (!res.ok) {
     const t = await res.text().catch(() => "");
     if (res.status === 429) throw err("rate_limited", t);
     if (res.status === 401 || res.status === 403) throw err("bad_key", p.name + ": chiave non valida");
     if (res.status === 413) throw err("prompt_too_large");
     if (res.status === 404 || /model.{0,40}(not.?found|decommission|does not exist)/i.test(t)) throw err("model_gone", p.name + " " + model + ": " + t.slice(0, 160));
+    if (json && res.status === 400 && /reasoning/i.test(t) && body.reasoning_effort) { const b2 = { ...body }; delete b2.reasoning_effort; const r2 = await fetch(p.url, { method: "POST", headers, body: JSON.stringify(b2), signal }); if (r2.ok) return (await r2.json()).choices?.[0]?.message?.content || ""; }
     if (json && res.status === 400 && /json/i.test(t)) { const b2 = { ...body }; delete b2.response_format; const r2 = await fetch(p.url, { method: "POST", headers, body: JSON.stringify(b2), signal }); if (r2.ok) return (await r2.json()).choices?.[0]?.message?.content || ""; }
     throw err("provider", p.name + " " + res.status + ": " + t.slice(0, 200));
   }
@@ -2446,7 +2462,7 @@ async function startTest(){
   $("#d-cat").innerHTML = `<span class="dot" style="color:var(--core)"></span>Test`;
   $("#d-body").innerHTML = `<div class="thinking"><div class="orb"></div><div class="msg">Preparo ${N} domande…</div><div class="sub">Su ${chosen.length} ${chosen.length === 1 ? "voce" : "voci"} del tuo archivio${scope.length ? " · " + esc(scopeName(scope)) : ""}</div></div>`;
   openDetail();
-  const mk = (chosen, N, all) => { const data = chosen.map(n => `[${n.id}] ${n.titolo} (${catName(n.categoria)}${n.autore ? ", " + n.autore : ""})\nSintesi: ${n.sintesi}\n${String(n.spiegazione || "").slice(0, 700)}\nEsempi: ${(n.esempi || []).slice(0, 2).join(" / ")}`).join("\n\n");
+  const mk = (chosen, N, all) => { const data = chosen.map(n => `[${n.id}] ${n.titolo} (${catName(n.categoria)}${n.autore ? ", " + n.autore : ""})\nSintesi: ${n.sintesi}\n${String(n.spiegazione || "").slice(0, 380)}\nEsempi: ${(n.esempi || []).slice(0, 2).join(" / ")}`).join("\n\n");
   return `Sei un insegnante brillante. Crea un test di ${N} domande in italiano per verificare se l'utente ha capito e ricorda le voci del suo archivio personale qui sotto.${all ? " Fai esattamente UNA domanda per ciascuna voce." : ""}
 Mescola i tipi: definizione, applicazione a un caso concreto, riconoscere un esempio, collegare due concetti, vero o falso. Copri più voci diverse possibile. Le opzioni sbagliate devono essere plausibili, non ridicole. Non mettere la risposta nella domanda.
 
@@ -2457,33 +2473,56 @@ Rispondi solo con JSON:
 {"domande": [{"nota": "id della voce tra parentesi quadre", "tipo": "scelta" o "vero_falso", "domanda": "...", "opzioni": ["4 opzioni per scelta; per vero_falso esattamente [\\"Vero\\", \\"Falso\\"]"], "corretta": indice della risposta giusta partendo da 0, "spiegazione": "perché la risposta giusta è giusta, spiegato in modo semplice, 20-40 parole", "perche_errate": ["per OGNI opzione, nello stesso ordine: se è sbagliata, perché è sbagliata in max 15 parole; se è quella giusta, stringa vuota"]}]}`; };
   S.busy = true;
   try {
-    const raw = await genBatched(chosen, N, mk, stepMsg);
     const ids = new Set(S.notes.map(n => n.id));
-    const qs = raw.map(q => {
+    await genQuiz(chosen, N, mk, q => {
       const opz = (Array.isArray(q.opzioni) ? q.opzioni : []).map(String).slice(0, 5);
       const c = Number(q.corretta);
       if (!q.domanda || opz.length < 2 || !(c >= 0 && c < opz.length)) return null;
       const order = q.tipo === "vero_falso" ? opz.map((_, i) => i) : shuffle(opz.map((_, i) => i));
       const pe = Array.isArray(q.perche_errate) ? q.perche_errate.map(x => String(x ?? "")) : [];
       return { nota: ids.has(String(q.nota)) ? String(q.nota) : null, domanda: String(q.domanda), opzioni: order.map(i => opz[i]), perche: order.map(i => pe[i] || ""), corretta: order.indexOf(c), spiegazione: String(q.spiegazione || ""), vf: q.tipo === "vero_falso" };
-    }).filter(Boolean).slice(0, N);
-    if (!qs.length) throw { code: "invalid_json" };
-    S.quiz = { qs, i: 0, score: 0, wrong: [], ambito: scope, answered: false };
-    renderQ();
+    }, scope);
   } catch (e) {
     $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Non sono riuscito a preparare il test</div><div class="sub">${esc(errMsg(e))}</div><button class="btn primary" type="button" id="q-retry">Riprova</button></div>`;
   } finally { S.busy = false; }
 }
-async function genBatched(chosen, N, mk, onStep){
-  const all = !S.tNum, size = 8, batches = [];
-  if (all) for (let i = 0; i < chosen.length; i += size) batches.push(chosen.slice(i, i + size)); else batches.push(chosen);
-  const raw = [];
-  for (let b = 0; b < batches.length; b++) {
-    onStep?.(b, batches.length);
-    const r = await S.sample.json(mk(batches[b], all ? batches[b].length : N, all), { modelTier: "default", cache: false });
-    raw.push(...(Array.isArray(r.domande) ? r.domande : []));
+// Genera il test a piccoli blocchi (5 domande), due alla volta: il test parte appena arriva il primo blocco
+// e le altre domande si aggiungono mentre rispondi. Se un blocco fallisce, si tengono gli altri.
+async function genQuiz(chosen, N, mk, normQ, ambito){
+  const all = !S.tNum, size = 5, groups = [];
+  if (all) for (let i = 0; i < chosen.length; i += size) groups.push({ items: chosen.slice(i, i + size), n: Math.min(size, chosen.length - i) });
+  else {
+    const k = Math.max(1, Math.ceil(N / size));
+    for (let g = 0; g < k; g++) groups.push({ items: [], n: Math.floor(N / k) + (g < N % k ? 1 : 0) });
+    chosen.forEach((x, i) => groups[i % k].items.push(x));
   }
-  return raw;
+  const Q = { qs: [], i: 0, score: 0, wrong: [], ambito, answered: false, total: N, pending: groups.length };
+  let started = false, lastErr = null, next = 0;
+  const step = () => { const m = document.querySelector("#d-body .thinking .msg"); if (m) m.textContent = `Preparo le domande… (${groups.length - Q.pending} di ${groups.length})`; };
+  const add = raw => {
+    const room = N - Q.qs.length; if (room <= 0) return;
+    Q.qs.push(...raw.map(normQ).filter(Boolean).slice(0, room));
+    if (!Q.qs.length) return;
+    if (!started) { started = true; S.quiz = Q; renderQ(); return; }
+    if (S.quiz !== Q) return;
+    if (Q.waiting && Q.qs.length > Q.i + 1) { Q.waiting = false; Q.i++; renderQ(); }
+  };
+  const work = async g => {
+    for (let t = 0; t < 2; t++) {
+      try { const r = await S.sample.json(mk(g.items, g.n, all), { modelTier: "default", cache: false }); add(Array.isArray(r?.domande) ? r.domande : []); return; }
+      catch (e) { lastErr = e; if (e?.code === "cancelled" || e?.code === "no_provider" || e?.code === "bad_key") return; }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(2, groups.length) }, async () => {
+    while (next < groups.length) { const g = groups[next++]; await work(g); Q.pending--; if (!started) step(); }
+  }));
+  Q.pending = 0; Q.total = Q.qs.length;
+  if (!Q.qs.length) throw lastErr || { code: "invalid_json" };
+  if (S.quiz === Q) {
+    const top = document.querySelector(".q-top span"); if (top) top.textContent = `${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${Q.total}`;
+    if (Q.waiting) { Q.waiting = false; endQ(); }
+    else if (Q.answered && Q.i === Q.total - 1) { const b = $("#q-next"); if (b) b.textContent = "Vedi il risultato"; }
+  }
 }
 const stepMsg = (b, n) => { const m = document.querySelector("#d-body .thinking .msg"); if (m && n > 1) m.textContent = `Preparo le domande… (${b + 1} di ${n})`; };
 async function startTrTest(){
@@ -2510,18 +2549,14 @@ Rispondi solo con JSON:
 {"domande": [{"tipo": "scelta" o "vero_falso", "domanda": "...", "opzioni": ["4 opzioni per scelta; per vero_falso esattamente [\\"Vero\\", \\"Falso\\"]"], "corretta": indice della risposta giusta partendo da 0, "spiegazione": "perché è giusta, con un esempio d'uso breve, 15-35 parole", "perche_errate": ["per OGNI opzione, nello stesso ordine: se è sbagliata, cosa significa davvero o perché non va, max 15 parole; se è giusta, stringa vuota"]}]}`; };
   S.busy = true;
   try {
-    const raw = await genBatched(chosen, N, mk, stepMsg);
-    const qs = raw.map(q => {
+    await genQuiz(chosen, N, mk, q => {
       const opz = (Array.isArray(q.opzioni) ? q.opzioni : []).map(String).slice(0, 5);
       const c = Number(q.corretta);
       if (!q.domanda || opz.length < 2 || !(c >= 0 && c < opz.length)) return null;
       const order = q.tipo === "vero_falso" ? opz.map((_, i) => i) : shuffle(opz.map((_, i) => i));
       const pe = Array.isArray(q.perche_errate) ? q.perche_errate.map(x => String(x ?? "")) : [];
       return { nota: null, domanda: String(q.domanda), opzioni: order.map(i => opz[i]), perche: order.map(i => pe[i] || ""), corretta: order.indexOf(c), spiegazione: String(q.spiegazione || ""), vf: q.tipo === "vero_falso" };
-    }).filter(Boolean).slice(0, N);
-    if (!qs.length) throw { code: "invalid_json" };
-    S.quiz = { qs, i: 0, score: 0, wrong: [], ambito: ["__tr"], answered: false };
-    renderQ();
+    }, ["__tr"]);
   } catch (e) {
     $("#d-body").innerHTML = `<div class="thinking"><div class="msg">Non sono riuscito a preparare il test</div><div class="sub">${esc(errMsg(e))}</div><button class="btn primary" type="button" id="q-retry">Riprova</button></div>`;
   } finally { S.busy = false; }
@@ -2542,8 +2577,8 @@ function renderQ(){
   const color = note ? catColor(note.categoria) : "var(--accent)";
   $("#d-cat").innerHTML = `<span class="dot" style="color:${color}"></span>Test${note ? " · " + esc(catName(note.categoria)) : Q.ambito?.includes?.("__tr") ? " · Traduzioni" : ""}`;
   $("#d-body").innerHTML = `<div class="quiz">
-    <div class="q-top"><span>${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${Q.qs.length}</span><button type="button" class="q-save ${Q.saved?.includes(Q.i) ? "on" : ""}" id="q-save" aria-pressed="${!!Q.saved?.includes(Q.i)}" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>${Q.saved?.includes(Q.i) ? "Salvata" : "Salva per rivedere"}</button><span>${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}</span></div>
-    <div class="q-bar"><i style="width:${(Q.i / Q.qs.length) * 100}%"></i></div>
+    <div class="q-top"><span>${Q.ripasso ? "Ripasso · " : ""}Domanda ${Q.i + 1} di ${(Q.total || Q.qs.length)}</span><button type="button" class="q-save ${Q.saved?.includes(Q.i) ? "on" : ""}" id="q-save" aria-pressed="${!!Q.saved?.includes(Q.i)}" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>${Q.saved?.includes(Q.i) ? "Salvata" : "Salva per rivedere"}</button><span>${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}</span></div>
+    <div class="q-bar"><i style="width:${(Q.i / (Q.total || Q.qs.length)) * 100}%"></i></div>
     <div class="q-text">${esc(q.domanda)}</div>
     ${canSay && Q.ambito?.includes?.("__tr") ? sayRow(quizWords(q.domanda)) : ""}
     <div class="q-opts">${q.opzioni.map((o, i) => `<button type="button" class="q-opt" data-o="${i}"><b>${"ABCDE"[i]}</b><span>${esc(o)}</span></button>`).join("")}</div>
@@ -2562,11 +2597,11 @@ function answerQ(i){
   if (ok) Q.score++; else Q.wrong.push(Q.i);
   document.querySelectorAll(".q-opt").forEach((b, j) => { b.disabled = true; if (j === q.corretta) b.classList.add("ok"); else if (j === i) b.classList.add("ko"); });
   const note = q.nota && S.notes.find(n => n.id === q.nota);
-  const last = Q.i === Q.qs.length - 1;
+  const last = Q.i === (Q.total || Q.qs.length) - 1;
   const why = !ok && q.perche?.[i] ? `<p class="q-why"><b>Perché «${esc(q.opzioni[i])}» non va:</b> ${esc(q.perche[i])}</p>` : "";
   $("#q-after").innerHTML = `<div class="q-exp"><strong style="color:${ok ? "var(--ok)" : "var(--danger)"}">${ok ? "Giusto" : "Sbagliato"}</strong>${ok ? "" : `<p class="q-why"><b>Risposta giusta:</b> ${esc(q.opzioni[q.corretta])}</p>`}${why}<p class="q-why"><b>Perché:</b> ${esc(q.spiegazione)}</p>${canSay && Q.ambito?.includes?.("__tr") ? (w => w.length ? `<p class="q-why" style="margin-bottom:0"><b>Ascolta:</b></p>${sayRow(w)}` : "")(quizWords(q.domanda + " " + q.opzioni[q.corretta] + " " + q.spiegazione)) : ""}${note ? `<br><button class="linkbtn" type="button" data-open-q="${esc(note.id)}">Ripassa «${esc(note.titolo)}»</button>` : ""}</div>
     <div class="row" style="margin-top:14px"><button class="btn primary" type="button" id="q-next">${last ? "Vedi il risultato" : "Avanti →"}</button></div>`;
-  document.querySelector(".q-bar i").style.width = ((Q.i + 1) / Q.qs.length) * 100 + "%";
+  document.querySelector(".q-bar i").style.width = ((Q.i + 1) / (Q.total || Q.qs.length)) * 100 + "%";
   document.querySelector(".q-top span:last-child").textContent = `${Q.score} ${Q.score === 1 ? "giusta" : "giuste"}`;
   renderAsk();
   $("#q-next").focus({ preventScroll: true });
@@ -2637,7 +2672,7 @@ $("#d-body").addEventListener("click", e => {
   const sv = e.target.closest("#q-save");
   if (sv && S.quiz) { const Q = S.quiz; Q.saved = Q.saved || []; const k = Q.saved.indexOf(Q.i); if (k >= 0) Q.saved.splice(k, 1); else Q.saved.push(Q.i); const on = k < 0; sv.classList.toggle("on", on); sv.setAttribute("aria-pressed", on); sv.lastChild.textContent = on ? "Salvata" : "Salva per rivedere"; if (on) toast("Salvata: la ritrovi alla fine del test"); return; }
   if (e.target.closest("#q-saved-go") && S.lastSaved?.qs.length) { retryWrong(S.lastSaved.qs, S.lastSaved.ambito); return; }
-  if (e.target.closest("#q-next")) { const Q = S.quiz; if (Q.i === Q.qs.length - 1) endQ(); else { Q.i++; renderQ(); } return; }
+  if (e.target.closest("#q-next")) { const Q = S.quiz; if (Q.i < Q.qs.length - 1) { Q.i++; renderQ(); } else if (Q.pending > 0) { Q.waiting = true; const b = $("#q-next"); b.disabled = true; b.textContent = "Preparo le prossime domande…"; } else endQ(); return; }
   if (e.target.closest("#q-again") || e.target.closest("#q-retry")) { startTest(); return; }
   if (e.target.closest("#q-wrong") && S.lastWrong?.qs.length) { retryWrong(S.lastWrong.qs, S.lastWrong.ambito); return; }
   const r = e.target.closest("[data-open-q]"); if (r) { S.quiz = null; openNote(r.dataset.openQ); }
