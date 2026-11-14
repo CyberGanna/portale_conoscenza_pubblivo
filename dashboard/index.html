@@ -740,7 +740,9 @@ const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
 
+const AIT_URL = "https://ale-x.pages.dev/";
 function go(id, opt = {}){
+  if (id === "aitrading" && !opt.noOpen) window.open(AIT_URL, "_blank", "noopener");
   if (id !== "notizie" && typeof newsCat1 !== "undefined") newsCat1 = null;
   $("#new-menu").classList.remove("open");
   const changed = go.prev !== id; go.prev = id;
@@ -967,7 +969,10 @@ const VIEWS = {
     return `<div class="portal portal-slot"></div>`;
   },
   aitrading(){
-    return `<div class="portal portal-slot"></div>`;
+    return head("AI-TRADING", "Il tuo sito di trading") + `
+    <div class="glass c"><div class="hd"><div><h3>ale-x.pages.dev</h3><small>Si apre in una scheda a parte, così il login funziona</small></div></div>
+      <p class="muted" style="margin:6px 0 14px">Dentro la dashboard il sito non può tenere l'accesso (il browser blocca i cookie dei siti incorporati), per questo si apre da solo.</p>
+      <a class="btn blue" href="${AIT_URL}" target="_blank" rel="noopener">Apri AI-TRADING</a></div>`;
   },
   promemoria(){ return remView(); },
   sveglie(){ return alarmView(); },
@@ -2122,7 +2127,6 @@ function useGeo(){
    così un test o una spiegazione in corso continua anche se vai in un'altra sezione. */
 const EMBEDS = {
   conoscenza: { host: "portal-host", t: "Portale conoscenza", src: () => "../?v=" + Date.now() },
-  aitrading: { host: "embed-aitrading", t: "AI-TRADING", src: () => "https://ale-x.pages.dev/" },
 };
 function portalSync(){
   const slot = EMBEDS[cur] ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
@@ -2981,7 +2985,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "56";
+const APP_V = "57";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
@@ -3007,7 +3011,7 @@ setTimeout(() => checkAppUpdate(false), 3000);
 
 const start = (location.hash || "").slice(1);
 refresh();
-if (start && appById(start)) go(start);
+if (start && appById(start)) go(start, { noOpen: true });
 loadWeather(); loadNotes(); loadNews(); loadMk(); loadEv(); brLoad(false); gcLoad(true); setTimeout(dsSync, 1200);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) gcLoad(false); });
 setInterval(loadNews, 15 * 6e4); setInterval(loadMk, 10 * 6e4);
