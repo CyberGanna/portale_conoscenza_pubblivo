@@ -407,7 +407,7 @@ html.no-anim *,html.no-anim *::before,html.no-anim *::after{animation:none !impo
 .ab-hd button{border:0;background:rgba(255,255,255,.06);color:var(--muted);border-radius:9px;height:28px;min-width:28px;padding:0 8px;font-size:12px;cursor:pointer} .ab-hd button:hover{color:var(--ink);background:rgba(255,255,255,.12)}
 .ab-msgs{max-height:min(300px,42vh);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
 .ab-msgs .ai-b{max-width:92%}
-html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
+html.noscroll #ab,html:has(#ai-panel.open) #ab,html.in-portal #ab{display:none}
 @media (min-width:900px) and (max-width:1250px){#ab{left:calc(50% + 120px)}}
 @media (max-width:899px){
   #ab{left:50%;width:min(270px,calc(100vw - 100px));bottom:calc(var(--safe-b) + 14px)}
@@ -2121,6 +2121,7 @@ function useGeo(){
 function portalSync(){
   const slot = cur === "conoscenza" ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
   let host = document.getElementById("portal-host");
+  document.documentElement.classList.toggle("in-portal", !!slot);
   if (!slot){ if (host) host.style.display = "none"; return; }
   if (!host){ host = document.createElement("div"); host.id = "portal-host";
     host.innerHTML = `<iframe src="../" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`; document.body.appendChild(host); }
@@ -2962,7 +2963,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "50";
+const APP_V = "51";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
