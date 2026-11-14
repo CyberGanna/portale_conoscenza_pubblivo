@@ -1928,7 +1928,9 @@ const CAT_T = Object.fromEntries(NEWS_CATS), CC_T = Object.fromEntries(COUNTRIES
 function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); if (EN) return m < 2 ? "now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : m < 2880 ? "yesterday" : Math.round(m / 1440) + " days ago"; return m < 2 ? "adesso" : m < 60 ? m + " min fa" : m < 1440 ? Math.round(m / 60) + " h fa" : m < 2880 ? "ieri" : Math.round(m / 1440) + " giorni fa"; }
 function newsList(){
   if (!NEWS) return [];
-  const all = S.news.countries.includes("mondo");
+  // le novità sull'AI sono quasi sempre "mondiali": se guardi solo quella categoria, il filtro paese non le nasconde
+  const onlyLLM = newsCat1 === "llm" || (S.news.cats.length === 1 && S.news.cats[0] === "llm");
+  const all = S.news.countries.includes("mondo") || onlyLLM;
   const day = NEWS.days ? NEWS.days[newsDay] || NEWS.days[0] : null;
   const L = NEWS.items.filter(x => (!day || x.day === day || !x.day && newsDay === 0) && (newsCat1 ? x.cats.includes(newsCat1) : x.cats.some(c => S.news.cats.includes(c))) && (all || x.cc.some(c => S.news.countries.includes(c))));
   // importanti = riprese da più testate, ma una notizia ferma da ore scende
@@ -1937,7 +1939,7 @@ function newsList(){
 }
 function newsFilterBox(all){ return VIEWS._notizieFiltri(all); }
 function newsEmpty(){
-  return NEWS ? `<div class="soon">${ico("news")}<span>Nessuna notizia con queste scelte. Prova ad aggiungere categorie o paesi nei <b>Filtri</b>.</span></div>`
+  return NEWS ? `<div class="soon">${ico("news")}<span>Nessuna notizia con queste scelte. Prova ad aggiungere categorie o paesi nei <b>Filtri</b>.</span> <button class="btn" style="margin-left:auto" onclick="S.news.countries=['mondo'];newsCat1=null;save();reView()">Tutto il mondo</button></div>`
     : newsErr ? `<div class="soon">${ico("news")}<span>Non riesco a scaricare le notizie adesso. Controlla la connessione e riprova tra poco.</span></div>`
     : `<div class="muted" style="padding:6px 2px">Carico le notizie…</div>`;
 }
@@ -2834,7 +2836,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "44";
+const APP_V = "45";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
