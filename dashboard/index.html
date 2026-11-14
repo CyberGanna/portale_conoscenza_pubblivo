@@ -761,18 +761,32 @@ function mkView(){
 }
 const nT = x => (!S.newsOrig && x.ti) || x.t, nS = x => (!S.newsOrig && x.si) || x.s || "";
 function newsLangBtn(){ return NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
+/* modelli Groq: li legge dal tuo account (cambiano nel tempo) e sceglie i migliori disponibili */
+let GM = null;
+const GM_PREF = [/llama-4-maverick/, /llama-3\.3-70b/, /kimi-k2/, /llama-4-scout/, /gpt-oss-120b/, /llama.*70b/, /gpt-oss-20b/, /llama-3\.1-8b|8b-instant/, /llama/, /gpt-oss/, /mistral|gemma/];
+async function groqModels(key){
+  if (GM) return GM;
+  try { const c = JSON.parse(localStorage.getItem(KEY + "-gm") || "null"); if (c && Date.now() - c.at < 12 * 3600e3 && c.list.length) return GM = c.list; } catch {}
+  let ids = [];
+  try { const r = await fetch("https://api.groq.com/openai/v1/models", { headers: { Authorization: "Bearer " + key } }); if (r.ok) ids = ((await r.json()).data || []).filter(m => m.active !== false).map(m => m.id).filter(id => !/whisper|tts|guard|embed|playai|orpheus|compound|prompt-guard|distil/i.test(id)); } catch {}
+  const out = []; for (const re of GM_PREF) for (const id of ids) if (re.test(id) && !out.includes(id)) out.push(id);
+  GM = out.length ? out.slice(0, 5) : ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "openai/gpt-oss-20b", "llama-3.1-8b-instant"];
+  if (out.length) try { localStorage.setItem(KEY + "-gm", JSON.stringify({ at: Date.now(), list: GM })); } catch {}
+  return GM;
+}
+const groqOpt = (model, max) => /gpt-oss/.test(model) ? { max_tokens: max + 800, reasoning_effort: "low" } : { max_tokens: max };
 /* Groq gratis: prova più modelli, aspetta se c'è il limite al minuto, e se la modalità JSON fallisce estrae il JSON dal testo */
 async function groqJSON(key, sys, user, maxTokens){
   let last = "";
-  for (const model of ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.1-8b-instant"]){
+  for (const model of await groqModels(key)){
     for (let t = 0; t < 3; t++){
       const json = t < 2;
       let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, max_tokens: maxTokens, ...(json ? { response_format: { type: "json_object" } } : {}), messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) }); }
+        body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, maxTokens), ...(json ? { response_format: { type: "json_object" } } : {}), messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) }); }
       catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
       if (r.status === 401) throw new Error("la chiave Groq non è valida");
       if (r.status === 429){ last = "limite di richieste raggiunto"; const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 2){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
-      if (!r.ok){ last = "Groq " + r.status; if (r.status === 400 && json){ t = 1; continue; } break; }
+      if (!r.ok){ last = "Groq " + r.status; if (r.status === 404){ GM = null; try { localStorage.removeItem(KEY + "-gm"); } catch {} } if (r.status === 400 && json){ t = 1; continue; } break; }
       const txt = (await r.json()).choices?.[0]?.message?.content || "";
       try { return JSON.parse(txt); } catch {}
       const m = txt.match(/\{[\s\S]*\}/); if (m) try { return JSON.parse(m[0]); } catch {}
@@ -823,15 +837,16 @@ async function sumNews(i){
   if (!key){ box.innerHTML = `Per i riassunti serve la chiave <b>Groq</b> gratuita. Se l'hai già messa nel portale su questo dispositivo funziona da sola; altrimenti apri <a href="#conoscenza" onclick="event.preventDefault();go('conoscenza')" style="color:var(--blue-2)">Conoscenza</a> e inseriscila una volta nelle impostazioni AI.`; return; }
   box.textContent = "Sto riassumendo…";
   const text = [`Titolo: ${x.t}`, x.s && `Anteprima: ${x.s}`, x.alt?.length && `Altri titoli sullo stesso fatto:\n- ${x.alt.join("\n- ")}`, `Testate: ${x.srcs.map(s => s[0]).join(", ")}`].filter(Boolean).join("\n");
-  for (const model of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]){
+  for (const model of await groqModels(key)){
     try {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 220, messages: [
+        body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, 260), messages: [
           { role: "system", content: "Sei un giornalista. Riassumi la notizia in italiano in massimo 3 frasi brevi, chiare e neutrali. Usa solo le informazioni date, non inventare dettagli. Se le informazioni sono poche, dillo." },
           { role: "user", content: text }] }) });
       if (r.status === 401){ box.textContent = "La chiave Groq non è valida: aggiornala nelle impostazioni AI del portale."; return; }
       if (!r.ok) continue;
-      const j = await r.json(); SUMS[i] = (j.choices?.[0]?.message?.content || "").trim() + "\n\nRiassunto AI da titoli e anteprime: apri l'articolo per i dettagli.";
+      const j = await r.json(), txt = (j.choices?.[0]?.message?.content || "").trim(); if (!txt) continue;
+      SUMS[i] = txt + "\n\nRiassunto AI da titoli e anteprime: apri l'articolo per i dettagli.";
       box.textContent = SUMS[i]; return;
     } catch {}
   }
@@ -1003,11 +1018,11 @@ async function brAsk(){
   const files = BR.files || [];
   const index = files.map(f => `${f.path} | ${brTitle(f)}`).join("\n").slice(0, 6000);
   const call = async (messages, json) => {
-    for (const model of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]){
-      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 700, messages, ...(json ? { response_format: { type: "json_object" } } : {}) }) });
+    for (const model of await groqModels(key)){
+      let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
+        body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, 700), messages, ...(json ? { response_format: { type: "json_object" } } : {}) }) }); } catch { continue; }
       if (r.status === 401) throw new Error("la chiave Groq non è valida");
-      if (r.ok) return (await r.json()).choices?.[0]?.message?.content || "";
+      if (r.ok){ const t = (await r.json()).choices?.[0]?.message?.content || ""; if (t) return t; }
     }
     throw new Error("l'AI non risponde adesso");
   };
@@ -1649,7 +1664,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "23";
+const APP_V = "24";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
