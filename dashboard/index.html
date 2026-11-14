@@ -452,8 +452,8 @@ html.noscroll #ab,html:has(#ai-panel.open) #ab,html.in-portal #ab{display:none}
 .tg.on{background:var(--green)}.tg.on::after{left:21px}
 input[type=range]{width:100%;accent-color:var(--blue)}
 .portal{display:block;width:100%;height:calc(100vh - 120px);border:1px solid var(--line);border-radius:var(--r);background:#000}
-#portal-host{position:fixed;z-index:31;display:none;overflow:hidden;background:#000;border:1px solid var(--line)} #portal-host iframe{display:block;width:100%;height:100%;border:0}
-@media (max-width:899px){#portal-host{border:0}}
+.embed-host{position:fixed;z-index:31;display:none;overflow:hidden;background:#000;border:1px solid var(--line)} .embed-host iframe{display:block;width:100%;height:100%;border:0}
+@media (max-width:899px){.embed-host{border:0}}
 .is-portal .view{gap:0}
 .toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 100px);transform:translate(-50%,20px);opacity:0;z-index:60;padding:10px 16px;border-radius:12px;background:#1d2433;border:1px solid var(--line-2);font-size:13px;transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -725,6 +725,7 @@ const APPS = [
   { id: "globale", t: "Calendario globale", s: "Globale", i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)" },
   { id: "notizie", t: "Notizie", i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)" },
   { id: "conoscenza", t: "Conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)" },
+  { id: "aitrading", t: "AI-TRADING", i: "chart", g: "linear-gradient(135deg,#10b981,#0f172a)" },
   { id: "cervello", t: "Cervello", i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)" },
   { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", pcOnly: true },
   { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)" },
@@ -734,7 +735,7 @@ const APPS = [
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#34d399,#047857)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#94a3b8,#475569)" },
 ];
-const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
@@ -750,7 +751,7 @@ function go(id, opt = {}){
     $("#sheet-t").textContent = appById(id).t;
     $("#sheet-body").innerHTML = VIEWS[id](opt);
     if (anim){ const sb = $("#sheet-body"); sb.classList.remove("anim-in"); void sb.offsetWidth; sb.classList.add("anim-in"); clearTimeout(go.t2); go.t2 = setTimeout(() => sb.classList.remove("anim-in"), 1000); }
-    $("#sheet").classList.toggle("portal-open", id === "conoscenza");
+    $("#sheet").classList.toggle("portal-open", !!EMBEDS[id]);
     $("#sheet").classList.add("open"); $("#sheet").scrollTop = 0;
     history.replaceState(null, "", "#" + id);
     after(id, $("#sheet-body"), opt);
@@ -963,6 +964,9 @@ const VIEWS = {
       <div class="chips">${COUNTRIES.map(([k, t]) => `<button class="chip ${S.news.countries.includes(k) ? "on" : ""}" onclick="tog('countries','${k}')">${t}</button>`).join("")}</div></div>`;
   },
   conoscenza(){
+    return `<div class="portal portal-slot"></div>`;
+  },
+  aitrading(){
     return `<div class="portal portal-slot"></div>`;
   },
   promemoria(){ return remView(); },
@@ -2116,16 +2120,22 @@ function useGeo(){
 }
 /* Il portale resta sempre aperto: un solo iframe, creato la prima volta e poi solo nascosto,
    così un test o una spiegazione in corso continua anche se vai in un'altra sezione. */
+const EMBEDS = {
+  conoscenza: { host: "portal-host", t: "Portale conoscenza", src: () => "../?v=" + Date.now() },
+  aitrading: { host: "embed-aitrading", t: "AI-TRADING", src: () => "https://ale-x.pages.dev/" },
+};
 function portalSync(){
-  const slot = cur === "conoscenza" ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
-  let host = document.getElementById("portal-host");
+  const slot = EMBEDS[cur] ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
   document.documentElement.classList.toggle("in-portal", !!slot);
-  if (!slot){ if (host) host.style.display = "none"; return; }
-  if (!host){ host = document.createElement("div"); host.id = "portal-host";
-    host.innerHTML = `<iframe src="../?v=${Date.now()}" title="Portale conoscenza" allow="clipboard-write; microphone; camera"></iframe>`; document.body.appendChild(host); portalVer(false); }
-  else if (host.style.display === "none") portalVer(true);
-  const r = slot.getBoundingClientRect();
-  Object.assign(host.style, { display: "block", left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", borderRadius: getComputedStyle(slot).borderRadius });
+  for (const [id, e] of Object.entries(EMBEDS)){
+    let host = document.getElementById(e.host);
+    if (!slot || id !== cur){ if (host) host.style.display = "none"; continue; }
+    if (!host){ host = document.createElement("div"); host.id = e.host; host.className = "embed-host";
+      host.innerHTML = `<iframe src="${e.src()}" title="${e.t}" allow="clipboard-write; microphone; camera; fullscreen"></iframe>`; document.body.appendChild(host); if (id === "conoscenza") portalVer(false); }
+    else if (host.style.display === "none" && id === "conoscenza") portalVer(true);
+    const r = slot.getBoundingClientRect();
+    Object.assign(host.style, { display: "block", left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", borderRadius: getComputedStyle(slot).borderRadius });
+  }
 }
 /* se il portale è stato modificato (nuova versione su GitHub), lo ricarico quando ci rientri */
 let PORTAL_TAG = "", PORTAL_CK = 0;
@@ -2936,8 +2946,8 @@ function renderStatic(){
 }
 function refresh(){
   renderStatic();
-  if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open") && cur !== "conoscenza" && cur !== "cervello") { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
-  else { renderNav(); if (cur === "conoscenza" && $("#pc-body .portal-slot")) return portalSync(); if (cur === "cervello" && $("#pc-body .br-ai")) return; if (cur === "oggi" && $("#pc-body .wel") && $("#dash-rest")) return welUpdate(); $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
+  if (isPhone()){ renderPhone(); if ($("#sheet").classList.contains("open") && !EMBEDS[cur] && cur !== "cervello") { $("#sheet-body").innerHTML = VIEWS[cur]({}); } }
+  else { renderNav(); if (EMBEDS[cur] && $("#pc-body .portal-slot")) return portalSync(); if (cur === "cervello" && $("#pc-body .br-ai")) return; if (cur === "oggi" && $("#pc-body .wel") && $("#dash-rest")) return welUpdate(); $("#pc-body").innerHTML = cur === "oggi" ? DASH() : `<div class="view">${VIEWS[cur]({})}</div>`; }
 }
 /* quando arrivano dati nuovi il benvenuto non viene ridisegnato (la sua animazione ripartirebbe da capo): aggiorno solo i testi */
 function welUpdate(){
@@ -2971,7 +2981,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "55";
+const APP_V = "56";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
