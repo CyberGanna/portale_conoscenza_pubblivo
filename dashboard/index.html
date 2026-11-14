@@ -228,7 +228,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
   .orbs .o2{width:380px;height:380px;left:-180px;bottom:20%}
   .phone .ph-music{display:grid;position:absolute;right:16px;top:calc(var(--safe-t) + 12px);z-index:3}
   .phone .ph-lang{display:grid;position:absolute;right:62px;top:calc(var(--safe-t) + 12px);z-index:3}
-  .phone .ph-ai{display:grid;position:absolute;right:108px;top:calc(var(--safe-t) + 12px);z-index:3;font-size:15px;color:#fff;border:0;background:radial-gradient(circle at 30% 28%,#fff 0,#c4b5fd 14%,#7c5cff 45%,#2f7bff 75%,#0b1a4a 100%);animation:aiPulse 2.8s ease-in-out infinite}
+  .phone .ph-ai{display:grid;position:absolute;right:108px;top:calc(var(--safe-t) + 10px);z-index:3;width:42px;height:42px;border:0;padding:0} .phone .ph-ai::before{inset:-4px} .phone .ph-ai b{font-size:15px;letter-spacing:0;margin:0}
   .ph-date{font-size:13px;color:var(--muted);text-align:left;font-weight:500;padding:6px 150px 0 4px}
   .ph-hello{font-size:15px;font-weight:600;text-align:left;margin-top:2px;padding:0 150px 0 4px}
   .phone{display:flex!important;flex-direction:column;padding-bottom:calc(var(--safe-b) + 64px)!important}
@@ -311,17 +311,15 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .music-btn.on svg{animation:pulse 2.6s ease-in-out infinite}
 @keyframes pulse{50%{transform:scale(1.15)}}
 .ph-music,.ph-lang,.ph-ai{display:none}
-.ai-side{position:relative;display:block;width:100%;margin-bottom:12px;padding:1.5px;border:0;border-radius:18px;cursor:pointer;overflow:hidden;isolation:isolate;background:rgba(255,255,255,.08);box-shadow:0 8px 30px -8px rgba(124,92,255,.55),0 0 0 1px rgba(255,255,255,.04);transition:transform .25s cubic-bezier(.2,.9,.3,1.3),box-shadow .25s}
-.ai-side::before{content:"";position:absolute;inset:-60%;z-index:-1;background:conic-gradient(from 0deg,#2f7bff,#a78bfa,#f472b6,#fbbf24,#22d3ee,#2f7bff);animation:aiSpin 5s linear infinite}
-.ai-side:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 14px 38px -8px rgba(124,92,255,.75)} .ai-side:active{transform:scale(.98)}
-.ai-in{position:relative;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:16.5px;background:linear-gradient(135deg,rgba(18,22,40,.96),rgba(30,22,52,.94));overflow:hidden;text-align:left}
-.ai-in::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-18deg);animation:aiShine 4.5s ease-in-out infinite}
-.ai-orb{position:relative;flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 28%,#fff 0,#c4b5fd 14%,#7c5cff 45%,#2f7bff 75%,#0b1a4a 100%);box-shadow:0 0 18px rgba(124,92,255,.8),inset 0 -4px 10px rgba(0,0,0,.35);animation:aiPulse 2.8s ease-in-out infinite}
-.ai-orb i{font-style:normal;font-size:15px;color:#fff;text-shadow:0 0 8px #fff;animation:aiTwinkle 2.8s ease-in-out infinite}
-.ai-orb::after{content:"✦";position:absolute;top:-3px;right:-4px;font-size:10px;color:#fde68a;text-shadow:0 0 6px #fbbf24;animation:aiTwinkle 2s ease-in-out .7s infinite}
-.ai-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px} .ai-tx b{font-size:14px;font-weight:700;background:linear-gradient(90deg,#fff,#c4b5fd 55%,#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
-.ai-tx small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .ai-go{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#c4b5fd;font-size:16px;transition:transform .25s}
-.ai-side:hover .ai-go{transform:translateX(3px);background:rgba(167,139,250,.25)}
+.ai-side{position:relative;display:grid;place-items:center;width:100%;margin:4px 0 14px;padding:6px 0;border:0;background:none;cursor:pointer}
+.aris{position:relative;width:96px;height:96px;display:grid;place-items:center;border-radius:42% 58% 63% 37% / 41% 44% 56% 59%;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.9) 0,rgba(196,181,253,.85) 12%,#7c5cff 40%,#2f7bff 70%,#0b1a4a 100%);
+  box-shadow:0 0 26px rgba(124,92,255,.7),0 0 60px rgba(47,123,255,.25),inset 0 -8px 18px rgba(0,0,0,.35);animation:arisMorph 7s ease-in-out infinite,arisGlow 3.2s ease-in-out infinite;transition:transform .3s cubic-bezier(.2,.9,.3,1.4)}
+.aris::before{content:"";position:absolute;inset:-7px;border-radius:inherit;border:1.5px solid rgba(167,139,250,.45);animation:arisMorph 7s ease-in-out -3s infinite reverse}
+.aris b{font-size:17px;font-weight:700;letter-spacing:.14em;color:#fff;text-shadow:0 0 12px rgba(255,255,255,.7),0 1px 2px rgba(0,0,0,.4);margin-left:.14em}
+.ai-side:hover .aris{transform:scale(1.07)} .ai-side:active .aris{transform:scale(.95)}
+@keyframes arisMorph{0%,100%{border-radius:42% 58% 63% 37% / 41% 44% 56% 59%}25%{border-radius:58% 42% 45% 55% / 55% 60% 40% 45%}50%{border-radius:50% 50% 34% 66% / 56% 38% 62% 44%}75%{border-radius:38% 62% 58% 42% / 44% 56% 44% 56%}}
+@keyframes arisGlow{0%,100%{box-shadow:0 0 22px rgba(124,92,255,.6),0 0 50px rgba(47,123,255,.2),inset 0 -8px 18px rgba(0,0,0,.35)}50%{box-shadow:0 0 34px rgba(124,92,255,.95),0 0 80px rgba(47,123,255,.35),inset 0 -8px 18px rgba(0,0,0,.35)}}
 @keyframes aiSpin{to{transform:rotate(360deg)}} @keyframes aiShine{0%,55%{left:-60%}85%,100%{left:130%}}
 @keyframes aiPulse{0%,100%{box-shadow:0 0 14px rgba(124,92,255,.6),inset 0 -4px 10px rgba(0,0,0,.35)}50%{box-shadow:0 0 26px rgba(124,92,255,1),0 0 44px rgba(47,123,255,.35),inset 0 -4px 10px rgba(0,0,0,.35)}}
 @keyframes aiTwinkle{0%,100%{opacity:1;transform:scale(1) rotate(0)}50%{opacity:.55;transform:scale(.8) rotate(20deg)}}
@@ -346,7 +344,7 @@ html.no-anim *,html.no-anim *::before,html.no-anim *::after{animation:none !impo
 @media (prefers-reduced-motion:reduce){.anim-in *,.anim-home *,.spark{animation:none !important}}
 #ai-panel{position:fixed;inset:0;z-index:65;background:rgba(3,6,12,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;justify-content:flex-end}
 #ai-panel.open{display:flex} .ai-p{width:min(520px,100%);height:100%;border-radius:0;display:flex;flex-direction:column;padding:20px 20px calc(var(--safe-b) + 16px);background:rgba(14,18,28,.97);border-left:1px solid var(--line)}
-.ai-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-top:var(--safe-t)} .ai-hd h3{margin:0 0 2px} .ai-hd .btn{white-space:nowrap}
+.ai-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-top:var(--safe-t)} .ai-hd h3{margin:0 0 2px;display:flex;align-items:center;gap:10px;font-size:20px} .aris.aris-s{width:30px;height:30px} .aris.aris-s::before{inset:-3px} .aris.aris-s b{font-size:12px;letter-spacing:0;margin:0} .ai-hd .btn{white-space:nowrap}
 .ai-p .ai-msgs{flex:1;overflow-y:auto;margin:14px 0 10px;display:flex;flex-direction:column;gap:8px}
 .ai-b{max-width:88%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.5} .ai-b.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:4px}
 .ai-b.ai{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line);border-bottom-left-radius:4px} .ai-b.err{color:#fda4af}
@@ -376,7 +374,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Cerca…" autocomplete="off"><kbd>Ctrl K</kbd></label>
     <nav class="nav" id="nav"></nav>
     <div class="grow"></div>
-    <button class="ai-side" onclick="aiOpen()"><span class="ai-in"><span class="ai-orb"><i>✦</i></span><span class="ai-tx"><b>Chiedi all'AI</b><small>Il tuo assistente</small></span><span class="ai-go">›</span></span></button>
+    <button class="ai-side" onclick="aiOpen()" title="Chiedi ad Aris" data-raw><span class="aris"><b>ARIS</b></span></button>
     <div class="me"><div class="av" id="me-av">AL</div><div><b id="me-name">Ale</b><small id="me-sync">Dati salvati su questo dispositivo</small></div></div>
   </aside>
   <main class="main">
@@ -398,7 +396,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 
 <!-- ============ TELEFONO ============ -->
 <div class="phone">
-  <button class="round ph-ai" title="Chiedi all'AI" onclick="aiOpen()">✦</button>
+  <button class="round ph-ai aris" title="Aris" data-raw onclick="aiOpen()"><b>A</b></button>
   <button class="round lang-btn ph-lang" data-raw title="Italiano / English" onclick="setLang(S.lang === 'en' ? 'it' : 'en')"></button>
   <button class="round music-btn ph-music" title="Musica rilassante" onclick="toggleMusic()"><svg class="i"><use href="#i-music"/></svg></button>
   <div class="ph-date" id="ph-date"></div>
@@ -539,7 +537,7 @@ const I18N = {
 "Perché:": "Why:", "Cosa può comportare:": "What it can mean:", "Riassunto non disponibile adesso, riprova tra poco.": "Summary not available right now, try again soon.", "Sto riassumendo…": "Summarizing…",
 "Hai già l'ultima versione": "You already have the latest version", "Aggiorno l'app…": "Updating the app…", "Nessuna connessione": "No connection", "Musica rilassante accesa": "Relaxing music on", "Musica spenta": "Music off",
 "Giorno": "Day", "Settimana": "Week", "Mese": "Month", "Anno": "Year", "Alba": "Sunrise", "Tramonto": "Sunset", "Temperatura": "Temperature", "Umidità": "Humidity", "Vento": "Wind", "Percepiti": "Feels like", "24 ore": "24 hours",
-"Home": "Home", "Nuovo": "New", "Chiedi all'AI": "Ask the AI", "Il tuo assistente": "Your assistant", "Animazioni": "Animations", "Effetti quando cambi sezione": "Effects when you switch section", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
+"Home": "Home", "Nuovo": "New", "Chiedi ad Aris": "Ask Aris", "Animazioni": "Animations", "Effetti quando cambi sezione": "Effects when you switch section", "Futures": "Futures", "Future S&P 500": "S&P 500 future", "Future Nasdaq 100": "Nasdaq 100 future", "Future Dow Jones": "Dow Jones future", "Future Russell 2000": "Russell 2000 future", "Future Treasury 10 anni": "10-year Treasury future", "Future Euro": "Euro future", "Future Mais": "Corn future", "Future Soia": "Soybean future", "★ I miei preferiti": "★ My favourites", "Sempre qui, uguali su PC e telefono": "Always here, same on PC and phone", "Tocca ☆ accanto a uno strumento per salvarlo": "Tap ☆ next to an instrument to save it",
 "Per esempio salva Oro, S&P 500 o Bitcoin: li vedrai sempre in questo riquadro, anche quando non sono tra i movimenti più forti.": "For example save Gold, S&P 500 or Bitcoin: you'll always see them in this box, even when they're not among the strongest moves.",
 "Togli dai preferiti": "Remove from favourites", "Salva nei preferiti": "Save to favourites", "Tolto dai preferiti": "Removed from favourites", "Salvato nei preferiti": "Saved to favourites",
 "Mappa dei mercati": "Market map", "Scende": "Down", "Sale": "Up", "Colore più acceso = movimento più insolito · ★ bordo giallo = preferito": "Brighter colour = more unusual move · yellow border = favourite",
@@ -1261,8 +1259,8 @@ async function groqText(key, sys, msgs, maxTokens){
   throw new Error(L2("l'AI non risponde adesso", "the AI isn't answering right now") + (last ? " (" + last + ")" : ""));
 }
 const aiMd = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^#+\s*(.+)$/gm, "<b>$1</b>").replace(/^\s*[-*]\s+/gm, "• ").replace(/\n/g, "<br>");
-const AI_BASE = () => L2(`Sei l'assistente della dashboard personale di ${S.name}. Rispondi in italiano semplice, chiaro e breve (massimo 8-10 righe se non ti chiedono di più). Usa i dati della dashboard qui sotto quando servono e dillo se un'informazione non c'è o se non la sai: non inventare numeri, date o fatti. Puoi spiegare economia e finanza, ma niente consigli personali di comprare o vendere.`,
-  `You are the assistant of ${S.name}'s personal dashboard. Answer in simple, clear, short English (at most 8-10 lines unless asked for more). Use the dashboard data below when useful and say when something isn't there or you don't know it: don't invent numbers, dates or facts. You can explain economics and finance, but no personal buy or sell advice.`);
+const AI_BASE = () => L2(`Ti chiami Aris e sei l'assistente personale della dashboard di ${S.name}. Rispondi in italiano semplice, chiaro e breve (massimo 8-10 righe se non ti chiedono di più). Usa i dati della dashboard qui sotto quando servono e dillo se un'informazione non c'è o se non la sai: non inventare numeri, date o fatti. Puoi spiegare economia e finanza, ma niente consigli personali di comprare o vendere.`,
+  `Your name is Aris and you are the personal assistant of ${S.name}'s dashboard. Answer in simple, clear, short English (at most 8-10 lines unless asked for more). Use the dashboard data below when useful and say when something isn't there or you don't know it: don't invent numbers, dates or facts. You can explain economics and finance, but no personal buy or sell advice.`);
 function aiContext(){
   const now = new Date(), out = [`Adesso: ${dateLong(now)} ${now.getFullYear()}, ore ${hhmm(now)}. Sezione aperta: ${cur}.`];
   if (MK){ const n = cur === "mercati" ? 30 : 12;
@@ -1298,7 +1296,7 @@ function aiDraw(){
     : cur === "notizie" ? [L2("Riassumi le notizie più importanti di oggi", "Summarize today's top news"), L2("Cosa succede in Medio Oriente?", "What's happening in the Middle East?")]
     : cur === "calendario" ? [L2("Cosa ho in programma questa settimana?", "What's on this week?"), L2("Quando ho la prossima verifica?", "When is my next test?")]
     : [L2("Fammi un riassunto della giornata", "Give me a summary of the day"), L2("Cosa si muove oggi nei mercati?", "What's moving in the markets today?"), L2("Cosa ho in programma domani?", "What's planned tomorrow?")];
-  el.innerHTML = `<div class="ai-p glass"><div class="ai-hd"><div><h3>✨ ${L2("Chiedi all'AI", "Ask the AI")}</h3><small class="muted">${L2("Conosce mercati, notizie, calendario e promemoria della dashboard", "Knows the dashboard's markets, news, calendar and reminders")} · Groq</small></div>
+  el.innerHTML = `<div class="ai-p glass"><div class="ai-hd"><div><h3><span class="aris aris-s"><b>A</b></span> Aris</h3><small class="muted">${L2("Conosce mercati, notizie, calendario e promemoria della dashboard", "Knows the dashboard's markets, news, calendar and reminders")} · Groq</small></div>
     <div style="display:flex;gap:6px">${AIC.msgs.length ? `<button class="btn" onclick="AIC.msgs=[];AIC.err='';aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button class="round" onclick="aiClose()" aria-label="${L2("Chiudi", "Close")}">✕</button></div></div>
     ${aiChatHtml(AIC.msgs, AIC.busy, AIC.err, "ai", sugg, "aiSend")}</div>`;
   const m = document.getElementById("ai-m"); if (m) m.scrollTop = m.scrollHeight;
@@ -1334,7 +1332,7 @@ async function mkChatSend(q){
 function mkChatScroll(){ const m = document.getElementById("mkc-m"); if (m) m.scrollTop = m.scrollHeight; }
 function mkChatHtml(x){
   const C = MKD_CHAT[x.s] || { msgs: [], busy: false, err: "" }, n = EN ? (I18N[x.n] || x.n) : x.n;
-  return `<div class="mkd-sec mkd-chat"><h4>✨ ${L2("Chiedi all'AI su", "Ask the AI about")} ${esc(n)}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "mkc",
+  return `<div class="mkd-sec mkd-chat"><h4>${L2("Chiedi ad Aris su", "Ask Aris about")} ${esc(n)}</h4>${aiChatHtml(C.msgs, C.busy, C.err, "mkc",
     [L2(`Perché si è mosso così oggi?`, "Why did it move like this today?"), L2("Cosa lo può far salire o scendere nei prossimi mesi?", "What could push it up or down in the coming months?"), L2("Spiegamelo come se fossi un principiante", "Explain it to me like a beginner")], "mkChatSend")}</div>`;
 }
 const nT = x => (!EN && !S.newsOrig && x.ti) || x.t, nS = x => (!EN && !S.newsOrig && x.si) || x.s || "";
@@ -2263,7 +2261,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "30";
+const APP_V = "31";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
