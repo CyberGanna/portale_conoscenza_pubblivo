@@ -214,7 +214,9 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .hm{display:flex;flex-direction:column;gap:10px} .hm-g{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:start} .hm-g>span{font-size:11px;color:var(--muted);padding-top:9px;text-transform:uppercase;letter-spacing:.06em}
 .hm-ts{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px} .hm-t{border-radius:10px;padding:7px 8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;text-align:left;color:#fff;min-height:48px;transition:transform .15s}
 .hm-t:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.25)} .hm-t b{display:block;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .hm-t i{font-style:normal;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
-.hm-t.fav{box-shadow:inset 0 0 0 1.5px #fbbf24} .hm-leg{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:12px} .hm-leg .bar{flex:1;max-width:220px;height:6px;border-radius:3px;background:linear-gradient(90deg,#be123c,#3f1d2b,#1f2937,#14532d,#16a34a)}
+.hm-t.fav{box-shadow:inset 0 0 0 1.5px #fbbf24}
+.hm-t.hm-best,.hm-t.hm-worst{position:relative;border-width:2px} .hm-t.hm-best{border-color:#4ade80;box-shadow:0 0 14px rgba(74,222,128,.45)} .hm-t.hm-worst{border-color:#fb7185;box-shadow:0 0 14px rgba(251,113,133,.45)}
+.hm-t.hm-best::after,.hm-t.hm-worst::after{position:absolute;top:-8px;right:6px;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;color:#fff;letter-spacing:.02em} .hm-t.hm-best::after{content:"▲ migliore";background:#16a34a} .hm-t.hm-worst::after{content:"▼ peggiore";background:#e11d48} .hm-leg{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:12px} .hm-leg .bar{flex:1;max-width:220px;height:6px;border-radius:3px;background:linear-gradient(90deg,#be123c,#3f1d2b,#1f2937,#14532d,#16a34a)}
 @media (max-width:560px){.hm-g{grid-template-columns:1fr} .hm-g>span{padding-top:0}}
 .mk-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mk-r,.mk-fav{cursor:pointer} .mk-r:hover .mk-n b,.mk-fav:hover b{color:var(--blue-2)}
@@ -1558,9 +1560,12 @@ function mkMapCard(){
   if (!MK) return "";
   const L = MK.items.filter(mkFresh), cls = [...new Set(MK.items.map(x => x.cls))].filter(c => L.some(x => x.cls === c));
   const up = L.filter(x => x.pct > 0).length;
+  // il migliore e il peggiore della giornata hanno un bordino colorato
+  const best = L.reduce((a, x) => !a || x.pct > a.pct ? x : a, null), worst = L.reduce((a, x) => !a || x.pct < a.pct ? x : a, null);
+  const ext = x => x === best && x.pct > 0 ? " hm-best" : x === worst && x.pct < 0 ? " hm-worst" : "";
   return `<div class="glass c" id="mk-map-card" style="scroll-margin-top:20px"><div class="hd"><div><h3>Mappa dei mercati</h3><small>Tutti gli strumenti di oggi · ${up} su ${L.length} in rialzo</small></div><button class="lnk" onclick="go('mercati')">Apri</button></div>
-    <div class="hm">${cls.map(c => `<div class="hm-g"><span>${esc(c)}</span><div class="hm-ts">${L.filter(x => x.cls === c).map(x => `<button class="hm-t ${mkIsFav(x.s) ? "fav" : ""}" style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}" onclick="mkOpen('${esc(x.s)}')"><b>${esc(x.n)}</b><i>${mkPct(x.pct)}</i></button>`).join("")}</div></div>`).join("")}</div>
-    <div class="hm-leg"><span>Scende</span><span class="bar"></span><span>Sale</span><span style="margin-left:auto">Colore più acceso = movimento più insolito · ★ bordo giallo = preferito</span></div></div>`;
+    <div class="hm">${cls.map(c => `<div class="hm-g"><span>${esc(c)}</span><div class="hm-ts">${L.filter(x => x.cls === c).map(x => `<button class="hm-t ${mkIsFav(x.s) ? "fav" : ""}${ext(x)}" style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}" onclick="mkOpen('${esc(x.s)}')"><b>${esc(x.n)}</b><i>${mkPct(x.pct)}</i></button>`).join("")}</div></div>`).join("")}</div>
+    <div class="hm-leg"><span>Scende</span><span class="bar"></span><span>Sale</span><span style="margin-left:auto">Colore più acceso = movimento più insolito · bordo verde/rosso = migliore e peggiore di oggi · bordo giallo = preferito</span></div></div>`;
 }
 /* schede degli strumenti: [anno di nascita, cos'è, cosa lo muove] in italiano e in inglese */
 const MK_INFO = {
@@ -2966,7 +2971,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "54";
+const APP_V = "55";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
