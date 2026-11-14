@@ -74,7 +74,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e8ecf5;color:#111;font-size:12px;font-weight:700}
 .me b{font-size:13px;display:block} .me small{font-size:11px;color:var(--muted)}
 
-.main{min-width:0;display:flex;flex-direction:column;gap:20px}
+.main{min-width:0;display:flex;flex-direction:column;gap:20px;padding-bottom:80px}
 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:6px 4px 0}
 .top h1{font-size:22px;font-weight:600;letter-spacing:-.01em}
 .sub{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-top:5px}
@@ -353,6 +353,30 @@ a.nw-t,a.mk-nt{cursor:pointer}
 .ai-b{animation:secIn .3s ease both}
 html.no-anim *,html.no-anim *::before,html.no-anim *::after{animation:none !important;transition:none !important}
 @media (prefers-reduced-motion:reduce){.anim-in *,.anim-home *,.spark{animation:none !important}}
+/* barra di Aris sempre in basso al centro */
+#ab{position:fixed;z-index:50;left:calc(50% + 136px);bottom:18px;transform:translateX(-50%);width:min(640px,calc(100vw - 360px));pointer-events:none}
+#ab>*{pointer-events:auto}
+.ab-row{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 7px;border-radius:999px;background:rgba(14,18,28,.82);border:1px solid rgba(167,139,250,.35);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 24px rgba(124,92,255,.18)}
+.ab-row .aris{width:40px;height:40px;flex:none;cursor:pointer;border:0;padding:0} .ab-row .aris::before{inset:-4px} .ab-row .aris b{font-size:15px;letter-spacing:0;margin:0}
+.ab-row input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:14.5px;padding:8px 4px}
+.ab-row input::placeholder{color:var(--muted)}
+.ab-go{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--blue);color:#fff;font-size:17px;cursor:pointer;display:grid;place-items:center} .ab-go:disabled{opacity:.45}
+.ab-pop{display:none;margin-bottom:10px;border-radius:20px;background:rgba(14,18,28,.95);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 14px 44px rgba(0,0,0,.5);overflow:hidden;animation:secIn .25s ease both}
+#ab.open .ab-pop{display:block}
+.ab-hd{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600} .ab-hd span{flex:1}
+.ab-hd button{border:0;background:rgba(255,255,255,.06);color:var(--muted);border-radius:9px;height:28px;min-width:28px;padding:0 8px;font-size:12px;cursor:pointer} .ab-hd button:hover{color:var(--text);background:rgba(255,255,255,.12)}
+.ab-msgs{max-height:min(300px,42vh);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ab-msgs .ai-b{max-width:92%}
+html.noscroll #ab,html:has(#ai-panel.open) #ab{display:none}
+@media (min-width:900px) and (max-width:1250px){#ab{left:calc(50% + 120px)}}
+@media (max-width:899px){
+  #ab{left:12px;right:12px;width:auto;transform:none;bottom:calc(var(--safe-b) + 14px)}
+  html:has(.sheet.open) #ab{bottom:calc(var(--safe-b) + 40px)} html:has(.sheet.open.portal-open) #ab{bottom:calc(var(--safe-b) + 76px)}
+  .phone{padding-bottom:calc(var(--safe-b) + 84px)!important}
+  .ab-row .aris{width:36px;height:36px} .ab-row input{font-size:16px}
+  .ab-msgs{max-height:min(260px,38vh)}
+  .sheet:not(.portal-open){padding-bottom:calc(var(--safe-b) + 120px) !important}
+}
 #ai-panel{position:fixed;inset:0;z-index:65;background:rgba(3,6,12,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;justify-content:flex-end}
 #ai-panel.open{display:flex} .ai-p{width:min(520px,100%);height:100%;border-radius:0;display:flex;flex-direction:column;padding:20px 20px calc(var(--safe-b) + 16px);background:rgba(14,18,28,.97);border-left:1px solid var(--line)}
 .ai-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-top:var(--safe-t)} .ai-hd h3{margin:0 0 2px;display:flex;align-items:center;gap:10px;font-size:20px} .aris.aris-s{width:30px;height:30px} .aris.aris-s::before{inset:-3px} .aris.aris-s b{font-size:12px;letter-spacing:0;margin:0} .ai-hd .btn{white-space:nowrap}
@@ -418,6 +442,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <button class="wid glass wid-bottom" style="width:100%;text-align:left" onclick="go('meteo')" id="ph-wid"></button>
   <div class="dock glass" id="ph-dock"></div>
 </div>
+<div id="ab" data-raw><div class="ab-pop" id="ab-pop"></div><form class="ab-row" onsubmit="event.preventDefault();abSend()"><button type="button" class="aris" title="Aris" onclick="abToggle()"><b>A</b></button><input id="ab-q" autocomplete="off" enterkeyhint="send"><button class="ab-go" id="ab-go" aria-label="Invia">↑</button></form></div>
 <div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div><div class="sh-edge"></div><button class="sh-home" aria-label="Torna alla home" onclick="closeSheet()"><i></i></button></div>
 <div class="toast" id="toast"></div>
 
@@ -1314,11 +1339,36 @@ function aiDraw(){
 }
 async function aiSend(q){
   q = String(q || "").trim(); const key = mkKey(); if (!q || !key || AIC.busy) return;
-  AIC.msgs.push({ role: "user", content: q }); AIC.busy = true; AIC.err = ""; aiDraw();
+  AIC.msgs.push({ role: "user", content: q }); AIC.busy = true; AIC.err = ""; aiDraw(); abDraw();
   try { const a = await groqText(key, AI_BASE() + "\n\nDATI DELLA DASHBOARD:\n" + aiContext(), AIC.msgs.slice(-10), 900); AIC.msgs.push({ role: "assistant", content: a }); }
   catch (e){ AIC.err = e.message; }
-  AIC.busy = false; aiDraw(); setTimeout(() => document.getElementById("ai-q")?.focus(), 30);
+  AIC.busy = false; aiDraw(); abDraw(); if (document.getElementById("ai-panel")?.classList.contains("open")) setTimeout(() => document.getElementById("ai-q")?.focus(), 30);
 }
+/* barra di Aris sempre visibile: domanda veloce, risposta in una finestrella sopra */
+function abDraw(){
+  const ab = document.getElementById("ab"), pop = document.getElementById("ab-pop"); if (!ab || !pop) return;
+  const q = document.getElementById("ab-q"); q.placeholder = L2("Chiedi ad Aris…", "Ask Aris…");
+  document.getElementById("ab-go").disabled = AIC.busy || !mkKey();
+  const empty = !AIC.msgs.length && !AIC.busy && !AIC.err;
+  const sugg = [L2("Fammi un riassunto della giornata", "Give me a summary of the day"), L2("Cosa si muove oggi nei mercati?", "What's moving in the markets today?"), L2("Cosa ho in programma domani?", "What's planned tomorrow?")];
+  pop.innerHTML = `<div class="ab-hd"><span>Aris</span>${AIC.msgs.length ? `<button type="button" onclick="AIC.msgs=[];AIC.err='';abDraw();aiDraw()">${L2("Nuova chat", "New chat")}</button>` : ""}<button type="button" title="${L2("Apri grande", "Open large")}" onclick="abClose();aiOpen()">⤢</button><button type="button" aria-label="${L2("Chiudi", "Close")}" onclick="abClose()">✕</button></div>
+    <div class="ab-msgs" id="ab-m">${!mkKey() ? `<p class="muted" style="font-size:12.5px;margin:0">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
+      : empty ? `<div class="ai-sug">${sugg.map(t => `<button type="button" class="chip" onclick="abSend(this.textContent)">${esc(t)}</button>`).join("")}</div>`
+      : AIC.msgs.map(m => `<div class="ai-b ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? esc(m.content) : aiMd(m.content)}</div>`).join("")}
+      ${AIC.busy ? `<div class="ai-b ai muted">${L2("Sto pensando…", "Thinking…")}</div>` : ""}${AIC.err ? `<div class="ai-b ai err">${esc(AIC.err)}</div>` : ""}</div>`;
+  const m = document.getElementById("ab-m"); if (m) m.scrollTop = m.scrollHeight;
+}
+function abShow(){ const ab = document.getElementById("ab"); if (!ab.classList.contains("open")){ ab.classList.add("open"); abDraw(); } }
+function abClose(){ document.getElementById("ab")?.classList.remove("open"); }
+function abToggle(){ const ab = document.getElementById("ab"); if (ab.classList.contains("open")) abClose(); else { abShow(); document.getElementById("ab-q").focus(); } }
+async function abSend(t){
+  const inp = document.getElementById("ab-q"), q = String(t ?? inp.value).trim(); if (!q || AIC.busy) return;
+  inp.value = ""; abShow(); await aiSend(q);
+}
+addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("ab")?.classList.contains("open") && !NWD && !document.querySelector("#mk-modal.open,#ai-panel.open")) abClose(); });
+document.addEventListener("pointerdown", e => { const ab = document.getElementById("ab"); if (ab && ab.classList.contains("open") && !ab.contains(e.target) && !AIC.busy) abClose(); });
+document.getElementById("ab-q")?.addEventListener("focus", () => { if (!AIC.msgs.length) abShow(); });
+setTimeout(abDraw, 0);
 /* domande su un singolo strumento, dentro la sua scheda */
 const MKD_CHAT = {};
 function mkCtx(x){
@@ -2350,7 +2400,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "32";
+const APP_V = "33";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
