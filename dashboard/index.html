@@ -587,7 +587,7 @@ const VIEWS = {
     const L = newsList(), nf = (S.news.cats.length < NEWS_CATS.length ? 1 : 0) + (all ? 0 : 1);
     return head("Notizie", NEWS ? `${["Oggi", "Ieri", "L'altro ieri"][newsDay]} · ${L.length} notizie con le tue scelte · aggiornate alle ${hhmm(new Date(NEWS.updated))}` : "Le più importanti del momento") + `
     <div class="nw-bar"><div class="seg">${["Oggi", "Ieri", "L'altro ieri"].map((t, k) => `<button class="${newsDay === k ? "on" : ""}" onclick="newsDay=${k};newsLimit=30;reView()">${t}</button>`).join("")}</div><div class="seg"><button class="${newsSort === "top" ? "on" : ""}" onclick="newsSort='top';newsLimit=30;reView()">Più importanti</button><button class="${newsSort === "new" ? "on" : ""}" onclick="newsSort='new';newsLimit=30;reView()">Più recenti</button></div>
-      <span class="sp"></span><button class="btn" onclick="newsFilters=!newsFilters;reView()">${ico("sliders")} Filtri${nf ? " (" + nf + ")" : ""}</button></div>
+      <span class="sp"></span>${newsLangBtn()}<button class="btn" onclick="newsFilters=!newsFilters;reView()">${ico("sliders")} Filtri${nf ? " (" + nf + ")" : ""}</button></div>
     ${newsFilters ? newsFilterBox(all) : ""}
     ${newsBody(L)}`;
   },
@@ -692,7 +692,7 @@ function mkRow(x, why){
       <small class="muted">${esc(x.cls)} · ${mkFmt(x)}${x.cls === "Tassi" ? "%" : " " + esc(x.cur)}${x.wk != null ? ` · 5 giorni ${mkPct(x.wk)}` : ""} · di solito si muove ±${x.vol.toLocaleString("it-CH")}% al giorno</small></div>
     ${mkSpark(x.spark, mkCol(x.pct))}
     <div class="mk-p" style="color:${mkCol(x.pct)}">${mkPct(x.pct)}</div>
-    ${why ? `<div class="mk-why">${ai ? `<p><b>Perché:</b> ${esc(ai.perche)}</p><p><b>Cosa può comportare:</b> ${esc(ai.effetti)}</p>` : `<p class="muted">${MKAI.busy ? "L'AI sta cercando il motivo nelle notizie…" : mkKey() ? "Spiegazione in arrivo…" : "Per il motivo serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)."}</p>`}</div>` : ""}
+    ${why ? `<div class="mk-why">${ai ? `<p><b>Perché:</b> ${esc(ai.perche)}</p><p><b>Cosa può comportare:</b> ${esc(ai.effetti)}</p>` : `<p class="muted">${MKAI.busy ? "L'AI sta cercando il motivo nelle notizie…" : MKAI.err ? "Spiegazione non disponibile adesso: tocca Riprova qui sotto." : mkKey() ? "Spiegazione in arrivo…" : "Per il motivo serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)."}</p>`}</div>` : ""}
   </div>`;
 }
 function mkKey(){ try { return localStorage.getItem("pc_groq") || ""; } catch { return ""; } }
@@ -704,27 +704,19 @@ async function mkExplain(force){
   const strong = MK.items.filter(x => mkFresh(x) && mkStrong(x)).slice(0, 8);
   MKAI.busy = true; MKAI.err = "";
   const since = Date.now() - 36 * 3600e3;
-  const pool = NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "esteri", "politica", "ai", "tecnologia", "clima"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 80);
-  const heads = pool.map((x, i) => `[${i}] ${x.t} (${x.n} testate)`).join("\n");
+  const pool = NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "esteri", "politica", "ai", "tecnologia", "clima"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 50);
+  const heads = pool.map((x, i) => `[${i}] ${x.t.slice(0, 150)} (${x.n} testate)`).join("\n");
   const moves = MK.items.filter(mkFresh).slice(0, 12).map(x => `${x.n} ${mkPct(x.pct)}`).join(", ");
   const list = strong.map(x => `${x.s} | ${x.n} (${x.cls}) | oggi ${mkPct(x.pct)} | di solito ±${x.vol}% al giorno | 5 giorni ${x.wk == null ? "?" : mkPct(x.wk)}`).join("\n");
   const sys = "Sei un analista finanziario che spiega a una persona non esperta, in italiano semplice. Compito 1: per ogni strumento della lista 'movimenti forti' scrivi il motivo più probabile del movimento di oggi e cosa può comportare (per i mercati, per l'economia o per chi risparmia/investe), usando i titoli delle notizie quando c'entrano davvero; se nessun titolo lo spiega dillo e indica la causa più plausibile come ipotesi. Compito 2: scegli dai titoli numerati le notizie (massimo 6, dalla più importante) che stanno davvero muovendo i mercati oggi (banche centrali, tassi, inflazione, dazi, guerre, petrolio, risultati di grandi aziende, crisi) e per ognuna scrivi in una frase quali mercati muove e come. Ignora sport, cronaca e notizie senza effetto sui mercati. Non inventare numeri o fatti. Niente consigli di comprare o vendere. Massimo 2 frasi per campo. Rispondi solo con JSON: {\"items\":[{\"s\":\"simbolo\",\"perche\":\"...\",\"effetti\":\"...\"}],\"notizie\":[{\"i\":numero,\"effetto\":\"...\"}]}";
   const user = `Movimenti forti di oggi:\n${list || "(nessuno)"}\n\nAltri movimenti di oggi: ${moves}\n\nTitoli delle notizie delle ultime 36 ore:\n${heads || "(nessuna notizia disponibile)"}`;
   try {
-    let out = null;
-    for (const model of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]){
-      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 2200, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) });
-      if (r.status === 401) throw new Error("la chiave Groq non è valida");
-      if (!r.ok) continue;
-      try { out = JSON.parse((await r.json()).choices?.[0]?.message?.content || "{}"); break; } catch {}
-    }
-    if (!out) throw new Error("l'AI non risponde adesso");
+    const out = await groqJSON(key, sys, user, 1600);
     const items = {};
     for (const it of out.items || []) if (it && it.s && it.perche) items[it.s] = { perche: String(it.perche), effetti: String(it.effetti || "") };
     const news = [], seen = new Set();
     for (const n of out.notizie || []){ const x = pool[+n.i]; if (!x || seen.has(x.u)) continue; seen.add(x.u);
-      news.push({ t: x.t, u: x.u, src: x.src, srcs: (x.srcs || [[x.src, x.u]]).slice(0, 5), n: x.n, d: x.d, effetto: String(n.effetto || "") }); if (news.length >= 6) break; }
+      news.push({ t: x.t, ti: x.ti, u: x.u, src: x.src, srcs: (x.srcs || [[x.src, x.u]]).slice(0, 5), n: x.n, d: x.d, effetto: String(n.effetto || "") }); if (news.length >= 6) break; }
     Object.assign(MKAI, { v: 2, at: MK.updated, items, news });
     try { localStorage.setItem(KEY + "-mkai", JSON.stringify({ v: 2, at: MKAI.at, items, news })); } catch {}
   } catch (e){ MKAI.err = e.message; }
@@ -736,8 +728,8 @@ function mkNewsCard(){
   const since = Date.now() - 36 * 3600e3;
   const L = ai ? MKAI.news : (NEWS ? NEWS.items.filter(x => x.d > since && x.cats.includes("economia")).sort((a, b) => b.n - a.n).slice(0, 5) : []);
   const srcs = x => (x.srcs || [[x.src, x.u]]).filter(s => s && s[0]).slice(0, 4).map(([n, u]) => `<a class="mk-src" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("");
-  return `<div class="glass c span4"><div class="hd"><div><h3>Notizie che muovono i mercati</h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div><button class="lnk" onclick="go('notizie')">Notizie</button></div>
-    ${L.length ? `<div class="mk-news">${L.map(x => `<div class="mk-nw"><a class="mk-nt" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a>
+  return `<div class="glass c span4"><div class="hd"><div><h3>Notizie che muovono i mercati</h3><small>${ai ? "Scelte dall'AI tra le notizie di oggi" : MKAI.busy ? "L'AI le sta scegliendo…" : "Le notizie di economia più riprese"}</small></div><button class="lnk" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "In italiano" : "Lingua originale"}</button></div>
+    ${L.length ? `<div class="mk-news">${L.map(x => `<div class="mk-nw"><a class="mk-nt" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(nT(x))}</a>
       ${x.effetto ? `<p>${esc(x.effetto)}</p>` : ""}<div class="mk-srcs"><span class="muted">Fonti:</span>${srcs(x)}</div></div>`).join("")}</div>` : `<div class="muted">${NEWS ? "Nessuna notizia di economia nelle ultime ore." : "Carico le notizie…"}</div>`}
     ${!mkKey() ? `<div class="muted" style="font-size:11.5px;margin-top:8px">Con la chiave Groq gratuita l'AI sceglie quelle che muovono davvero i mercati e spiega l'effetto.</div>` : ""}
   </div>`;
@@ -767,6 +759,28 @@ function mkView(){
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
     <div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>`;
 }
+const nT = x => (!S.newsOrig && x.ti) || x.t, nS = x => (!S.newsOrig && x.si) || x.s || "";
+function newsLangBtn(){ return NEWS && NEWS.items.some(x => x.ti) ? `<button class="btn" onclick="S.newsOrig=!S.newsOrig;save();refresh()">${S.newsOrig ? "🇮🇹 Traduci in italiano" : "🌐 Mostra lingua originale"}</button>` : ""; }
+/* Groq gratis: prova più modelli, aspetta se c'è il limite al minuto, e se la modalità JSON fallisce estrae il JSON dal testo */
+async function groqJSON(key, sys, user, maxTokens){
+  let last = "";
+  for (const model of ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.1-8b-instant"]){
+    for (let t = 0; t < 3; t++){
+      const json = t < 2;
+      let r; try { r = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key },
+        body: JSON.stringify({ model, temperature: 0.2, max_tokens: maxTokens, ...(json ? { response_format: { type: "json_object" } } : {}), messages: [{ role: "system", content: sys }, { role: "user", content: user }] }) }); }
+      catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
+      if (r.status === 401) throw new Error("la chiave Groq non è valida");
+      if (r.status === 429){ last = "limite di richieste raggiunto"; const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 2){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
+      if (!r.ok){ last = "Groq " + r.status; if (r.status === 400 && json){ t = 1; continue; } break; }
+      const txt = (await r.json()).choices?.[0]?.message?.content || "";
+      try { return JSON.parse(txt); } catch {}
+      const m = txt.match(/\{[\s\S]*\}/); if (m) try { return JSON.parse(m[0]); } catch {}
+      last = "risposta non valida";
+    }
+  }
+  throw new Error("l'AI non risponde adesso" + (last ? " (" + last + ")" : ""));
+}
 const CAT_T = Object.fromEntries(NEWS_CATS), CC_T = Object.fromEntries(COUNTRIES);
 function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); return m < 2 ? "adesso" : m < 60 ? m + " min fa" : m < 1440 ? Math.round(m / 60) + " h fa" : m < 2880 ? "ieri" : Math.round(m / 1440) + " giorni fa"; }
 function newsList(){
@@ -789,8 +803,8 @@ function newsBody(L){
   return `<div class="nw-list">${L.slice(0, newsLimit).map(x => { const i = NEWS.items.indexOf(x); return `
     <article class="nw">
       <div class="nw-top"><span class="nw-n ${x.n >= 6 ? "hot" : ""}">${x.n} ${x.n === 1 ? "testata" : "testate"}</span><span>${ago(x.d)} · ${esc(x.src)}</span></div>
-      <a class="nw-t" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a>
-      ${x.s ? `<p class="nw-s">${esc(x.s)}</p>` : ""}
+      <a class="nw-t" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(nT(x))}</a>
+      ${nS(x) ? `<p class="nw-s">${esc(nS(x))}</p>` : ""}
       <div class="nw-tags">${x.cats.map(c => `<span>${CAT_T[c] || c}</span>`).join("")}${x.cc.filter(c => CC_T[c]).map(c => `<span>${CC_T[c]}</span>`).join("")}</div>
       <div class="nw-act"><button class="btn" onclick="sumNews(${i})">✨ Riassumi</button>
         ${x.srcs.length > 1 ? `<details><summary>Lo riportano anche ${x.srcs.length === 2 ? "un'altra testata" : x.srcs.length - 1 + " altre"}</summary>${x.srcs.slice(1).map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("")}</details>` : ""}</div>
@@ -801,7 +815,7 @@ function newsBody(L){
 function newsMini(n){
   const d0 = newsDay; newsDay = 0; const L = newsList().slice(0, n); newsDay = d0;
   if (!L.length) return newsEmpty();
-  return `<div class="rows nw-mini">${L.map(x => `<a class="r" href="${esc(x.u)}" target="_blank" rel="noopener"><div class="ic" style="color:var(--red)">${ico("news")}</div><div class="t"><b>${esc(x.t)}</b><small>${x.n} ${x.n === 1 ? "testata" : "testate"} · ${ago(x.d)}</small></div></a>`).join("")}</div>`;
+  return `<div class="rows nw-mini">${L.map(x => `<a class="r" href="${esc(x.u)}" target="_blank" rel="noopener"><div class="ic" style="color:var(--red)">${ico("news")}</div><div class="t"><b>${esc(nT(x))}</b><small>${x.n} ${x.n === 1 ? "testata" : "testate"} · ${ago(x.d)}</small></div></a>`).join("")}</div>`;
 }
 async function sumNews(i){
   const x = NEWS.items[i], box = document.getElementById("sum-" + i); if (!x || !box) return;
@@ -1635,7 +1649,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "22";
+const APP_V = "23";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
