@@ -148,6 +148,11 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wv-fc-now{filter:drop-shadow(0 0 6px #93c5fd);animation:wvpulse 2s ease-in-out infinite} .wv-fc-end{animation:wvpulse 2s .5s ease-in-out infinite} @keyframes wvpulse{50%{opacity:.45}}
 .wv-fc-cone{animation:wvcone 4s ease-in-out infinite} @keyframes wvcone{50%{opacity:.6}}
 .no-anim .wv-fc-p,.no-anim .wv-fc-now,.no-anim .wv-fc-end,.no-anim .wv-fc-cone{animation:none}
+.br-gw{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start} @media (max-width:1100px){.br-gw{grid-template-columns:1fr}}
+.br-sug{max-height:600px;overflow:auto} .br-sug .hd{position:sticky;top:-18px;background:inherit;z-index:1} .br-sug-load{display:flex;gap:8px;align-items:center;font-size:12.5px;color:#cbd5e1;padding:8px 0}
+.br-act{padding:10px 12px;border-radius:12px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);margin-bottom:10px} .br-act b{font-size:12.5px} .br-act ol{margin:6px 0 0;padding-left:18px;font-size:12.5px;line-height:1.5;color:#e2e8f0} .br-act li{margin-bottom:3px}
+.br-sl{display:flex;flex-direction:column;gap:8px} .br-si{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);cursor:pointer;display:flex;flex-direction:column;gap:5px} .br-si:hover,.br-si.on{border-color:rgba(250,204,21,.6);background:rgba(250,204,21,.06)}
+.br-sp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;font-weight:700} .br-sp em{font-style:normal;color:#c084fc} .br-si p{margin:0;font-size:12.3px;color:#cbd5e1;line-height:1.45} .br-si small{font-size:11.8px;color:#fcd34d;line-height:1.4} .br-sb{display:flex;gap:6px;margin-top:2px} .br-sb .btn{padding:5px 12px;font-size:12px}
 .wv-pv{display:flex;flex-direction:column;gap:5px;width:100%} .wv-pv span{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;border-radius:9px;font-size:12px;background:rgba(255,255,255,.05);border-left:3px solid #4ade80} .wv-pv span.short{border-left-color:#fb7185} .wv-pv em{font-style:normal;font-weight:800;color:#4ade80} .wv-pv .short em{color:#fb7185}
 .wv-heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px} .wv-heat i{display:block;height:11px;border-radius:3px}
 .wv-ratio{margin-top:8px;height:6px;border-radius:4px;background:#e11d48;overflow:hidden} .wv-ratio i{display:block;height:100%;background:#16a34a}
@@ -2566,7 +2571,7 @@ async function portalVer(reload){
 document.addEventListener("visibilitychange", () => { if (!document.hidden && document.getElementById("portal-host")) portalVer(true); });
 addEventListener("resize", () => portalSync());
 addEventListener("scroll", () => portalSync(), true);
-function after(id, root, opt){ portalSync(); [0, 120, 340].forEach(t => setTimeout(portalSync, t)); if (id === "calendario"){ gcLoad(false); if (GC.form) setTimeout(() => root.querySelector("#gc-t")?.focus(), 200); } if (id === "cervello"){ if (BR.tab === "grafo") requestAnimationFrame(brGraph); brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
+function after(id, root, opt){ portalSync(); [0, 120, 340].forEach(t => setTimeout(portalSync, t)); if (id === "calendario"){ gcLoad(false); if (GC.form) setTimeout(() => root.querySelector("#gc-t")?.focus(), 200); } if (id === "cervello"){ if (BR.tab === "grafo"){ requestAnimationFrame(brGraph); setTimeout(() => brSuggest(false), 400); } brLoad(false); } if (id === "collegamenti" && opt.add) setTimeout(() => root.querySelector("#ln-n")?.focus(), 300); }
 
 /* ---------------- SECONDO CERVELLO ----------------
    Archivio in stile Obsidian: file Markdown nella cartella cervello/ della repository privata
@@ -2767,6 +2772,46 @@ ${index || "(nessuno)"}` },
 }
 
 /* grafo: punti = note, linee = [[collegamenti]] */
+/* collegamenti suggeriti: Aris legge titoli e riassunti delle note e propone quali puntini unire e come */
+const brSugList = () => ((S.brsug && S.brsug.list) || []).filter(x => (BR.files || []).some(f => f.path === x.a) && (BR.files || []).some(f => f.path === x.b) && !brLinks(((BR.files || []).find(f => f.path === x.a) || {}).text || "").some(n => brFind(n)?.path === x.b) && !brLinks(((BR.files || []).find(f => f.path === x.b) || {}).text || "").some(n => brFind(n)?.path === x.a));
+let BR_SUG_BUSY = false, BR_SUG_ERR = "";
+async function brSuggest(force){
+  const files = BR.files || [], key = mkKey(); if (BR_SUG_BUSY || files.length < 2 || !key) return;
+  const sig = files.map(f => f.path).sort().join("|").length + ":" + files.length;
+  if (!force && S.brsug && S.brsug.sig === sig) return;
+  BR_SUG_BUSY = true; BR_SUG_ERR = ""; if (cur === "cervello") reView();
+  try {
+    const list = files.slice(0, 120).map(f => { const sum = brSumGet(f) || f.text.replace(/^#.*$/m, "").replace(/[#>*_`\[\]-]/g, " ").replace(/\s+/g, " ").trim().slice(0, 220);
+      const ln = brLinks(f.text).map(n => brFind(n)).filter(Boolean).map(t => brName(t.path));
+      return `- [${brName(f.path)}] (${brType(f.path)}) ${brTitle(f)}: ${sum}${ln.length ? " | già collegata a: " + ln.join(", ") : ""}`; }).join("\n");
+    const o = await groqJSON(key, `Sei Aris e aiuti ${S.name} a "collegare i puntini" nel suo secondo cervello (note in stile Obsidian). Leggi l'elenco delle note e trova i COLLEGAMENTI UTILI che ancora mancano: temi in comune, un'idea che serve a un progetto o a un obiettivo, cose da combinare, contraddizioni, passi successivi. Non proporre coppie già collegate. Sii concreto e pratico, in italiano semplice.
+Rispondi SOLO in JSON: {"azioni":["3-5 punti brevi su come agire per collegare le idee (es. 'Unisci X e Y in un progetto Z', 'Crea una nota hub su …')"],"collegamenti":[{"a":"nome-file tra parentesi quadre","b":"nome-file tra parentesi quadre","perche":"cosa le unisce, 1 frase","azione":"cosa fare concretamente, 1 frase"}]} con 6-12 collegamenti, i più utili prima.`, list, 2200);
+    const L = (o.collegamenti || []).map(x => { const a = brFind(String(x.a || "").replace(/^\[|\]$/g, "")), b = brFind(String(x.b || "").replace(/^\[|\]$/g, "")); return a && b && a.path !== b.path ? { a: a.path, b: b.path, perche: String(x.perche || ""), azione: String(x.azione || "") } : null; }).filter(Boolean);
+    S.brsug = { at: Date.now(), sig, ai: AI_USED, azioni: (o.azioni || []).map(String).slice(0, 6), list: L }; save();
+  } catch (e){ BR_SUG_ERR = e.message || String(e); }
+  BR_SUG_BUSY = false; if (cur === "cervello") reView();
+}
+async function brConnect(i){
+  const sg = brSugList()[i]; if (!sg) return; const fa = (BR.files || []).find(f => f.path === sg.a); if (!fa) return;
+  const line = `- [[${brName(sg.b)}]]${sg.perche ? " — " + sg.perche : ""}`;
+  const text = /\n## Collegamenti\n/.test(fa.text) ? fa.text.replace("\n## Collegamenti\n", "\n## Collegamenti\n" + line + "\n") : fa.text.replace(/\s*$/, "") + `\n\n## Collegamenti\n${line}\n`;
+  try { await brWrite(sg.a, text, `Cervello: collega ${brTitle(fa)} a ${brName(sg.b)}`); toast("Collegate ✓"); BR.hl = null; }
+  catch (e){ toast("Non ci sono riuscito: " + e.message); }
+  reView();
+}
+function brSugPanel(){
+  const L = brSugList(), sg = S.brsug, T = p => esc(brTitle((BR.files || []).find(f => f.path === p) || { text: "", path: p }));
+  return `<div class="glass c br-sug"><div class="hd"><div><h3>🔗 Collega i puntini</h3><small>${BR_SUG_BUSY ? "Aris sta leggendo le tue note…" : sg ? `Suggeriti da Aris · ${ago(sg.at)}` : "Aris cerca cosa si può collegare"}</small></div><button class="btn" ${BR_SUG_BUSY ? "disabled" : ""} onclick="brSuggest(true)" title="Cerca di nuovo">↻</button></div>
+    ${BR_SUG_ERR ? `<p class="pv-err">Non ci sono riuscito: ${esc(BR_SUG_ERR)}</p>` : ""}
+    ${!mkKey() ? `<p class="muted" style="font-size:12.5px">Serve una chiave AI (Groq o di riserva in Impostazioni).</p>` : ""}
+    ${BR_SUG_BUSY && !sg ? `<div class="br-sug-load"><i class="pv-spin"></i> Cerco temi in comune, idee utili ai progetti e passi successivi…</div>` : ""}
+    ${sg && sg.azioni.length ? `<div class="br-act"><b>Come agire</b><ol>${sg.azioni.map(a => `<li>${esc(a)}</li>`).join("")}</ol></div>` : ""}
+    ${L.length ? `<div class="br-sl">${L.map((x, i) => `<div class="br-si ${BR.hl === x.a + "|" + x.b ? "on" : ""}" onmouseenter="BR.hl='${esc(x.a + "|" + x.b)}';brGraph()" onclick="BR.hl='${esc(x.a + "|" + x.b)}';brGraph();document.querySelectorAll('.br-si').forEach(e=>e.classList.remove('on'));this.classList.add('on')">
+        <div class="br-sp"><span>${T(x.a)}</span><em>↔</em><span>${T(x.b)}</span></div>${x.perche ? `<p>${esc(x.perche)}</p>` : ""}${x.azione ? `<small>👉 ${esc(x.azione)}</small>` : ""}
+        <div class="br-sb"><button class="btn blue" onclick="event.stopPropagation();brConnect(${i})">Collega</button><button class="btn" onclick="event.stopPropagation();BR.open=decodeURIComponent('${encodeURIComponent(x.a)}');BR.tab='elenco';reView()">Apri</button></div></div>`).join("")}</div>`
+      : sg && !BR_SUG_BUSY ? `<p class="muted" style="font-size:12.5px">Per ora è tutto collegato. Premi ↻ per cercare ancora.</p>` : ""}
+    <small class="muted" style="display:block;margin-top:8px;font-size:11px">Le linee tratteggiate viola nel grafo sono i collegamenti suggeriti. "Collega" aggiunge il link [[…]] nella nota.</small></div>`;
+}
 function brGraph(){
   const cv = document.getElementById("br-graph"); if (!cv) return;
   const files = BR.files || [], W2 = cv.clientWidth, H2 = cv.clientHeight, dpr = devicePixelRatio || 1;
@@ -2774,7 +2819,9 @@ function brGraph(){
   const N = files.map((f, i) => ({ f, x: W2 / 2 + Math.cos(i * 2.4) * (40 + i * 6), y: H2 / 2 + Math.sin(i * 2.4) * (40 + i * 6), vx: 0, vy: 0, d: 0 }));
   const idx = new Map(files.map((f, i) => [f.path, i])), E = [];
   files.forEach((f, i) => brLinks(f.text).forEach(n => { const t = brFind(n); if (t && t.path !== f.path){ E.push([i, idx.get(t.path)]); N[i].d++; N[idx.get(t.path)].d++; } }));
+  const SE = brSugList().map(x => [idx.get(x.a), idx.get(x.b)]).filter(([a, b]) => a != null && b != null);
   for (let it = 0; it < 260; it++){
+    for (const [a, b] of SE){ const dx = N[b].x - N[a].x, dy = N[b].y - N[a].y, d = Math.hypot(dx, dy) || 1, f = (d - 150) * 0.012 / d; N[a].vx += dx * f; N[a].vy += dy * f; N[b].vx -= dx * f; N[b].vy -= dy * f; }
     for (let a = 0; a < N.length; a++) for (let b = a + 1; b < N.length; b++){
       const dx = N[b].x - N[a].x, dy = N[b].y - N[a].y, d2 = dx * dx + dy * dy + 0.01, k = Math.min(8, 7000 / d2), d = Math.sqrt(d2);
       N[a].vx -= dx / d * k; N[a].vy -= dy / d * k; N[b].vx += dx / d * k; N[b].vy += dy / d * k;
@@ -2785,6 +2832,12 @@ function brGraph(){
   }
   g.strokeStyle = "rgba(160,180,255,.25)"; g.lineWidth = 1;
   for (const [a, b] of E){ g.beginPath(); g.moveTo(N[a].x, N[a].y); g.lineTo(N[b].x, N[b].y); g.stroke(); }
+  // collegamenti suggeriti da Aris: tratteggiati e luminosi (quello selezionato più forte)
+  g.setLineDash([5, 5]);
+  for (const sg of brSugList()){ const a = idx.get(sg.a), b = idx.get(sg.b); if (a == null || b == null) continue; const on = BR.hl === sg.a + "|" + sg.b;
+    g.strokeStyle = on ? "rgba(250,204,21,.95)" : "rgba(192,132,252,.55)"; g.lineWidth = on ? 2.5 : 1.3; g.shadowColor = on ? "#facc15" : "#c084fc"; g.shadowBlur = on ? 14 : 6;
+    g.beginPath(); g.moveTo(N[a].x, N[a].y); g.lineTo(N[b].x, N[b].y); g.stroke(); }
+  g.setLineDash([]); g.shadowBlur = 0;
   g.font = "11px system-ui, sans-serif"; g.textAlign = "center";
   for (const n of N){ const r = 4 + Math.min(8, n.d * 1.5), c = BR_COL[brType(n.f.path)];
     g.beginPath(); g.arc(n.x, n.y, r, 0, 7); g.fillStyle = c; g.shadowColor = c; g.shadowBlur = 12; g.fill(); g.shadowBlur = 0;
@@ -2821,7 +2874,7 @@ function brView(){
       <span class="sp"></span><button class="btn" onclick="brRetitle(true)" title="Aris dà a ogni nota un nome breve sul suo contenuto">✨ Rinomina</button><button class="btn" onclick="brNewAsk()">${ico("plus")} Nota</button><button class="btn" onclick="brLoad(true)" title="Aggiorna">↻</button></div>
     ${BR.err ? `<div class="soon">${ico("brain")}<span>Non riesco a leggere l'archivio: ${esc(BR.err)}.</span></div>` : ""}
     ${note}
-    ${BR.tab === "grafo" ? `<div class="glass c" style="padding:0;overflow:hidden"><canvas id="br-graph" style="display:block;width:100%;height:${isPhone() ? 420 : 560}px"></canvas></div>`
+    ${BR.tab === "grafo" ? `<div class="br-gw"><div class="glass c" style="padding:0;overflow:hidden"><canvas id="br-graph" style="display:block;width:100%;height:${isPhone() ? 420 : 600}px"></canvas></div>${brSugPanel()}</div>`
       : `<input class="input br-search" style="max-width:980px" placeholder="Cerca nelle note…" value="${esc(BR.q)}" oninput="BR.q=this.value;clearTimeout(brQT);brQT=setTimeout(()=>{const p=this.selectionStart;reView();const i=document.querySelector('.br-search');if(i){i.focus();i.setSelectionRange(p,p)}},250)" class="br-search">
          <div class="br-list">${list || `<div class="soon">${ico("brain")}<span>${files.length ? "Nessuna nota trovata." : BR.busy ? "Carico…" : "L'archivio è vuoto. Comincia dal <b>Diario di oggi</b> o scrivi qualcosa all'AI qui sopra: le note nascono da sole."}</span></div>`}</div>`}`;
 }
@@ -3126,7 +3179,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI"];
+const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -3401,7 +3454,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "78";
+const APP_V = "79";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
