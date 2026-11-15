@@ -1103,7 +1103,7 @@ const VIEWS = {
       <div class="chips"><button class="chip ${EN ? "" : "on"}" data-raw onclick="setLang('it')">🇮🇹 Italiano</button><button class="chip ${EN ? "on" : ""}" data-raw onclick="setLang('en')">🇬🇧 English</button></div></div>
     <div class="glass c"><div class="hd"><div><h3>AI di riserva (gratis)</h3><small>Quando Groq finisce i limiti, Aris passa da solo a queste, in quest'ordine. Premi "Prova" per controllare che siano collegate.</small></div></div>
       ${ALT_AI.map(a => { const st = ALT_ST[a.id], on = !!altKey(a);
-        return `<div class="alt-r"><div class="alt-h"><b>${a.n}</b>${a.get ? ` <a href="${a.get}" target="_blank" rel="noopener">prendi la chiave gratis ↗</a>` : ""}<span class="tag alt-st ${st === "ok" ? "ok" : st && st !== "…" ? "ko" : ""}">${st === "ok" ? "✓ collegata e funziona" : st === "…" ? "provo…" : st ? "✗ " + esc(st) : on ? "chiave inserita" : "non collegata"}</span>${on ? `<button class="btn" style="margin-left:auto;padding:5px 12px" onclick="altTest('${a.id}')">Prova</button>` : ""}</div>
+        return `<div class="alt-r"><div class="alt-h"><b>${a.n}</b>${a.get ? ` <a href="${a.get}" target="_blank" rel="noopener">prendi la chiave gratis ↗</a>` : ""}<span class="tag alt-st ${st === "ok" ? "ok" : st && st[0] !== "…" ? "ko" : ""}">${st === "ok" ? "✓ collegata e funziona" + (ALT_OKM[a.id] ? " · " + esc(ALT_OKM[a.id]) : "") : st && st[0] === "…" ? esc(st) + "…" : st ? "✗ " + esc(st) : on ? "chiave inserita" : "non collegata"}</span>${on ? `<button class="btn" style="margin-left:auto;padding:5px 12px" onclick="altTest('${a.id}')">Prova</button>` : ""}</div>
           ${a.id === "omni" ? `<small class="muted" style="display:block;margin:4px 0 6px;font-size:11.5px">Funziona solo sul PC dove gira OmniRoute, quando è acceso. Indirizzo:</small><input class="input" placeholder="${a.url0}" value="${esc(lsGet(a.urlLs))}" onchange="try{localStorage.setItem('${a.urlLs}',this.value.trim());localStorage.setItem('pc_omni_on','1')}catch{};OM_M=null;reView()" style="margin-bottom:6px">
             <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px"><input type="checkbox" ${lsGet("pc_omni_on") ? "checked" : ""} onchange="try{this.checked?localStorage.setItem('pc_omni_on','1'):localStorage.removeItem('pc_omni_on')}catch{};reView()"> Usa OmniRoute su questo dispositivo</label>` : ""}
           <input class="input" type="password" placeholder="${esc(a.ph)}" value="${esc(lsGet(a.ls))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};OR_M=null;OM_M=null;GEM_M=null;delete ALT_ST['${a.id}'];reView();if(this.value.trim())altTest('${a.id}')"></div>`; }).join("")}
@@ -2307,12 +2307,12 @@ let OR_M = null, OM_M = null, GEM_M = null, AI_USED = "Groq";
 /* modelli Gemini: li legge dal tuo account Google (i nomi cambiano spesso) e sceglie i "flash", veloci e gratuiti */
 async function gemModels(){
   if (GEM_M) return GEM_M; let L = [];
-  try { const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=" + encodeURIComponent(lsGet("pc_gemini"))); if (r.ok) L = ((await r.json()).models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => m.name.replace(/^models\//, "")).filter(id => /^gemini/.test(id) && !/image|tts|audio|live|embed|vision|robotics|computer|exp|preview-tts|native/i.test(id)); } catch {}
+  try { const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=" + encodeURIComponent(lsGet("pc_gemini")), { signal: AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined }); if (r.ok) L = ((await r.json()).models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => m.name.replace(/^models\//, "")).filter(id => /^gemini/.test(id) && !/image|tts|audio|live|embed|vision|robotics|computer|exp|preview-tts|native/i.test(id)); } catch {}
   const ver = id => +((id.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0), rank = id => (/flash/.test(id) ? 0 : /pro/.test(id) ? 2 : 1) + (/lite/.test(id) ? .5 : 0) + (/preview/.test(id) ? .3 : 0) + (/-\d{3}$|-\d{2}-\d{4}$/.test(id) ? .2 : 0);
   L.sort((a, b) => rank(a) - rank(b) || ver(b) - ver(a));
   return GEM_M = L.length ? L.slice(0, 4) : ["gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"];
 }
-const ALT_ST = {};
+const ALT_ST = {}, ALT_OKM = {};
 async function orModels(){
   if (OR_M) return OR_M; let ids = [];
   try { const r = await fetch("https://openrouter.ai/api/v1/models"); if (r.ok) ids = ((await r.json()).data || []).map(m => m.id).filter(id => /:free$/.test(id)); } catch {}
@@ -2325,17 +2325,17 @@ async function omniModels(){
   return OM_M = ids.length ? ids.slice(0, 4) : ["auto"];
 }
 const altErr = (a, st, body) => st === 404 ? "modello non trovato" : st === 429 ? "limite raggiunto" : st === 401 || st === 403 || /API_KEY_INVALID|API key not valid/i.test(body) ? "chiave non valida" : st === 402 ? "credito finito" : "errore " + st;
-async function altCall(a, model, messages, max){
-  const k = lsGet(a.ls);
+async function altCall(a, model, messages, max, ms = 90000){
+  const k = lsGet(a.ls), signal = AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined;
   if (a.id === "gemini"){ // API nativa di Google (funziona dal browser)
     const sys = messages.filter(m => m.role === "system").map(m => m.content).join("\n");
     const contents = messages.filter(m => m.role !== "system").map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content) }] }));
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(k)}`, { method: "POST", headers: { "content-type": "application/json" },
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(k)}`, { method: "POST", signal, headers: { "content-type": "application/json" },
       body: JSON.stringify({ ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}), contents, generationConfig: { temperature: 0.3, maxOutputTokens: max + 2500, ...(/2\.5-flash/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}) } }) });
     if (!r.ok) return { err: altErr(a, r.status, await r.text().catch(() => "")), st: r.status };
     const j = await r.json(); return { t: (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim() };
   }
-  const r = await fetch(altUrl(a) + "/chat/completions", { method: "POST", headers: { "content-type": "application/json", ...(k ? { authorization: "Bearer " + k } : {}) }, body: JSON.stringify({ model, temperature: 0.3, max_tokens: max, messages }) });
+  const r = await fetch(altUrl(a) + "/chat/completions", { method: "POST", signal, headers: { "content-type": "application/json", ...(k ? { authorization: "Bearer " + k } : {}) }, body: JSON.stringify({ model, temperature: 0.3, max_tokens: max, messages }) });
   if (!r.ok) return { err: altErr(a, r.status, await r.text().catch(() => "")), st: r.status };
   return { t: ((await r.json()).choices?.[0]?.message?.content || "").trim() };
 }
@@ -2343,7 +2343,7 @@ async function altChat(messages, max){
   const errs = [];
   for (const a of ALT_AI){ if (!altKey(a)) continue; let last = "";
     for (const model of await a.models()){
-      let o; try { o = await altCall(a, model, messages, max); } catch { last = a.id === "omni" ? "non raggiungibile (è acceso sul PC?)" : "rete"; break; }
+      let o; try { o = await altCall(a, model, messages, max); } catch (e){ if (e && e.name === "TimeoutError"){ last = "non risponde (troppo lento)"; continue; } last = a.id === "omni" ? "non raggiungibile (è acceso sul PC?)" : "rete"; break; }
       if (o.t){ AI_USED = a.n; ALT_ST[a.id] = "ok"; return o.t; }
       last = o.err || "risposta vuota"; if (o.st === 401 || o.st === 403 || /chiave/.test(last)) break;
     }
@@ -2353,10 +2353,11 @@ async function altChat(messages, max){
 }
 async function altTest(id){
   const a = ALT_AI.find(x => x.id === id); ALT_ST[id] = "…"; reView(); if (a.id === "openrouter") OR_M = null; if (a.id === "omni") OM_M = null; if (a.id === "gemini") GEM_M = null;
-  let last = "";
+  let last = ""; ALT_ST[id] = "… cerco i modelli"; reView();
   for (const model of await a.models()){
-    try { const o = await altCall(a, model, [{ role: "user", content: "Rispondi solo con la parola: ok" }], 20); if (o.t){ ALT_ST[id] = "ok"; return reView(); } last = o.err || "risposta vuota"; if (/chiave/.test(last)) break; }
-    catch { last = a.id === "omni" ? "non raggiungibile: avvia OmniRoute sul PC (comando omniroute) e usa la dashboard su quel PC" : "rete"; break; }
+    ALT_ST[id] = "… provo " + model; reView();
+    try { const o = await altCall(a, model, [{ role: "user", content: "Rispondi solo con la parola: ok" }], 20, 25000); if (o.t){ ALT_ST[id] = "ok"; ALT_OKM[id] = model; return reView(); } last = o.err || "risposta vuota"; if (/chiave/.test(last)) break; }
+    catch (e){ if (e && e.name === "TimeoutError"){ last = "non risponde (troppo lento)"; continue; } last = a.id === "omni" ? "non raggiungibile: avvia OmniRoute sul PC (comando omniroute) e usa la dashboard su quel PC" : "rete"; break; }
   }
   ALT_ST[id] = last; reView();
 }
@@ -3336,7 +3337,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "75";
+const APP_V = "76";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
