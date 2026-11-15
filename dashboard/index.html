@@ -142,6 +142,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wv-big{display:flex;align-items:center;gap:10px} .wv-big b{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1} .wv-big span{font-size:11.5px;color:var(--muted);line-height:1.25}
 .wv-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px} .wv-pills span{font-size:10.5px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#cbd5e1;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
 .alt-r{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)} .alt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px} .alt-h b{font-size:13px} .alt-h a{color:var(--blue-2);font-size:12px} .alt-st{font-size:11px;background:rgba(255,255,255,.06);color:var(--muted)} .alt-st.ok{background:rgba(34,197,94,.15);color:#4ade80} .alt-st.ko{background:rgba(244,63,94,.15);color:#fb7185}
+.br-redo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px} .br-redo.thin{padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)} .br-redo span{font-size:12.5px;color:#fcd34d;flex:1}
 .wv-pv{display:flex;flex-direction:column;gap:5px;width:100%} .wv-pv span{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;border-radius:9px;font-size:12px;background:rgba(255,255,255,.05);border-left:3px solid #4ade80} .wv-pv span.short{border-left-color:#fb7185} .wv-pv em{font-style:normal;font-weight:800;color:#4ade80} .wv-pv .short em{color:#fb7185}
 .wv-heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px} .wv-heat i{display:block;height:11px;border-radius:3px}
 .wv-ratio{margin-top:8px;height:6px;border-radius:4px;background:#e11d48;overflow:hidden} .wv-ratio i{display:block;height:100%;background:#16a34a}
@@ -1506,7 +1507,7 @@ async function vdAnalyze(v, force){
     const o = await groqJSON(key, sys, user, 1600);
     v.ai = { titolo: String(o.titolo || v.title || "Video"), tema: String(o.tema || ""), riassunto: String(o.riassunto || ""), punti: (o.punti || []).map(String).slice(0, 8), idee: (o.idee || []).filter(i => i && i.idea).map(i => ({ idea: String(i.idea), come: String(i.come || "") })).slice(0, 6), primo: String(o.primo_passo || ""), nota: String(o.nota || "") };
     v.st = "fatto"; v.aerr = ""; save();
-    vdBrain(v);
+    await vdBrain(v, force);
   } catch (e){ v.aerr = e.message; save(); if (/limite|rate limit/i.test(e.message)) setTimeout(() => vdAnalyze(v), 45000); }
   delete VD_BUSY[v.id]; if (cur === "video") reView();
 }
@@ -1516,6 +1517,26 @@ const BR_SUM_RX = /^>\s*\*\*In breve:\*\*\s*(.+)$/m, BR_SUM_BUSY = {};
 const brSumGet = f => { const m = f && f.text.match(BR_SUM_RX); return m ? m[1].trim() : ""; };
 const brSumShort = t => { const p = String(t || "").replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+/g) || [String(t || "")]; let o = ""; for (const x of p){ if ((o + x).length > 260 && o) break; o += x; } return o.trim(); };
 function brSumVid(f){ return (S.vid || []).find(v => v.ai && (v.brain === f.path || (v.u && f.text.includes(v.u)))); }
+/* rifà una nota del Cervello più dettagliata (per le idee venute male, es. quando il video non si è sentito) */
+const BR_REDO = {};
+const brThin = f => brType(f.path) === "idee" && (f.text.replace(BR_SUM_RX, "").length < 900 || /\breel\b/i.test(brTitle(f)));
+async function brRedo(path){
+  const f = (BR.files || []).find(x => x.path === path); if (!f || BR_REDO[path]) return;
+  const key = mkKey(); if (!key) return toast("Serve una chiave AI (Groq o di riserva)");
+  BR_REDO[path] = 1; reView();
+  try {
+    const v = (S.vid || []).find(v => v.brain === path || (v.u && f.text.includes(v.u)));
+    if (v && (v.tr || v.cap || v.note)){ v.brain = path; await vdAnalyze(v, true); if (v.aerr) throw new Error(v.aerr); }
+    else {
+      const url = (f.text.match(/\[Video originale\]\((.+?)\)/) || [])[1] || "";
+      const o = await groqJSON(key, `Sei Aris, l'assistente di ${S.name}. Questa nota del suo secondo cervello è troppo povera. Riscrivila più dettagliata e utile, in italiano semplice, senza inventare fatti specifici che non ci sono: spiega meglio l'argomento e i concetti, dai contesto generale, idee pratiche concrete e un primo passo. Se mancano informazioni sul video, dillo in una riga. Rispondi SOLO in JSON: {"titolo":"1-4 parole che dicono l'argomento, mai 'Reel', 'Video' o nomi utente","riassunto":"3-5 frasi","nota":"Markdown con le sezioni ## Di cosa parla, ## Le cose chiave, ## Idee da provare, ## Primo passo"}`, f.text.slice(0, 6000), 1800);
+      if (!o.nota) throw new Error("risposta vuota");
+      await brWrite(path, `# ${o.titolo || brTitle(f)}\n\n> **In breve:** ${brSumShort(o.riassunto || "")}\n\n${String(o.nota).replace(/^#\s+[^\n]*\n+/, "").trim()}\n\n${url ? `[Video originale](${url})\n` : ""}`, "Cervello: nota più dettagliata");
+    }
+    toast("Nota rifatta più dettagliata");
+  } catch (e){ toast("Non ci sono riuscito: " + e.message); }
+  delete BR_REDO[path]; if (cur === "cervello") reView();
+}
 function brSumBox(f){
   const txt = brSumGet(f), v = brSumVid(f);
   const show = txt || (v ? brSumShort(v.ai.riassunto) : "");
@@ -1540,9 +1561,9 @@ async function brSumFill(){
   try { for (const f of (BR.files || []).filter(f => brType(f.path) === "idee" && !brSumGet(f))){ await brSumMake(f, true); await new Promise(r => setTimeout(r, 2500)); } }
   finally { brSumFill.on = false; }
 }
-async function vdBrain(v){
-  if (!brCfg().gh || !v.ai || v.brain) return;
-  const a = v.ai, path = `${BR_DIR}idee/${brSlug("video " + a.titolo)}.md`;
+async function vdBrain(v, force){
+  if (!brCfg().gh || !v.ai || (v.brain && !force)) return;
+  const a = v.ai, path = force && v.brain ? v.brain : `${BR_DIR}idee/${brSlug("video " + a.titolo)}.md`;
   const sum = `> **In breve:** ${brSumShort(a.riassunto)}\n\n`;
   const md = a.nota && a.nota.trim().length > 40 ? `# ${a.titolo}\n\n` + sum + a.nota.trim().replace(/^#\s+[^\n]*\n+/, "") + `\n\n[Video originale](${v.u})\n` : `# ${a.titolo}\n\n${sum}${a.riassunto}\n\n## Idee da provare\n${a.idee.map(i => `- **${i.idea}**: ${i.come}`).join("\n")}\n\n## Primo passo\n${a.primo}\n\n[Video originale](${v.u})\n`;
   try { await brWrite(path, md + `\n_Salvato dalla sezione Video il ${new Date().toLocaleDateString("it-IT")}_\n`, "Cervello: idee dal video " + a.titolo); v.brain = path; save(); BR.at = 0; }
@@ -1741,8 +1762,8 @@ async function prevRun(mode){
       const sysE = `Sei Aris, un analista macro prudente. Per OGNI evento del calendario fornito (massimo 8, i più importanti) spiega perché conta per i mercati e prevedi come potrebbe muovere gli strumenti forniti, tenendo conto delle attese (previsto/precedente), dell'andamento recente dei prezzi e delle notizie. Indica 2-4 strumenti per evento, scegliendo tra quelli forniti. Probabilità realistiche 50-80. Oggi è ${new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} (${ymd(new Date())}). Per ogni strumento indica l'operazione ("long" = comprare, "short" = vendere allo scoperto, "fuori" = non operare), la variazione % attesa "mossa" (numero con segno, realistica) e quando (giorno e ora dell'evento). Italiano semplice.
 Rispondi SOLO in JSON: {"sintesi":"2-3 frasi: la settimana in arrivo per i mercati","eventi":[{"k":"codice tra parentesi quadre","titolo":"breve","perche":"perché conta, 1-2 frasi","sopra":"cosa succede se il dato/esito è migliore o più forte del previsto","sotto":"se è peggiore o più debole","impatti":[{"s":"simbolo","dir":"rialzo|ribasso|laterale","prob":60,"perche":"1 frase","op":"long|short|fuori","mossa":2.5}]}]}`;
       const o = await groqJSON(key, sysE, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3000)}` : ""), 2600);
-      const E = (o.eventi || []).map(e => { const g = EVL.find(x => x.k === e.k) || EVL.find(x => pvNorm(x.title).includes(pvNorm(e.titolo || "").slice(0, 12)));
-        const imp = (e.impatti || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)), entro: p.entro || g?.day || "", quando: p.quando || [g?.day && new Date(g.day + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "short" }), g?.time && "alle " + g.time, "con " + (e.titolo || g?.title || "")].filter(Boolean).join(" ") }) : null; }).filter(Boolean);
+      const E = pvArr(o, ["eventi", "events"]).map(e => { const g = EVL.find(x => x.k === e.k) || EVL.find(x => pvNorm(x.title).includes(pvNorm(e.titolo || "").slice(0, 12)));
+        const imp = (e.impatti || e.impacts || []).map(p => { p.s = p.s || p.simbolo || p.symbol || p.strumento || p.nome; const x = pvFind(p.s) || pvFind(p.nome); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)), entro: p.entro || g?.day || "", quando: p.quando || [g?.day && new Date(g.day + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "short" }), g?.time && "alle " + g.time, "con " + (e.titolo || g?.title || "")].filter(Boolean).join(" ") }) : null; }).filter(Boolean);
         return { titolo: String(e.titolo || g?.title || ""), day: g?.day || "", time: g?.time || "", where: g?.where || "", k: g?.k || "", imp: g?.imp || 3, perche: String(e.perche || ""), sopra: String(e.sopra || ""), sotto: String(e.sotto || ""), impatti: imp }; }).filter(e => e.titolo && e.impatti.length);
       if (!E.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
       S.prev = [{ at: Date.now(), mode, ai: AI_USED, sintesi: String(o.sintesi || ""), conn: [], E, P: E.flatMap(e => e.impatti), web: !!web && groqText.web }, ...(S.prev || [])].slice(0, 8); save();
@@ -1754,8 +1775,9 @@ ${mode === "scelti" ? "Fai una previsione per OGNI strumento elencato." : "Scegl
 Oggi è ${new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} (${ymd(new Date())}). Per ogni previsione indica: l'operazione ("long" = comprare per guadagnare dal rialzo, "short" = vendere allo scoperto per guadagnare dal ribasso, "fuori" = non operare), la variazione percentuale attesa "mossa" (numero con segno, realistica rispetto a quanto si muove di solito lo strumento), QUANDO dovrebbe avvenire il movimento (giorno e, se c'è, l'evento o l'ora che lo innesca, es. "mercoledì 18 nov alle 14:30 con il dato sull'inflazione USA") e la data "entro" (AAAA-MM-GG).
 Rispondi SOLO in JSON: {"sintesi":"2-3 frasi sul quadro generale","connessioni":[{"tema":"breve","spiega":"come collega più strumenti","strumenti":["simbolo"]}],"previsioni":[{"s":"simbolo esatto tra parentesi quadre","dir":"rialzo|ribasso|laterale","prob":60,"orizzonte":"1-3 giorni","perche":"2 frasi","segnali":["dato o notizia concreta"],"rischio":"cosa smentirebbe la previsione","op":"long|short|fuori","mossa":-3.0,"quando":"giorno e motivo/ora","entro":"AAAA-MM-GG"}]}`;
     const o = await groqJSON(key, sys, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3500)}` : ""), 3600);
-    const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) }) : null; }).filter(Boolean).sort((a, b) => (b.op !== "fuori") - (a.op !== "fuori") || b.prob - a.prob);
-    if (!P.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
+    const RAW = pvArr(o, ["previsioni", "predictions", "previsione", "forecasts", "strumenti"]);
+    const P = RAW.map(p => { p.s = p.s || p.simbolo || p.symbol || p.strumento || p.nome || p.name; const x = pvFind(p.s) || pvFind(p.nome || p.n); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) }) : null; }).filter(Boolean).sort((a, b) => (b.op !== "fuori") - (a.op !== "fuori") || b.prob - a.prob);
+    if (!P.length) throw new Error(RAW.length ? "non ho riconosciuto gli strumenti indicati dall'AI (" + RAW.slice(0, 4).map(p => p.s).join(", ") + "), riprova" : "l'AI ha risposto senza previsioni, riprova");
     S.prev = [{ at: Date.now(), mode, ai: AI_USED, sintesi: String(o.sintesi || ""), conn: (o.connessioni || []).slice(0, 5), P, web: !!web && groqText.web }, ...(S.prev || [])].slice(0, 8); save();
   } catch (e){ PV.err = e.message || String(e); }
   PV.busy = false; PV.step = ""; if (cur === "mercati") reView();
@@ -1796,6 +1818,20 @@ function prevPlan(r){ // il riepilogo chiaro: cosa fare, di quanto, quando
   const P = (r.P || []).filter(p => p.op && p.op !== "fuori").sort((a, b) => b.prob - a.prob); if (!P.length) return "";
   return `<div class="pv-plan"><div class="pv-plh"><b>📋 Cosa farebbe l'agente</b><small>dal più probabile al meno probabile</small></div>${P.map(p => `<div class="pv-row ${p.op}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-rop">${p.op === "long" ? "▲ COMPRA" : "▼ SHORT"}</span><b>${esc(p.n)}</b><span class="pv-mv">${p.mossa != null ? mkPct(p.mossa) : "—"}</span><span class="pv-q">${esc(pvWhen(p))}</span><span class="pv-pr"><i style="width:${p.prob}%"></i><em>${p.prob}%</em></span></div>`).join("")}
     <small class="pv-note">Nessuna previsione è davvero "quasi certa": anche quelle migliori si fermano intorno al 70-80%. Usa sempre uno stop loss.</small></div>`;
+}
+/* trova lo strumento anche se l'AI scrive il simbolo in un altro modo (BTC, EUR/USD, S&P 500, "Oro"…) */
+function pvFind(q){
+  if (!q || !MK) return null; const L = MK.items, n = pvNorm(q); if (!n) return null;
+  return L.find(i => i.s === q) || L.find(i => pvNorm(i.s) === n) || L.find(i => pvNorm(i.n) === n)
+    || L.find(i => pvNorm(i.s.replace(/=X$|=F$|-USD$/, "")) === n) || (n.length >= 3 && L.find(i => pvNorm(i.s).startsWith(n)))
+    || (n.length >= 4 && L.find(i => pvNorm(i.n).includes(n) || n.includes(pvNorm(i.n)))) || null;
+}
+/* l'elenco può arrivare con un nome diverso o dentro un altro oggetto */
+function pvArr(o, keys){
+  for (const k of keys) if (Array.isArray(o?.[k]) && o[k].length) return o[k];
+  if (Array.isArray(o)) return o;
+  for (const v of Object.values(o || {})) if (v && typeof v === "object" && !Array.isArray(v)) for (const k of keys) if (Array.isArray(v[k]) && v[k].length) return v[k];
+  return [];
 }
 const pvNorm = t => String(t || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
 function prevEvents(r){
@@ -2748,7 +2784,7 @@ function brView(){
   const note = open ? `<div class="glass c br-note"><div class="hd"><div><h3>${esc(brTitle(open))}</h3><small><span class="br-dot" style="background:${BR_COL[brType(open.path)]}"></span>${esc(open.path.slice(BR_DIR.length))}</small></div>
         <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" title="Elimina la nota" onclick="brDel(this)">${ico("trash")}</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
       ${BR.edit ? `<textarea id="br-ta" class="input br-ta">${esc(open.text)}</textarea><small class="muted">Scrivi [[nome]] per collegare un'altra nota. Markdown: # titolo, **grassetto**, - elenco, - [ ] da fare.</small>`
-        : `${brType(open.path) === "idee" ? brSumBox(open) : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
+        : `${brType(open.path) === "idee" ? brSumBox(open) + `<div class="br-redo ${brThin(open) ? "thin" : ""}">${brThin(open) ? "<span>Questa idea è spiegata poco (forse il video non si è sentito bene).</span>" : ""}<button class="btn" ${BR_REDO[open.path] ? "disabled" : ""} onclick="brRedo(decodeURIComponent('${encodeURIComponent(open.path)}'))">${BR_REDO[open.path] ? "Aris la sta riscrivendo…" : "✨ Rifalla più dettagliata"}</button></div>` : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
   const list = BR_TYPES.map(([k, t, col]) => { const L = shown.filter(f => brType(f.path) === k); if (!L.length) return "";
     return `<div class="br-grp"><div class="br-h"><span class="br-dot" style="background:${col}"></span>${t} <span class="muted">${L.length}</span></div>${L.slice().reverse().map(f => `<button class="br-it ${open && open.path === f.path ? "on" : ""}" onclick="BR.open=decodeURIComponent('${jq(f.path)}');BR.edit=false;reView()"><b>${esc(brTitle(f))}</b><small>${esc(f.text.replace(/^#.*$/m, "").replace(/[#*\[\]>`-]/g, "").trim().slice(0, 90))}</small></button>`).join("")}</div>`; }).join("");
   return head("Cervello", BR.busy ? "Sincronizzo con GitHub…" : `${files.length} note · ${esc(c.repo)}/cervello`) + ai + `
@@ -3337,7 +3373,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "76";
+const APP_V = "77";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
