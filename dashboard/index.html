@@ -141,6 +141,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wv-met .wv-emo{position:absolute;left:0;top:-4px;font-size:26px} .wv-met em{color:#e0f2fe}
 .wv-big{display:flex;align-items:center;gap:10px} .wv-big b{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1} .wv-big span{font-size:11.5px;color:var(--muted);line-height:1.25}
 .wv-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px} .wv-pills span{font-size:10.5px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#cbd5e1;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.wv-pv{display:flex;flex-direction:column;gap:5px;width:100%} .wv-pv span{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;border-radius:9px;font-size:12px;background:rgba(255,255,255,.05);border-left:3px solid #4ade80} .wv-pv span.short{border-left-color:#fb7185} .wv-pv em{font-style:normal;font-weight:800;color:#4ade80} .wv-pv .short em{color:#fb7185}
 .wv-heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px} .wv-heat i{display:block;height:11px;border-radius:3px}
 .wv-ratio{margin-top:8px;height:6px;border-radius:4px;background:#e11d48;overflow:hidden} .wv-ratio i{display:block;height:100%;background:#16a34a}
 .wv-date{display:flex;align-items:center;gap:14px} .wv-date>span{display:flex;flex-direction:column;align-items:center;justify-content:center;width:60px;height:62px;border-radius:14px;background:#fff;color:#111} .wv-date small{font-size:10px;font-weight:700;text-transform:uppercase;color:#e11d48} .wv-date b{font-size:28px;font-weight:600;line-height:1}
@@ -957,6 +958,10 @@ function welHints(){
       act: () => { mkTab = "tutti"; go("mercati"); if (m) setTimeout(() => mkOpen(m.s), 60); } },
     { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "Mappa dei mercati", v: tot ? `<div class="wv-heat">${L.slice().sort((a, b) => b.pct - a.pct).map(x => `<i style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}"></i>`).join("")}</div><div class="wv-ratio"><i style="width:${(up / tot * 100).toFixed(1)}%"></i></div>` : "", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
       act: () => { mkTab = "mappa"; go("mercati"); } },
+    (() => { const r = (S.prev || [])[0], P = r ? r.P.map(p => pvFix({ ...p })).filter(p => p.op !== "fuori").sort((a, b) => b.prob - a.prob) : [], t = P[0];
+      return { i: "chart", g: "linear-gradient(135deg,#a855f7,#3b82f6)", k: "Previsioni", v: P.length ? `<div class="wv-pv">${P.slice(0, 3).map(p => `<span class="${p.op}"><b>${p.op === "long" ? "▲" : "▼"} ${esc(p.n)}</b><em>${p.mossa != null ? mkPct(p.mossa) : p.prob + "%"}</em></span>`).join("")}</div>` : "",
+        q: t ? `${t.op === "long" ? "Compra" : "Short"} ${t.n}${t.mossa != null ? " " + mkPct(t.mossa) : ""}` : "Cosa potrebbe muoversi", h: t ? `${t.prob}% · ${cut(pvWhen(t), 60)}` : "Tocca e l'agente analizza i mercati",
+        act: () => { mkTab = "prev"; go("mercati"); } }; })(),
     { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", v: ev ? `<div class="wv-date"><span><small>${new Date(ev.day + "T12:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { month: "short" })}</small><b>${+ev.day.slice(8)}</b></span><div class="wv-imp">${"●".repeat(Math.max(1, Math.min(5, ev.imp)))}<em>${"●".repeat(5 - Math.max(1, Math.min(5, ev.imp)))}</em><small>importanza</small></div></div>` : "", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
       act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
     { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", tt: 1, v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? "" : "LLM e intelligenza artificiale",
@@ -1098,6 +1103,10 @@ const VIEWS = {
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
       ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
+    <div class="glass c"><div class="hd"><div><h3>AI di riserva (gratis)</h3><small>Quando Groq finisce i limiti, Aris passa da solo a queste. Basta incollare le chiavi gratuite una volta.</small></div></div>
+      ${ALT_AI.map(a => `<div style="margin-top:10px"><b style="font-size:13px">${a.n}</b> <a href="${a.id === "gemini" ? "https://aistudio.google.com/apikey" : "https://openrouter.ai/settings/keys"}" target="_blank" rel="noopener" style="color:var(--blue-2);font-size:12px">prendi la chiave gratis ↗</a>${altKey(a) ? ` <span class="tag" style="background:rgba(34,197,94,.15);color:#4ade80">✓ attiva</span>` : ""}
+        <input class="input" type="password" placeholder="${a.id === "gemini" ? "AIza…" : "sk-or-…"}" value="${esc(altKey(a))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};${a.id === "openrouter" ? "OR_M=null;" : ""}toast('Salvato');reView()" style="margin-top:6px"></div>`).join("")}
+      <small class="muted" style="display:block;margin-top:10px;font-size:11.5px">Le chiavi restano solo su questo dispositivo. Sono gratuite: non serve la carta.</small></div>
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
     ${syncBox()}
@@ -1628,7 +1637,7 @@ function mkRow(x, why){
     ${why ? `<div class="mk-why">${ai ? `<p><b>Perché:</b> ${esc(ai.perche)}</p><p><b>Cosa può comportare:</b> ${esc(ai.effetti)}</p>` : `<p class="muted">${MKAI.busy ? "L'AI sta cercando il motivo nelle notizie…" : MKAI.err ? "Spiegazione non disponibile adesso: tocca Riprova qui sotto." : done ? "L'AI non ha trovato un motivo chiaro nelle notizie di oggi." : mkKey() ? "Spiegazione in arrivo…" : "Per il motivo serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)."}</p>`}</div>` : ""}
   </div>`;
 }
-function mkKey(){ try { return localStorage.getItem("pc_groq") || ""; } catch { return ""; } }
+function mkKey(){ let k = ""; try { k = localStorage.getItem("pc_groq") || ""; } catch {} return k || (altAny() ? "-" : ""); }
 const mkStrong = x => Math.abs(x.z) >= 2;
 async function mkExplain(force){
   const key = mkKey();
@@ -1688,6 +1697,7 @@ function mkView(){
   const L = MK.items.filter(x => mkCls === "Tutti" || x.cls === mkCls);
   const top = new Set(mkTop(8).map(x => x.s));
   const tabs = `<div class="seg mk-tabs"><button class="${mkTab === "tutti" ? "on" : ""}" onclick="mkTab='tutti';reView();renderNav()">Tutti gli strumenti</button><button class="${mkTab === "mappa" ? "on" : ""}" onclick="mkTab='mappa';reView();renderNav()">Mappa dei mercati</button><button class="${mkTab === "prev" ? "on" : ""}" onclick="mkTab='prev';reView();renderNav()">✨ Previsioni</button></div>`;
+  if (mkTab === "prev" && !PV.auto && (S.prev || [])[0] && !S.prev[0].P.some(p => p.op) && mkKey()){ PV.auto = 1; setTimeout(prevRedo, 300); }
   if (mkTab === "prev") return head("Previsioni", "L'agente di Aris cerca connessioni tra prezzi, notizie ed eventi") + tabs + prevView();
   if (mkTab === "mappa") return head("Mappa dei mercati", `Tutti gli strumenti di oggi a colori · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `<div class="mk-mapfull">${mkMapCard()}</div>`;
   return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `
@@ -1731,7 +1741,7 @@ Rispondi SOLO in JSON: {"sintesi":"2-3 frasi: la settimana in arrivo per i merca
         const imp = (e.impatti || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)), entro: p.entro || g?.day || "", quando: p.quando || [g?.day && new Date(g.day + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "short" }), g?.time && "alle " + g.time, "con " + (e.titolo || g?.title || "")].filter(Boolean).join(" ") }) : null; }).filter(Boolean);
         return { titolo: String(e.titolo || g?.title || ""), day: g?.day || "", time: g?.time || "", where: g?.where || "", k: g?.k || "", imp: g?.imp || 3, perche: String(e.perche || ""), sopra: String(e.sopra || ""), sotto: String(e.sotto || ""), impatti: imp }; }).filter(e => e.titolo && e.impatti.length);
       if (!E.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
-      S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: [], E, P: E.flatMap(e => e.impatti), web: !!web }, ...(S.prev || [])].slice(0, 8); save();
+      S.prev = [{ at: Date.now(), mode, ai: AI_USED, sintesi: String(o.sintesi || ""), conn: [], E, P: E.flatMap(e => e.impatti), web: !!web && groqText.web }, ...(S.prev || [])].slice(0, 8); save();
       PV.busy = false; PV.step = ""; if (cur === "mercati") reView(); return;
     }
     const sys = `Sei Aris, un analista quantitativo e macro prudente. Ricevi dati reali di prezzo, notizie ed eventi. Il tuo compito: trovare CONNESSIONI (es. un evento o una notizia che influenza più strumenti, correlazioni tra strumenti, momentum o eccessi da riassorbire) e stimare per i prossimi 1-5 giorni la direzione più probabile.
@@ -1742,10 +1752,11 @@ Rispondi SOLO in JSON: {"sintesi":"2-3 frasi sul quadro generale","connessioni":
     const o = await groqJSON(key, sys, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3500)}` : ""), 3600);
     const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) }) : null; }).filter(Boolean).sort((a, b) => (b.op !== "fuori") - (a.op !== "fuori") || b.prob - a.prob);
     if (!P.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
-    S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: (o.connessioni || []).slice(0, 5), P, web: !!web }, ...(S.prev || [])].slice(0, 8); save();
+    S.prev = [{ at: Date.now(), mode, ai: AI_USED, sintesi: String(o.sintesi || ""), conn: (o.connessioni || []).slice(0, 5), P, web: !!web && groqText.web }, ...(S.prev || [])].slice(0, 8); save();
   } catch (e){ PV.err = e.message || String(e); }
   PV.busy = false; PV.step = ""; if (cur === "mercati") reView();
 }
+function prevRedo(){ const r = (S.prev || [])[0]; if (!r) return prevRun("auto"); if (r.mode === "scelti") PV.sel = [...new Set(r.P.map(p => p.s))]; prevRun(r.mode || "auto"); }
 function prevTog(s){ PV.sel = PV.sel.includes(s) ? PV.sel.filter(x => x !== s) : [...PV.sel, s].slice(-8); reView(); }
 function prevCheck(p, at){ // com'è andata: confronto col prezzo di adesso
   const x = MK && MK.items.find(i => i.s === p.s); if (!x || !p.px0 || Date.now() - at < 6 * 3600e3) return "";
@@ -1797,7 +1808,8 @@ function prevView(){
       <div class="pv-act"><button class="btn blue" ${PV.busy ? "disabled" : ""} onclick="prevRun('auto')">🔎 Consigliami tu</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('eventi')">📅 Dagli eventi in calendario</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('scelti')">Analizza quelli scelti${PV.sel.length ? ` (${PV.sel.length})` : ""}</button>${PV.busy ? `<span class="pv-step"><i class="pv-spin"></i>${esc(PV.step)}</span>` : ""}</div>
       <div class="chips pv-chips">${order.map(x => `<button class="chip ${PV.sel.includes(x.s) ? "on" : ""}" onclick="prevTog('${esc(x.s)}')">${favs.includes(x.s) ? "★ " : ""}${esc(x.n)}</button>`).join("")}</div>
       ${PV.err ? `<div class="pv-err">Non ci sono riuscito: ${esc(PV.err)}</div>` : ""}</div>
-    ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : last.mode === "eventi" ? "Cosa possono muovere gli eventi in calendario" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}</small></div></div>
+    ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : last.mode === "eventi" ? "Cosa possono muovere gli eventi in calendario" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}${last.ai && last.ai !== "Groq" ? " · fatta con " + esc(last.ai) : ""}</small></div><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRedo()">🔄 Aggiorna</button></div>
+      ${!last.P.some(p => p.op) && !PV.busy ? `<div class="pv-err" style="border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.1);color:#bfdbfe">Questa previsione è nel formato vecchio (senza compra/short, quanto e quando). Premi 🔄 Aggiorna e la rifaccio in quello nuovo.</div>` : ""}
       ${last.sintesi ? `<p class="pv-sint">${esc(last.sintesi)}</p>` : ""}
       ${last.conn && last.conn.length ? `<div class="pv-conn">${last.conn.map(c => `<div><b>🔗 ${esc(c.tema)}</b><span>${esc(c.spiega)}</span></div>`).join("")}</div>` : ""}
       ${prevPlan(last)}
@@ -2035,6 +2047,11 @@ function mkDraw0(){
 const GROQ_WEB = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 let GROQ_WEB_OFF = 0;
 async function groqText(key, sys, msgs, maxTokens, opt = {}){
+  AI_USED = "Groq";
+  try { if (!key || key === "-") throw new Error("senza chiave Groq"); return await groqText0(key, sys, msgs, maxTokens, opt); }
+  catch (e){ if (!altAny()) throw e; groqText.web = false; return await altChat([{ role: "system", content: sys + LANG_SFX }, ...msgs.slice(-8)], maxTokens); }
+}
+async function groqText0(key, sys, msgs, maxTokens, opt = {}){
   let last = ""; groqText.web = false;
   const web = opt.web !== false && Date.now() > GROQ_WEB_OFF;
   for (const model of [...(web ? GROQ_WEB : []), ...await groqModels(key)]){
@@ -2045,7 +2062,7 @@ async function groqText(key, sys, msgs, maxTokens, opt = {}){
       catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
       if (isWeb && !r.ok && r.status !== 401){ GROQ_WEB_OFF = Date.now() + (r.status === 429 || r.status === 413 ? 5 : 60) * 60e3; break; }
       if (r.status === 401) throw new Error(L2("la chiave Groq non è valida", "the Groq key is not valid"));
-      if (r.status === 429){ last = L2("limite di richieste raggiunto", "rate limit reached"); const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 1){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
+      if (r.status === 429){ last = L2("limite di richieste raggiunto", "rate limit reached"); const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < (altAny() ? 0 : 1)){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
       if (!r.ok){ last = "Groq " + r.status; if (r.status === 404){ GM = null; try { localStorage.removeItem(KEY + "-gm"); } catch {} } break; }
       const j = await r.json(), m0 = j.choices?.[0]?.message || {}, raw = m0.content || "", txt = raw.replace(/【[^】]*】/g, "").replace(/[ \t]+([.,;:])/g, "$1").trim();
       if (txt){ groqText.web = isWeb && (!!(m0.executed_tools || []).length || /【/.test(raw)); return txt; } last = L2("risposta vuota", "empty answer");
@@ -2270,7 +2287,42 @@ async function groqModels(key){
 }
 const groqOpt = (model, max) => /gpt-oss/.test(model) ? { max_tokens: max + 800, reasoning_effort: "low" } : { max_tokens: max };
 /* Groq gratis: prova più modelli, aspetta se c'è il limite al minuto, e se la modalità JSON fallisce estrae il JSON dal testo */
+/* AI di riserva gratuite: quando Groq finisce i limiti si passa da sole a Google Gemini e poi a OpenRouter (modelli gratis) */
+const ALT_AI = [
+  { id: "gemini", n: "Google Gemini", ls: "pc_gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", models: async () => ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"] },
+  { id: "openrouter", n: "OpenRouter", ls: "pc_openrouter", url: "https://openrouter.ai/api/v1/chat/completions", models: () => orModels() },
+];
+const altKey = a => { try { return localStorage.getItem(a.ls) || ""; } catch { return ""; } };
+const altAny = () => ALT_AI.some(altKey);
+let OR_M = null, AI_USED = "Groq";
+async function orModels(){
+  if (OR_M) return OR_M; let ids = [];
+  try { const r = await fetch("https://openrouter.ai/api/v1/models"); if (r.ok) ids = ((await r.json()).data || []).map(m => m.id).filter(id => /:free$/.test(id)); } catch {}
+  const out = []; for (const re of [/deepseek-chat|deepseek-v3/, /llama-3\.3-70b/, /qwen3-235b|qwen-2\.5-72b/, /gpt-oss-120b/, /gemini/, /llama-4/, /mistral|gemma/]) for (const id of ids) if (re.test(id) && !out.includes(id)) out.push(id);
+  return OR_M = out.length ? out.slice(0, 4) : ["deepseek/deepseek-chat-v3-0324:free", "meta-llama/llama-3.3-70b-instruct:free"];
+}
+async function altChat(messages, max){
+  let last = "";
+  for (const a of ALT_AI){ const k = altKey(a); if (!k) continue;
+    for (const model of await a.models()){
+      let r; try { r = await fetch(a.url, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + k }, body: JSON.stringify({ model, temperature: 0.3, max_tokens: max + (a.id === "gemini" ? 2000 : 0), messages }) }); }
+      catch { last = a.n + ": rete"; continue; }
+      if (r.status === 401 || r.status === 403){ last = a.n + ": chiave non valida"; break; }
+      if (!r.ok){ last = a.n + " " + r.status; continue; }
+      const t = ((await r.json()).choices?.[0]?.message?.content || "").trim(); if (t){ AI_USED = a.n; return t; }
+      last = a.n + ": risposta vuota";
+    }
+  }
+  throw new Error(last || "nessuna AI di riserva");
+}
 async function groqJSON(key, sys, user, maxTokens){
+  AI_USED = "Groq";
+  try { if (!key || key === "-") throw new Error("senza chiave Groq"); return await groqJSON0(key, sys, user, maxTokens); }
+  catch (e){ if (!altAny()) throw e;
+    const t = await altChat([{ role: "system", content: sys + LANG_SFX + " Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo." }, { role: "user", content: user }], maxTokens);
+    const m = t.replace(/```(json)?/g, "").match(/\{[\s\S]*\}/); try { return JSON.parse(m ? m[0] : t); } catch { throw new Error(AI_USED + ": risposta non valida"); } }
+}
+async function groqJSON0(key, sys, user, maxTokens){
   let last = "";
   for (const model of await groqModels(key)){
     for (let t = 0; t < 3; t++){
@@ -2279,7 +2331,7 @@ async function groqJSON(key, sys, user, maxTokens){
         body: JSON.stringify({ model, temperature: 0.2, ...groqOpt(model, maxTokens), ...(json ? { response_format: { type: "json_object" } } : {}), messages: [{ role: "system", content: sys + LANG_SFX }, { role: "user", content: user }] }) }); }
       catch { last = "rete"; await new Promise(z => setTimeout(z, 1500)); continue; }
       if (r.status === 401) throw new Error("la chiave Groq non è valida");
-      if (r.status === 429){ last = "limite di richieste raggiunto"; const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < 2){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
+      if (r.status === 429){ last = "limite di richieste raggiunto"; const w = Math.min(20, +(r.headers.get("retry-after") || 0) || 6); if (t < (altAny() ? 0 : 2)){ await new Promise(z => setTimeout(z, w * 1000)); continue; } break; }
       if (!r.ok){ last = "Groq " + r.status; if (r.status === 404){ GM = null; try { localStorage.removeItem(KEY + "-gm"); } catch {} } if (r.status === 400 && json){ t = 1; continue; } break; }
       const txt = (await r.json()).choices?.[0]?.message?.content || "";
       try { return JSON.parse(txt); } catch {}
@@ -2346,6 +2398,7 @@ async function sumNews(i){
       box.textContent = SUMS[i]; return;
     } catch {}
   }
+  if (altAny()) try { const t = await altChat([{ role: "system", content: "Sei un giornalista. Riassumi la notizia in italiano in massimo 3 frasi brevi, chiare e neutrali. Usa solo le informazioni date, non inventare dettagli." + (EN ? " Write the summary in English." : "") }, { role: "user", content: text }], 300); SUMS[i] = t; box.textContent = t; return; } catch {}
   box.textContent = "Riassunto non disponibile adesso, riprova tra poco.";
 }
 function tog(field, k){
@@ -2571,6 +2624,7 @@ async function brAsk(){
       if (r.status === 401) throw new Error("la chiave Groq non è valida");
       if (r.ok){ const t = (await r.json()).choices?.[0]?.message?.content || ""; if (t) return t; }
     }
+    if (altAny()) return await altChat(json ? [...messages.slice(0, -1), { ...messages[messages.length - 1], content: messages[messages.length - 1].content + "\n\nRispondi SOLO con un oggetto JSON valido." }] : messages, 900);
     throw new Error("l'AI non risponde adesso");
   };
   try {
@@ -2583,7 +2637,7 @@ Regole: il diario del giorno è ${BR_DIR}diario/${brToday()}.md; se un file adat
 File esistenti (percorso | titolo):
 ${index || "(nessuno)"}` },
       { role: "user", content: q }], true);
-    try { plan = JSON.parse(raw); } catch { plan = { azione: "rispondi", cerca: [] }; }
+    try { plan = JSON.parse((raw.match(/\{[\s\S]*\}/) || [raw])[0]); } catch { plan = { azione: "rispondi", cerca: [] }; }
     if (plan.azione === "scrivi" && plan.file && plan.testo){
       let path = String(plan.file).replace(/^\/+/, ""); if (!path.startsWith(BR_DIR)) path = BR_DIR + path; if (!/\.md$/i.test(path)) path += ".md";
       path = path.replace(/\.\.+/g, "");
@@ -3236,7 +3290,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "71";
+const APP_V = "72";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
