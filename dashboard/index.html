@@ -1100,13 +1100,13 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3 data-raw>Lingua · Language</h3><small>${EN ? "Menus, dates, news and AI explanations" : "Menu, date, notizie e spiegazioni dell'AI"}</small></div><span class="muted">🌐</span></div>
       <div class="chips"><button class="chip ${EN ? "" : "on"}" data-raw onclick="setLang('it')">🇮🇹 Italiano</button><button class="chip ${EN ? "on" : ""}" data-raw onclick="setLang('en')">🇬🇧 English</button></div></div>
-    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
-      ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
-    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
     <div class="glass c"><div class="hd"><div><h3>AI di riserva (gratis)</h3><small>Quando Groq finisce i limiti, Aris passa da solo a queste. Basta incollare le chiavi gratuite una volta.</small></div></div>
       ${ALT_AI.map(a => `<div style="margin-top:10px"><b style="font-size:13px">${a.n}</b> <a href="${a.id === "gemini" ? "https://aistudio.google.com/apikey" : "https://openrouter.ai/settings/keys"}" target="_blank" rel="noopener" style="color:var(--blue-2);font-size:12px">prendi la chiave gratis ↗</a>${altKey(a) ? ` <span class="tag" style="background:rgba(34,197,94,.15);color:#4ade80">✓ attiva</span>` : ""}
         <input class="input" type="password" placeholder="${a.id === "gemini" ? "AIza…" : "sk-or-…"}" value="${esc(altKey(a))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};${a.id === "openrouter" ? "OR_M=null;" : ""}toast('Salvato');reView()" style="margin-top:6px"></div>`).join("")}
       <small class="muted" style="display:block;margin-top:10px;font-size:11.5px">Le chiavi restano solo su questo dispositivo. Sono gratuite: non serve la carta.</small></div>
+    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
+      ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
+    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
     ${syncBox()}
@@ -3290,7 +3290,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "72";
+const APP_V = "73";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
