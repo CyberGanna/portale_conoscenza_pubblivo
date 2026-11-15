@@ -114,6 +114,20 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wel-ar{opacity:.35;font-size:18px;transition:transform .25s,opacity .25s} .wel-c:hover .wel-ar{opacity:1;transform:translateX(4px)}
 .wel-flash{animation:welFlash 2.2s ease} @keyframes welFlash{0%,100%{box-shadow:none}15%,55%{box-shadow:0 0 0 2px #60a5fa,0 0 40px rgba(96,165,250,.45)}}
 .wel-sep{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase} .wel-sep::before,.wel-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.wel-c{flex-direction:column;align-items:stretch;gap:10px;padding:16px 16px 14px}
+.wel-k{position:relative;padding-left:14px} .wel-k::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--kc)}
+.wel-v{display:block;min-height:64px} .wel-v:empty{display:none}
+.wv-svg{display:block;width:100%;height:64px}
+.wv-chart{position:relative} .wv-chart em{position:absolute;right:0;top:-2px;font-style:normal;font-size:22px;font-weight:700;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)} .wv-chart em.up{color:#4ade80} .wv-chart em.dn{color:#fb7185}
+.wv-met .wv-emo{position:absolute;left:0;top:-4px;font-size:26px} .wv-met em{color:#e0f2fe}
+.wv-big{display:flex;align-items:center;gap:10px} .wv-big b{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1} .wv-big span{font-size:11.5px;color:var(--muted);line-height:1.25}
+.wv-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px} .wv-pills span{font-size:10.5px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#cbd5e1;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.wv-heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px} .wv-heat i{display:block;height:11px;border-radius:3px}
+.wv-ratio{margin-top:8px;height:6px;border-radius:4px;background:#e11d48;overflow:hidden} .wv-ratio i{display:block;height:100%;background:#16a34a}
+.wv-date{display:flex;align-items:center;gap:14px} .wv-date>span{display:flex;flex-direction:column;align-items:center;justify-content:center;width:60px;height:62px;border-radius:14px;background:#fff;color:#111} .wv-date small{font-size:10px;font-weight:700;text-transform:uppercase;color:#e11d48} .wv-date b{font-size:28px;font-weight:600;line-height:1}
+.wv-imp{display:flex;flex-direction:column;font-size:15px;letter-spacing:2px;color:#22d3ee} .wv-imp em{font-style:normal;opacity:.2;display:inline} .wv-imp small{font-size:10.5px;letter-spacing:.04em;color:var(--muted)}
+.wv-quote{font-size:13px;font-style:italic;color:#e2e8f0;line-height:1.45}
+.wv-vid{position:relative;height:64px;border-radius:12px;background:linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b);display:flex;align-items:center;justify-content:center} .wv-vid span{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);display:grid;place-items:center;font-size:13px;padding-left:2px} .wv-vid em{position:absolute;left:8px;bottom:6px;font-style:normal;font-size:10.5px;background:rgba(0,0,0,.35);padding:2px 7px;border-radius:999px}
 html.no-anim .wel-in .wel-h span,html.no-anim .wel-in .wel-c{animation:none;opacity:1;transform:none;filter:none} html.no-anim .wel-aura i{animation:none}
 @media (prefers-reduced-motion:reduce){.wel-in .wel-h span,.wel-in .wel-c{animation:none;opacity:1;transform:none;filter:none}.wel-aura i,.wel-rot span{animation:none}.wel-rot span:first-child{opacity:1}}
 .c{padding:20px;min-width:0}
@@ -208,7 +222,8 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 @media (max-width:560px){.gc-dt{display:none}}
 .mk-list{display:flex;flex-direction:column} .mk-r{display:grid;grid-template-columns:1fr auto 84px;gap:6px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)} .mk-r:first-child{border-top:0}
 .mk-star{background:none;border:0;padding:0 2px 0 0;font-size:16px;line-height:1;color:var(--faint);cursor:pointer} .mk-star:hover{color:#fcd34d} .mk-star.on{color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,.5)}
-.mk-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start} .mk-side{display:flex;flex-direction:column;gap:20px} .mk-side .hm-g{display:block;margin-bottom:10px} .mk-side .hm-g>span{display:block;margin:0 0 6px} .mk-side .hm-ts{grid-template-columns:repeat(3,1fr)} .mk-side .hm-t b{font-size:11px} .mk-side #mk-map-card .lnk{display:none} .mk-side .hm-leg{flex-wrap:wrap} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{position:static;order:-1}}
+.mk-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start} .mk-side{position:sticky;top:16px} .mk-tabs{margin-top:14px;width:max-content} .mk-mapfull .c{max-width:none} .mk-mapfull{margin-top:16px} .mk-mapfull #mk-map-card .lnk{display:none} .mk-mapfull .hm-ts{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))} .mk-mapfull .hm-t{min-height:58px}
+.nav a.sub{padding:6px 11px 6px 38px;font-size:12.5px;color:var(--muted)} .nav a.sub.on2{color:#fff;background:rgba(255,255,255,.07)} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{position:static;order:-1}}
 .mk-fav{padding:12px 0;border-top:1px solid var(--line)} .mk-fav:first-child{border-top:0;padding-top:4px} .mk-fav .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px} .mk-fav .px{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .mk-fav .p{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums} .mk-fav svg,.mk-fav .mk-sp{display:block !important;width:100%;height:40px;margin-top:6px} .mk-fav .w{font-size:12px;line-height:1.4;color:var(--muted);margin-top:4px}
 .dash-l{display:flex;flex-direction:column;gap:20px;align-self:start} .dash-l>.glass{margin:0}
@@ -805,7 +820,8 @@ function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; c
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
     const n = id === "collegamenti" ? `<span class="n">${S.links.length}</span>` : "";
-    return `<a href="#${id}" class="${cur === id ? "on" : ""}" onclick="event.preventDefault();go('${id}')">${ico(a.i)}${a.t}${n}</a>`; }).join("")).join("");
+    const sub = id === "mercati" && cur === "mercati" ? [["tutti", "Tutti gli strumenti"], ["mappa", "Mappa dei mercati"]].map(([k, t]) => `<a href="#mercati" class="sub ${mkTab === k ? "on2" : ""}" onclick="event.preventDefault();mkTab='${k}';reView();renderNav()">${t}</a>`).join("") : "";
+    return `<a href="#${id}" class="${cur === id ? "on" : ""}" onclick="event.preventDefault();go('${id}')">${ico(a.i)}${a.t}${n}</a>${sub}`; }).join("")).join("");
 }
 
 /* ---------------- tempo ---------------- */
@@ -878,6 +894,17 @@ function areaChart(pts, { w = 760, h = 240, unit = "°" } = {}){
 let chartMode = "24h";
 /* ---------- benvenuto animato: Aris ti propone cosa guardare ---------- */
 let WEL_SEEN = false;
+/* anteprime grafiche delle proposte del benvenuto */
+let WV_ID = 0;
+function wvArea(a, col, w = 240, h = 64){
+  if (!a || a.length < 2) return "";
+  const lo = Math.min(...a), hi = Math.max(...a), k = (hi - lo) || 1, id = "wva" + (++WV_ID);
+  const P = a.map((v, i) => [(i / (a.length - 1) * w).toFixed(1), (h - 3 - (v - lo) / k * (h - 8)).toFixed(1)]);
+  const line = P.map(p => p.join(",")).join(" "), last = P[P.length - 1];
+  return `<svg class="wv-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <polygon points="0,${h} ${line} ${w},${h}" fill="url(#${id})"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="${col}"/></svg>`;
+}
+const wvPills = (arr) => `<div class="wv-pills">${arr.slice(0, 4).map(t => `<span>${esc(t)}</span>`).join("")}</div>`;
 function welHints(){
   const day = Date.now() - 864e5, cut = (t, n = 90) => { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
   const n = NEWS && NEWS.items.filter(x => x.d > day).sort((a, b) => b.n - a.n)[0];
@@ -891,25 +918,25 @@ function welHints(){
   const diary = (BR.files || []).find(x => x.path === `${BR_DIR}diario/${brToday()}.md`), dtxt = diary ? String(diary.text || diary.body || diary.content || "").replace(/^---[\s\S]*?---/, "").replace(/^#.*$/m, "").replace(/[#*>_`-]/g, " ").trim() : "";
   const c = wOk() ? W.current : null, d = wOk() ? W.daily : null, vd = (S.vid || []).find(v => v.ai), nt = notes.length ? notes[Math.floor(Date.now() / 36e5) % notes.length] : null;
   return [
-    { i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", k: "La notizia del giorno", q: n ? cut(nT(n)) : "Le notizie più riprese di oggi", h: n ? `${n.n} testate ne parlano` : "Carico le notizie…",
+    { i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", k: "La notizia del giorno", v: n ? `<div class="wv-big"><b>${n.n}</b><span>testate<br>ne parlano</span></div>` + wvPills((n.srcs || [[n.src]]).map(x => x[0]).filter(Boolean)) : "", q: n ? cut(nT(n)) : "Le notizie più riprese di oggi", h: n ? `${n.n} testate ne parlano` : "Carico le notizie…",
       act: () => { newsDay = 0; go("notizie"); if (n) setTimeout(() => nwOpen(n.u), 60); } },
-    { i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", k: "Il movimento più forte", q: m ? `${m.n} ${mkPct(m.pct)}` : "I mercati di oggi", h: m ? (mkAI(m) ? cut(mkAI(m).perche, 80) : `${m.cls} · ${mkFmt(m)}${m.cls === "Tassi" ? "%" : " " + m.cur}`) : "Carico i prezzi…",
+    { i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", k: "Il movimento più forte", v: m ? `<div class="wv-chart">${wvArea(m.spark, m.pct >= 0 ? "#22c55e" : "#f43f5e")}<em class="${m.pct >= 0 ? "up" : "dn"}">${mkPct(m.pct)}</em></div>` : "", q: m ? `${m.n} ${mkPct(m.pct)}` : "I mercati di oggi", h: m ? (mkAI(m) ? cut(mkAI(m).perche, 80) : `${m.cls} · ${mkFmt(m)}${m.cls === "Tassi" ? "%" : " " + m.cur}`) : "Carico i prezzi…",
       act: () => { go("mercati"); if (m) setTimeout(() => mkOpen(m.s), 60); } },
-    { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "I mercati in generale", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
+    { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "I mercati in generale", v: tot ? `<div class="wv-heat">${L.slice().sort((a, b) => b.pct - a.pct).map(x => `<i style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}"></i>`).join("")}</div><div class="wv-ratio"><i style="width:${(up / tot * 100).toFixed(1)}%"></i></div>` : "", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
       act: () => go("mercati") },
-    { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
+    { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", v: ev ? `<div class="wv-date"><span><small>${new Date(ev.day + "T12:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { month: "short" })}</small><b>${+ev.day.slice(8)}</b></span><div class="wv-imp">${"●".repeat(Math.max(1, Math.min(5, ev.imp)))}<em>${"●".repeat(5 - Math.max(1, Math.min(5, ev.imp)))}</em><small>importanza</small></div></div>` : "", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
       act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
-    { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? `${ai.length} novità nelle ultime 24 ore` : "LLM e intelligenza artificiale",
+    { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? `${ai.length} novità nelle ultime 24 ore` : "LLM e intelligenza artificiale",
       act: () => { newsCat1 = "llm"; newsDay = 0; go("notizie"); newsCat1 = "llm"; if (ai && ai[0]) setTimeout(() => nwOpen(ai[0].u), 60); } },
-    { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Dalla tua conoscenza", q: nt ? cut(nt.titolo, 60) : "Il tuo portale della conoscenza", h: nt ? cut(nt.sintesi || nt.categoria || "", 80) || `${notes.length} note` : "Esplora o fai un test",
+    { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Dalla tua conoscenza", v: nt ? wvPills([nt.categoria, nt.sottocategoria, `${notes.length} note`].filter(Boolean)) : "", q: nt ? cut(nt.titolo, 60) : "Il tuo portale della conoscenza", h: nt ? cut(nt.sintesi || nt.categoria || "", 80) || `${notes.length} note` : "Esplora o fai un test",
       act: () => go("conoscenza") },
-    { i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", k: "Diario di oggi", q: dtxt ? cut(dtxt, 80) : "Non hai ancora scritto oggi", h: dtxt ? "Tocca per continuare" : "Due righe su com'è andata",
+    { i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", k: "Diario di oggi", v: `<div class="wv-quote">${dtxt ? "“" + esc(cut(dtxt, 70)) + "”" : '<span style="font-size:32px;font-style:normal">✍️</span>'}</div>`, q: dtxt ? cut(dtxt, 80) : "Non hai ancora scritto oggi", h: dtxt ? "Tocca per continuare" : "Due righe su com'è andata",
       act: () => go("cervello") },
-    { i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)", k: "Prossimo promemoria", q: r0 ? cut(r0.t, 70) : "Niente in sospeso", h: r0 ? `${new Date(remAt(r0)).toLocaleString(EN ? "en-GB" : "it-IT", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}${open.length > 1 ? ` · altri ${open.length - 1}` : ""}` : (S.alarms[0] ? "Sveglia " + S.alarms[0].h : "Promemoria e sveglie"),
+    { i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)", k: "Prossimo promemoria", v: r0 ? `<div class="wv-big"><b>${hhmm(new Date(remAt(r0)))}</b><span>${esc(new Date(remAt(r0)).toLocaleDateString(EN ? "en-GB" : "it-IT", { weekday: "long", day: "numeric" }))}</span></div>` : `<div class="wv-big"><b>✓</b><span>tutto fatto</span></div>`, q: r0 ? cut(r0.t, 70) : "Niente in sospeso", h: r0 ? `${new Date(remAt(r0)).toLocaleString(EN ? "en-GB" : "it-IT", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}${open.length > 1 ? ` · altri ${open.length - 1}` : ""}` : (S.alarms[0] ? "Sveglia " + S.alarms[0].h : "Promemoria e sveglie"),
       act: () => go("promemoria") },
-    { i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)", k: "Ultimo video salvato", q: vd ? cut(vd.ai.titolo, 70) : "I tuoi video salvati", h: vd ? cut(vd.ai.riassunto, 80) : "Manda un reel e Aris lo spiega",
+    { i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)", k: "Ultimo video salvato", v: vd ? `<div class="wv-vid"><span>▶</span>${vd.ai.tema ? `<em>${esc(vd.ai.tema)}</em>` : ""}</div>` : "", q: vd ? cut(vd.ai.titolo, 70) : "I tuoi video salvati", h: vd ? cut(vd.ai.riassunto, 80) : "Manda un reel e Aris lo spiega",
       act: () => { if (vd) VD_OPEN = vd.id; go("video"); } },
-    { i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", k: `Meteo · ${S.city.name}`, q: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° · ${WMO(c.weather_code)[1] || ""}` : S.city.name, h: d ? `Oggi max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°` : "Previsioni",
+    { i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", k: `Meteo · ${S.city.name}`, v: c ? `<div class="wv-chart wv-met"><span class="wv-emo">${WMO(c.weather_code)[0]}</span>${wvArea(nextHours(12).map(x => x.temp), "#38bdf8")}<em>${Math.round(c.temperature_2m)}°</em></div>` : "", q: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° · ${WMO(c.weather_code)[1] || ""}` : S.city.name, h: d ? `Oggi max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°` : "Previsioni",
       act: () => go("meteo") },
   ];
 }
@@ -923,7 +950,7 @@ function welcome(){
       <div><h1 class="wel-h">${[...hello].map((ch, i) => `<span style="--d:${(i * 0.035).toFixed(3)}s">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</h1>
       <p class="wel-q">Sono Aris. <b class="wel-rot"><span>Cosa ti va di guardare?</span><span>Ecco qualche idea per te.</span><span>Scegli da dove partire.</span></b></p></div></div>
     <div class="wel-grid">${welHints().map((x, i) => `<button class="wel-c" style="--i:${i}" onclick="welGo(${i})" onmousemove="welTilt(event,this)" onmouseleave="this.style.transform=''">
-      <span class="wel-ic" style="background:${x.g}">${ico(x.i)}</span><span class="wel-t"><i class="wel-k">${esc(x.k)}</i><b>${esc(x.q)}</b><small>${esc(x.h)}</small></span><span class="wel-ar">→</span></button>`).join("")}</div>
+      <i class="wel-k" style="--kc:${x.g}">${esc(x.k)}</i><span class="wel-v">${x.v || `<span class="wel-ic" style="background:${x.g}">${ico(x.i)}</span>`}</span><span class="wel-t"><b>${esc(x.q)}</b><small>${esc(x.h)}</small></span></button>`).join("")}</div>
   </section>`;
 }
 function welTilt(e, el){ if (S.anim === false) return; const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
@@ -1513,7 +1540,7 @@ function vdView(){
 setTimeout(vdPoll, 4000);
 /* ---------------- MERCATI (prezzi dal ramo notizie, spiegazioni con Groq gratis) ---------------- */
 const MK_URL = NEWS_URL.replace("news.json", "mercati.json");
-let MK = null, mkErr = false, mkCls = "Tutti";
+let MK = null, mkErr = false, mkCls = "Tutti", mkTab = "tutti";
 const MKAI = { at: 0, items: {}, busy: false, err: "" };
 try { MK = JSON.parse(localStorage.getItem(KEY + "-mk") || "null"); Object.assign(MKAI, JSON.parse(localStorage.getItem(KEY + "-mkai") || "{}"), { busy: false, err: "" }); } catch {}
 async function loadMk(){
@@ -1613,11 +1640,13 @@ function mkView(){
   const classes = ["Tutti", ...new Set(MK.items.map(x => x.cls))];
   const L = MK.items.filter(x => mkCls === "Tutti" || x.cls === mkCls);
   const top = new Set(mkTop(8).map(x => x.s));
-  return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + `
+  const tabs = `<div class="seg mk-tabs"><button class="${mkTab === "tutti" ? "on" : ""}" onclick="mkTab='tutti';reView();renderNav()">Tutti gli strumenti</button><button class="${mkTab === "mappa" ? "on" : ""}" onclick="mkTab='mappa';reView();renderNav()">Mappa dei mercati</button></div>`;
+  if (mkTab === "mappa") return head("Mappa dei mercati", `Tutti gli strumenti di oggi a colori · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `<div class="mk-mapfull">${mkMapCard()}</div>`;
+  return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `
     <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
     <div class="mk-wrap"><div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>
-      <div class="mk-side">${mkMapCard()}${mkFavCard()}</div></div>`;
+      <div class="mk-side">${mkFavCard()}</div></div>`;
 }
 function mkFavCard(){
   const F = mkFavs().map(s => MK && MK.items.find(x => x.s === s)).filter(Boolean);
@@ -3021,7 +3050,7 @@ function refresh(){
 }
 /* quando arrivano dati nuovi il benvenuto non viene ridisegnato (la sua animazione ripartirebbe da capo): aggiorno solo i testi */
 function welUpdate(){
-  const H = welHints(); document.querySelectorAll("#pc-body .wel-c").forEach((el, i) => { const x = H[i]; if (!x) return; el.querySelector(".wel-k").textContent = x.k; el.querySelector(".wel-t b").textContent = x.q; el.querySelector(".wel-t small").textContent = x.h; });
+  const H = welHints(); document.querySelectorAll("#pc-body .wel-c").forEach((el, i) => { const x = H[i]; if (!x) return; el.querySelector(".wel-k").textContent = x.k; const v = el.querySelector(".wel-v"); if (v && x.v && v._h !== x.v){ v._h = x.v; v.innerHTML = x.v; } el.querySelector(".wel-t b").textContent = x.q; el.querySelector(".wel-t small").textContent = x.h; });
 }
 if ($("#new-btn")) $("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
 document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
@@ -3050,7 +3079,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "62";
+const APP_V = "63";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
