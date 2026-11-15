@@ -11,7 +11,7 @@
 <title>Ale Conoscenza</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Sora:wght@200..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=VT323&family=Sora:wght@200..700&display=swap">
 </head>
 <body>
 <style>
@@ -48,6 +48,16 @@ button{cursor:pointer}
 
 #stage{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 #stage.dragging{cursor:grabbing}
+#stage3{position:fixed;inset:0;display:none;width:100%;height:100%;touch-action:none;cursor:grab;background:#04070b}
+#stage3.dragging{cursor:grabbing} #stage3.pointing{cursor:pointer}
+body.g3 #stage{display:none} body.g3 #stage3{display:block} body.g3 #h-all{display:none}
+#crt{position:fixed;inset:0;z-index:1;pointer-events:none;display:none;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,.42) 0 1px,rgba(0,0,0,0) 1px 3px),radial-gradient(ellipse 85% 80% at 50% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.95) 100%);
+  box-shadow:inset 0 0 140px 30px rgba(0,0,0,.85),inset 0 0 18px rgba(160,200,255,.06);border-radius:28px/24px;animation:crt-fl 5s infinite}
+#crt::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(190,220,255,.05) 50%,rgba(255,255,255,0) 100%);background-size:100% 220px;animation:crt-roll 7s linear infinite;mix-blend-mode:screen}
+body.g3 #crt{display:block}
+@keyframes crt-fl{0%,100%{opacity:1}47%{opacity:1}48%{opacity:.86}49%{opacity:1}72%{opacity:.95}}
+@keyframes crt-roll{from{background-position:0 -220px}to{background-position:0 120vh}}
 #stage.pointing{cursor:pointer}
 
 /* ---------- glass panels ---------- */
@@ -454,6 +464,8 @@ body.side-hidden #show-side{opacity:1;pointer-events:auto;transform:none}
 </style>
 
 <canvas id="stage" aria-label="Grafo della conoscenza: ogni punto è una voce, raggruppata per categoria"></canvas>
+<canvas id="stage3" aria-label="Grafo della conoscenza in 3D: trascina per ruotare, rotellina o due dita per lo zoom"></canvas>
+<div id="crt" aria-hidden="true"></div>
 
 <button id="show-side" type="button" aria-label="Mostra il pannello" title="Mostra il pannello">☰</button>
 <div id="mtitle"><p id="mcount"></p></div>
@@ -520,6 +532,7 @@ body.side-hidden #show-side{opacity:1;pointer-events:auto;transform:none}
 
 <div id="hud">
   <button id="h-all" aria-pressed="false" title="Mostra tutte le categorie, sottocategorie, voci e collegamenti">✦ Mostra tutto</button>
+  <button id="h-3d" aria-pressed="true" title="Grafo 3D stile vecchio monitor">◉ 3D</button>
   <button id="h-fit" title="Inquadra tutto">⤢</button>
 </div>
 
@@ -1323,9 +1336,103 @@ canvas.addEventListener("click", e => {
   else fit();
 });
 
+/* ================= GRAFO 3D "vecchio monitor" =================
+   Le stesse voci del grafo, come una nuvola di stelle in 3D che gira piano, su un vecchio schermo a tubo catodico. */
+const G3 = { on: (() => { try { return localStorage.getItem("pc_g3") !== "0"; } catch { return true; } })(), N: [], E: [], rx: -.32, ry: 0, zoom: 1, drag: null, hover: null, focus: null, raf: 0, P: [], ptr: new Map(), pinch: 0, W: 0, H: 0 };
+const c3 = $("#stage3"), g3 = c3.getContext("2d");
+function g3Rng(s){ let h = 1779033703 ^ String(s).length; for (let i = 0; i < String(s).length; i++){ h = Math.imul(h ^ String(s).charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; }; }
+const G3_SPR = (() => { // puntini luminosi: bianco, azzurro, celeste, verdino, giallino
+  return ["255,255,255", "190,225,255", "150,200,255", "200,255,220", "255,245,200"].map(rgb => { const s = 64, c = document.createElement("canvas"); c.width = c.height = s; const x = c.getContext("2d"), gr = x.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    gr.addColorStop(0, `rgba(255,255,255,1)`); gr.addColorStop(.1, `rgba(255,255,255,1)`); gr.addColorStop(.2, `rgba(${rgb},.9)`); gr.addColorStop(.45, `rgba(${rgb},.25)`); gr.addColorStop(1, `rgba(${rgb},0)`); x.fillStyle = gr; x.fillRect(0, 0, s, s); return c; }); })();
+function g3Build(){
+  const notes = S.notes || [], N = [], E = [], hubs = new Map(), byT = new Map();
+  const cats = [...new Set(notes.map(n => norm(n.categoria) || "altro"))], R = 250;
+  cats.forEach((c, i) => { const k = Math.max(1, cats.length), y = cats.length === 1 ? 0 : 1 - (i + .5) / k * 2, r = Math.sqrt(1 - y * y), th = i * 2.39996;
+    const h = { kind: "cat", cat: c, label: catName(c).toUpperCase(), x: Math.cos(th) * r * R * .7, y: y * R * .7, z: Math.sin(th) * r * R * .7, s: 4.2, sp: 0 }; N.push(h); hubs.set(c, h); });
+  for (const n of notes){ const c = norm(n.categoria) || "altro", h = hubs.get(c), r = g3Rng(n.id || n.titolo);
+    const u = r() * 2 - 1, th = r() * 6.283, d = 45 + Math.pow(r(), .7) * 120, q = Math.sqrt(1 - u * u);
+    const node = { kind: "note", note: n, cat: c, label: n.titolo || "", x: h.x + q * Math.cos(th) * d, y: h.y + u * d, z: h.z + q * Math.sin(th) * d, s: 1.7 + r() * 1.4, sp: Math.floor(r() * 5) };
+    N.push(node); E.push([h, node, 0]); byT.set(norm(n.titolo), node); }
+  const pairs = new Set(); let ghosts = 0;
+  for (const a of N.filter(x => x.kind === "note")) for (const raw of (a.note.collegamenti || [])){
+    const k = norm(raw); if (!k) continue; const b = byT.get(k);
+    if (b && b !== a){ const key = [a.label, b.label].sort().join("|"); if (!pairs.has(key)){ pairs.add(key); E.push([a, b, 1]); } }
+    else if (!b && ghosts < 900){ ghosts++; const r = g3Rng(a.label + k), d = 14 + r() * 34, u = r() * 2 - 1, th = r() * 6.283, q = Math.sqrt(1 - u * u);
+      const gn = { kind: "ghost", label: raw, cat: a.cat, x: a.x + q * Math.cos(th) * d, y: a.y + u * d, z: a.z + q * Math.sin(th) * d, s: .9 + r() * .7, sp: Math.floor(r() * 5) }; N.push(gn); E.push([a, gn, 2]); } }
+  G3.N = N; G3.E = E; g3Start();
+}
+function g3Apply(){
+  document.body.classList.toggle("g3", G3.on);
+  const b = $("#h-3d"); if (b){ b.setAttribute("aria-pressed", G3.on ? "true" : "false"); b.textContent = G3.on ? "◉ 3D" : "○ 3D"; }
+  if (G3.on) g3Start();
+}
+function g3Start(){ if (G3.on && !G3.raf) G3.raf = requestAnimationFrame(g3Frame); }
+function g3Frame(t){
+  G3.raf = 0; if (!G3.on) return;
+  if (document.hidden){ setTimeout(g3Start, 500); return; }
+  const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+  if (G3.W !== W || G3.H !== H || c3.width !== Math.round(W * dpr)){ G3.W = W; G3.H = H; c3.width = Math.round(W * dpr); c3.height = Math.round(H * dpr); }
+  const g = g3; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (!G3.drag && !matchMedia("(prefers-reduced-motion:reduce)").matches) G3.ry += .0018;
+  const cy = Math.cos(G3.ry), sy = Math.sin(G3.ry), cx = Math.cos(G3.rx), sx = Math.sin(G3.rx);
+  const cam = 760, f = Math.min(W, H) * 1.05 * G3.zoom, ox = W / 2 + (isPhone() ? 0 : 60), oy = H / 2;
+  const P = G3.P = [];
+  for (const n of G3.N){ const x1 = n.x * cy - n.z * sy, z1 = n.x * sy + n.z * cy, y1 = n.y * cx - z1 * sx, z2 = n.y * sx + z1 * cx, k = f / (cam + z2);
+    n.X = ox + x1 * k; n.Y = oy + y1 * k; n.Z = z2; n.K = k; if (cam + z2 > 40) P.push(n); }
+  g.globalCompositeOperation = "source-over"; g.fillStyle = "#04070b"; g.fillRect(0, 0, W, H);
+  // bagliore del tubo
+  const bg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * .65); bg.addColorStop(0, "rgba(40,60,80,.22)"); bg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const hv = G3.hover, fc = G3.focus, dim = n => fc && n.cat !== fc ? .18 : 1, depthA = z => Math.max(.28, Math.min(1, .85 - z / 600));
+  g.globalCompositeOperation = "lighter"; g.lineWidth = .6;
+  for (const [a, b, kd] of G3.E){ if (cam + a.Z < 40 || cam + b.Z < 40) continue; const on = hv && (a === hv || b === hv);
+    const al = (kd === 1 ? .32 : kd === 2 ? .1 : .14) * depthA((a.Z + b.Z) / 2) * Math.min(dim(a), dim(b)) * (on ? 4 : 1);
+    g.strokeStyle = kd === 1 ? `rgba(200,220,255,${al})` : `rgba(150,190,255,${al})`; g.beginPath(); g.moveTo(a.X, a.Y); g.lineTo(b.X, b.Y); g.stroke(); }
+  P.sort((a, b) => b.Z - a.Z);
+  const tw = t / 1000;
+  for (const n of P){ const a = depthA(n.Z) * dim(n), tw1 = .82 + .18 * Math.sin(tw * 2.3 + n.x * .07 + n.y * .05), r = n.s * n.K * (n === hv ? 2.2 : 1) * 3.6;
+    g.globalAlpha = Math.min(1, a * tw1 * (n.kind === "ghost" ? .7 : 1)); const sp = G3_SPR[n.kind === "cat" ? 0 : n.sp]; g.drawImage(sp, n.X - r, n.Y - r, r * 2, r * 2); }
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  // scritte: categorie sempre, voci quelle davanti (e tutte quelle della categoria scelta)
+  let nl = 0; const maxL = isPhone() ? 30 : 140;
+  for (let i = P.length - 1; i >= 0; i--){ const n = P[i]; if (n.kind === "ghost" && n !== hv) continue;
+    const front = n.Z < 60, show = n.kind === "cat" || n === hv || (fc ? n.cat === fc : front && nl < maxL); if (!show) continue; if (n.kind === "note") nl++;
+    const sz = (n.kind === "cat" ? 15 : n === hv ? 15 : 12.5) * (isPhone() ? .82 : 1), a = n.kind === "cat" ? .95 : depthA(n.Z) * .85 * dim(n);
+    g.font = `${sz}px "VT323", ui-monospace, Menlo, monospace`; g.fillStyle = n.kind === "cat" ? `rgba(225,240,255,${a})` : `rgba(200,220,240,${a})`;
+    g.shadowColor = "rgba(150,200,255,.8)"; g.shadowBlur = n.kind === "cat" || n === hv ? 8 : 0;
+    const L = n.label.length > 34 ? n.label.slice(0, 33) + "…" : n.label; g.textAlign = n.X > ox ? "left" : "right"; g.fillText(L, n.X + (n.X > ox ? 7 : -7), n.Y + 4); }
+  g.shadowBlur = 0;
+  G3.raf = requestAnimationFrame(g3Frame);
+}
+function g3Pick(px, py){ let best = null, bd = 18 * 18, gh = null, gd = 8 * 8;
+  for (const n of G3.P){ const d = (n.X - px) ** 2 + (n.Y - py) ** 2; if (n.kind === "ghost"){ if (d < gd){ gd = d; gh = n; } } else if (d < bd){ bd = d; best = n; } } return best || gh; }
+c3.addEventListener("pointerdown", e => { c3.setPointerCapture(e.pointerId); G3.ptr.set(e.pointerId, [e.clientX, e.clientY]); G3.drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: 0 }; c3.classList.add("dragging"); });
+c3.addEventListener("pointermove", e => {
+  if (G3.ptr.has(e.pointerId)) G3.ptr.set(e.pointerId, [e.clientX, e.clientY]);
+  if (G3.ptr.size === 2){ const [a, b] = [...G3.ptr.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (G3.pinch) G3.zoom = Math.max(.35, Math.min(4, G3.zoom * d / G3.pinch)); G3.pinch = d; if (G3.drag) G3.drag.moved = 99; return; }
+  if (G3.drag){ const dx = e.clientX - G3.drag.x, dy = e.clientY - G3.drag.y; G3.drag.x = e.clientX; G3.drag.y = e.clientY; G3.drag.moved += Math.abs(dx) + Math.abs(dy);
+    G3.ry += dx * .006; G3.rx = Math.max(-1.4, Math.min(1.4, G3.rx + dy * .006)); return; }
+  if (e.pointerType === "touch") return;
+  const n = g3Pick(e.clientX, e.clientY); G3.hover = n; c3.classList.toggle("pointing", !!n);
+  if (n){ const sub = n.kind === "cat" ? `${(S.notes || []).filter(x => (norm(x.categoria) || "altro") === n.cat).length} voci · clic per evidenziare` : n.kind === "ghost" ? "da esplorare · clic per approfondire" : catName(n.cat) + " · clic per aprire";
+    tip.innerHTML = `${esc(n.label)}<small>${esc(sub)}</small>`; tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; tip.classList.add("on"); } else tip.classList.remove("on");
+});
+const g3Up = e => { G3.ptr.delete(e.pointerId); if (G3.ptr.size < 2) G3.pinch = 0; const d = G3.drag; if (G3.ptr.size) return; G3.drag = null; c3.classList.remove("dragging");
+  if (!d || d.moved > 6 || e.type === "pointercancel") return;
+  const n = g3Pick(e.clientX, e.clientY); tip.classList.remove("on");
+  if (!n){ if (G3.focus){ G3.focus = null; return; } if (isPhone()) closeSheet(); return; }
+  if (n.kind === "note") openNote(n.note.id); else if (n.kind === "cat") G3.focus = G3.focus === n.cat ? null : n.cat; else if (n.kind === "ghost") explore(n.label); };
+c3.addEventListener("pointerup", g3Up); c3.addEventListener("pointercancel", g3Up);
+c3.addEventListener("pointerleave", () => { G3.hover = null; tip.classList.remove("on"); });
+c3.addEventListener("wheel", e => { e.preventDefault(); G3.zoom = Math.max(.35, Math.min(4, G3.zoom * Math.exp(-e.deltaY * .0012))); }, { passive: false });
+$("#h-3d").addEventListener("click", () => { G3.on = !G3.on; try { localStorage.setItem("pc_g3", G3.on ? "1" : "0"); } catch {} g3Apply(); });
+$("#h-fit").addEventListener("click", () => { if (G3.on){ G3.zoom = 1; G3.rx = -.32; G3.focus = null; } });
+g3Apply();
+window.__pcGraph = { ingest: l => ingest(l), G3 };
+
 /* ================= DATA ================= */
 function ingest(list){
-  S.notes = list;
+  S.notes = list; try { g3Build(); } catch (e){ console.warn("g3", e); }
   $("#count").textContent = list.length ? `${list.length} ${list.length === 1 ? "voce" : "voci"}` : "";
   $("#mcount").textContent = list.length ? `${list.length} ${list.length === 1 ? "VOCE" : "VOCI"} · ${new Set(list.map(n => norm(n.categoria))).size} CATEGORIE` : "IL TUO GRAFO DELLA CONOSCENZA";
   const first = G.nodes.size <= 1;
