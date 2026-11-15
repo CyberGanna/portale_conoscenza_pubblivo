@@ -117,7 +117,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wel-c{flex-direction:column;align-items:stretch;gap:10px;padding:16px 16px 14px}
 .wel-k{position:relative;padding-left:14px} .wel-k::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--kc)}
 .wel-v{display:block;min-height:64px} .wel-v:empty{display:none}
-.wv-svg{display:block;width:100%;height:64px}
+.wv-svg{display:block;width:100%;height:64px} .wv-uni{height:96px}
 .wv-chart{position:relative} .wv-chart em{position:absolute;right:0;top:-2px;font-style:normal;font-size:22px;font-weight:700;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)} .wv-chart em.up{color:#4ade80} .wv-chart em.dn{color:#fb7185}
 .wv-met .wv-emo{position:absolute;left:0;top:-4px;font-size:26px} .wv-met em{color:#e0f2fe}
 .wv-big{display:flex;align-items:center;gap:10px} .wv-big b{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1} .wv-big span{font-size:11.5px;color:var(--muted);line-height:1.25}
@@ -904,6 +904,20 @@ function wvArea(a, col, w = 240, h = 64){
   return `<svg class="wv-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
     <polygon points="0,${h} ${line} ${w},${h}" fill="url(#${id})"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="${col}"/></svg>`;
 }
+/* il tuo universo: le categorie della conoscenza come stelle grandi, le note come puntini intorno */
+function wvUniverse(){
+  if (!notes.length) return "";
+  const W = 260, H = 96, cx = W / 2, cy = H / 2, cols = ["#a78bfa", "#22d3ee", "#f472b6", "#fbbf24", "#34d399", "#60a5fa", "#fb923c", "#e879f9"];
+  const cats = [...new Set(notes.map(n => n.categoria || "Altro"))].slice(0, 8), hs = t => [...String(t)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  let lines = "", dots = "", stars = "";
+  cats.forEach((c, i) => { const a = i / cats.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * 96, y = cy + Math.sin(a) * 34, col = cols[i % cols.length];
+    lines += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${col}" stroke-opacity=".35" stroke-width=".8"/>`;
+    const NN = notes.filter(n => (n.categoria || "Altro") === c).slice(0, 14); NN.forEach((n, j) => { const h = hs(n.titolo + j), b = j / NN.length * Math.PI * 2 + (h % 100) / 100, r = 10 + h % 9, nx = x + Math.cos(b) * r * 1.4, ny = y + Math.sin(b) * r * .75;
+      lines += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${col}" stroke-opacity=".25" stroke-width=".6"/>`;
+      dots += `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="1.6" fill="${col}" fill-opacity=".85"/>`; });
+    stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.2" fill="${col}" filter="url(#wvg)"/>`; });
+  return `<svg class="wv-svg wv-uni" viewBox="0 0 ${W} ${H}"><defs><filter id="wvg" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>${lines}${dots}${stars}<circle cx="${cx}" cy="${cy}" r="6" fill="#fff" filter="url(#wvg)"/></svg>`;
+}
 const wvPills = (arr) => `<div class="wv-pills">${arr.slice(0, 4).map(t => `<span>${esc(t)}</span>`).join("")}</div>`;
 function welHints(){
   const day = Date.now() - 864e5, cut = (t, n = 90) => { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
@@ -928,7 +942,7 @@ function welHints(){
       act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
     { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? `${ai.length} novità nelle ultime 24 ore` : "LLM e intelligenza artificiale",
       act: () => { newsCat1 = "llm"; newsDay = 0; go("notizie"); newsCat1 = "llm"; if (ai && ai[0]) setTimeout(() => nwOpen(ai[0].u), 60); } },
-    { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Dalla tua conoscenza", v: nt ? wvPills([nt.categoria, nt.sottocategoria, `${notes.length} note`].filter(Boolean)) : "", q: nt ? cut(nt.titolo, 60) : "Il tuo portale della conoscenza", h: nt ? cut(nt.sintesi || nt.categoria || "", 80) || `${notes.length} note` : "Esplora o fai un test",
+    { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Il tuo universo", v: wvUniverse(), q: notes.length ? "La mia conoscenza" : "Il tuo portale della conoscenza", h: notes.length ? `${notes.length} note in ${new Set(notes.map(n => n.categoria || "Altro")).size} categorie · tocca per esplorare` : "Esplora o fai un test",
       act: () => go("conoscenza") },
     { i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", k: "Diario di oggi", v: `<div class="wv-quote">${dtxt ? "“" + esc(cut(dtxt, 70)) + "”" : '<span style="font-size:32px;font-style:normal">✍️</span>'}</div>`, q: dtxt ? cut(dtxt, 80) : "Non hai ancora scritto oggi", h: dtxt ? "Tocca per continuare" : "Due righe su com'è andata",
       act: () => go("cervello") },
@@ -1464,27 +1478,42 @@ async function vdAnalyze(v, force){
   } catch (e){ v.aerr = e.message; save(); if (/limite|rate limit/i.test(e.message)) setTimeout(() => vdAnalyze(v), 45000); }
   delete VD_BUSY[v.id]; if (cur === "video") reView();
 }
-/* Idee: in cima un riassunto breve di cosa parla il video (dall'analisi del video, altrimenti lo scrive Aris una volta e lo tiene) */
-const BR_SUM_BUSY = {};
+/* Idee: il riassunto breve di cosa parla il video è salvato DENTRO la nota (riga "> In breve: …"),
+   così si fa una volta sola (quando arriva il video, o la prima volta per le note vecchie) e vale su tutti i dispositivi */
+const BR_SUM_RX = /^>\s*\*\*In breve:\*\*\s*(.+)$/m, BR_SUM_BUSY = {};
+const brSumGet = f => { const m = f && f.text.match(BR_SUM_RX); return m ? m[1].trim() : ""; };
+const brSumShort = t => { const p = String(t || "").replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+/g) || [String(t || "")]; let o = ""; for (const x of p){ if ((o + x).length > 260 && o) break; o += x; } return o.trim(); };
 function brSumVid(f){ return (S.vid || []).find(v => v.ai && (v.brain === f.path || (v.u && f.text.includes(v.u)))); }
 function brSumBox(f){
-  const v = brSumVid(f), c = S.brSum && S.brSum[f.path], txt = v ? v.ai.riassunto : c && c.sha === (f.sha || f.text.length) ? c.t : "";
+  const txt = brSumGet(f), v = brSumVid(f);
   if (!txt && !BR_SUM_BUSY[f.path]) setTimeout(() => brSumMake(f), 50);
-  return `<div class="br-sum"><b>${v ? "🎬 Di cosa parla il video" : "✨ In breve"}</b><p>${txt ? esc(txt) : BR_SUM_BUSY[f.path] === "err" ? "Non riesco a fare il riassunto adesso." : mkKey() ? "Aris sta scrivendo il riassunto…" : "Per il riassunto serve la chiave Groq gratuita (in Conoscenza)."}</p></div>`;
+  const show = txt || (v ? brSumShort(v.ai.riassunto) : "");
+  return `<div class="br-sum"><b>${/video/i.test(f.text) || v ? "🎬 Di cosa parla il video" : "✨ In breve"}</b><p>${show ? esc(show) : BR_SUM_BUSY[f.path] === "err" ? "Non riesco a fare il riassunto adesso, riprovo più tardi." : mkKey() ? "Aris sta scrivendo il riassunto (solo questa volta)…" : "Per il riassunto serve la chiave Groq gratuita (in Conoscenza)."}</p></div>`;
 }
-async function brSumMake(f){
-  const key = mkKey(); if (!key || BR_SUM_BUSY[f.path]) return; BR_SUM_BUSY[f.path] = 1;
-  try {
-    const o = await groqJSON(key, `Riassumi in italiano semplice, in 2 o 3 frasi brevi (massimo 50 parole), di cosa parla questa nota${/video/i.test(f.text) ? ", che viene da un video" : ""}: l'argomento e l'idea principale. Rispondi solo in JSON: {"riassunto":"..."}` + LANG_SFX, f.text.slice(0, 6000), 300);
-    const t = String(o.riassunto || "").trim(); if (!t) throw new Error("vuoto");
-    S.brSum = S.brSum || {}; S.brSum[f.path] = { sha: f.sha || f.text.length, t }; save(); delete BR_SUM_BUSY[f.path];
-  } catch { BR_SUM_BUSY[f.path] = "err"; }
-  if (cur === "cervello") reView();
+const brWithSum = (text, t) => /^#\s+[^\n]*\n/.test(text) ? text.replace(/^(#\s+[^\n]*\n)\n?/, `$1\n> **In breve:** ${t}\n\n`) : `> **In breve:** ${t}\n\n` + text;
+async function brSumMake(f, quiet){
+  if (BR_SUM_BUSY[f.path] === 1 || brSumGet(f)) return; const v = brSumVid(f);
+  let t = v ? brSumShort(v.ai.riassunto) : "";
+  if (!t){ const key = mkKey(); if (!key) return; BR_SUM_BUSY[f.path] = 1;
+    try { const o = await groqJSON(key, `Riassumi in italiano semplice, in 2 o 3 frasi brevi (massimo 50 parole), di cosa parla questa nota${/video/i.test(f.text) ? ", che viene da un video" : ""}: l'argomento e l'idea principale. Rispondi solo in JSON: {"riassunto":"..."}` + LANG_SFX, f.text.slice(0, 6000), 300);
+      t = String(o.riassunto || "").replace(/\s+/g, " ").trim(); if (!t) throw new Error("vuoto"); }
+    catch { BR_SUM_BUSY[f.path] = "err"; setTimeout(() => { if (BR_SUM_BUSY[f.path] === "err") delete BR_SUM_BUSY[f.path]; }, 10 * 6e4); if (!quiet && cur === "cervello") reView(); return; } }
+  BR_SUM_BUSY[f.path] = 1;
+  try { const cur0 = (BR.files || []).find(x => x.path === f.path) || f; if (!brSumGet(cur0)) await brWrite(f.path, brWithSum(cur0.text, t), "Cervello: riassunto di " + brTitle(cur0)); delete BR_SUM_BUSY[f.path]; }
+  catch { BR_SUM_BUSY[f.path] = "err"; }
+  if (cur === "cervello" && !BR.edit) reView();
+}
+/* le idee vecchie senza riassunto: lo faccio una volta, in sottofondo, una alla volta */
+async function brSumFill(){
+  if (brSumFill.on || !mkKey()) return; brSumFill.on = true;
+  try { for (const f of (BR.files || []).filter(f => brType(f.path) === "idee" && !brSumGet(f)).slice(0, 12)){ await brSumMake(f, true); await new Promise(r => setTimeout(r, 2500)); } }
+  finally { brSumFill.on = false; }
 }
 async function vdBrain(v){
   if (!brCfg().gh || !v.ai || v.brain) return;
   const a = v.ai, path = `${BR_DIR}idee/${brSlug("video " + a.titolo)}.md`;
-  const md = a.nota && a.nota.trim().length > 40 ? `# ${a.titolo}\n\n` + a.nota.trim().replace(/^#\s+[^\n]*\n+/, "") + `\n\n[Video originale](${v.u})\n` : `# ${a.titolo}\n\n${a.riassunto}\n\n## Idee da provare\n${a.idee.map(i => `- **${i.idea}**: ${i.come}`).join("\n")}\n\n## Primo passo\n${a.primo}\n\n[Video originale](${v.u})\n`;
+  const sum = `> **In breve:** ${brSumShort(a.riassunto)}\n\n`;
+  const md = a.nota && a.nota.trim().length > 40 ? `# ${a.titolo}\n\n` + sum + a.nota.trim().replace(/^#\s+[^\n]*\n+/, "") + `\n\n[Video originale](${v.u})\n` : `# ${a.titolo}\n\n${sum}${a.riassunto}\n\n## Idee da provare\n${a.idee.map(i => `- **${i.idea}**: ${i.come}`).join("\n")}\n\n## Primo passo\n${a.primo}\n\n[Video originale](${v.u})\n`;
   try { await brWrite(path, md + `\n_Salvato dalla sezione Video il ${new Date().toLocaleDateString("it-IT")}_\n`, "Cervello: idee dal video " + a.titolo); v.brain = path; save(); BR.at = 0; }
   catch (e){ v.berr = e.message; save(); }
 }
@@ -2304,7 +2333,7 @@ async function brLoad(force){
     }
     BR.at = Date.now();
   } catch (e){ BR.err = e.message || String(e); }
-  BR.busy = false; brRefresh();
+  BR.busy = false; brRefresh(); setTimeout(brSumFill, 4000);
   if (BR.files && !(Date.now() - (S.brRen || 0) < 6 * 36e5) && BR.files.some(f => !/\/diario\//.test(f.path) && brBadTitle(f))) setTimeout(() => brRetitle(), 1500);
 }
 /* titoli delle note: brevi e sul contenuto (es. "Siti 3D con AI"), li sceglie Aris */
@@ -2490,7 +2519,7 @@ function brView(){
   const note = open ? `<div class="glass c br-note"><div class="hd"><div><h3>${esc(brTitle(open))}</h3><small><span class="br-dot" style="background:${BR_COL[brType(open.path)]}"></span>${esc(open.path.slice(BR_DIR.length))}</small></div>
         <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" title="Elimina la nota" onclick="brDel(this)">${ico("trash")}</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
       ${BR.edit ? `<textarea id="br-ta" class="input br-ta">${esc(open.text)}</textarea><small class="muted">Scrivi [[nome]] per collegare un'altra nota. Markdown: # titolo, **grassetto**, - elenco, - [ ] da fare.</small>`
-        : `${brType(open.path) === "idee" ? brSumBox(open) : ""}<div class="br-md">${brMd(open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
+        : `${brType(open.path) === "idee" ? brSumBox(open) : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
   const list = BR_TYPES.map(([k, t, col]) => { const L = shown.filter(f => brType(f.path) === k); if (!L.length) return "";
     return `<div class="br-grp"><div class="br-h"><span class="br-dot" style="background:${col}"></span>${t} <span class="muted">${L.length}</span></div>${L.slice().reverse().map(f => `<button class="br-it ${open && open.path === f.path ? "on" : ""}" onclick="BR.open=decodeURIComponent('${jq(f.path)}');BR.edit=false;reView()"><b>${esc(brTitle(f))}</b><small>${esc(f.text.replace(/^#.*$/m, "").replace(/[#*\[\]>`-]/g, "").trim().slice(0, 90))}</small></button>`).join("")}</div>`; }).join("");
   return head("Cervello", BR.busy ? "Sincronizzo con GitHub…" : `${files.length} note · ${esc(c.repo)}/cervello`) + ai + `
@@ -2804,7 +2833,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "brSum", "plasma", "plI"];
+const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "plasma", "plI"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -3079,7 +3108,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "64";
+const APP_V = "65";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
