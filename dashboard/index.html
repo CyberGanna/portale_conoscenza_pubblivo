@@ -110,7 +110,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 @keyframes welCard{to{opacity:1;transform:none}}
 .wel-ic{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:13px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)} .wel-ic .i{width:22px;height:22px}
 .wel-c:hover .wel-ic{animation:welPop .5s cubic-bezier(.2,.9,.3,1.6)} @keyframes welPop{40%{transform:scale(1.15) rotate(-6deg)}}
-.wel-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px} .wel-t b{font-size:14.5px;font-weight:600} .wel-t small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wel-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px} .wel-k{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55)} .wel-t b{font-size:14.5px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden} .wel-t small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wel-ar{opacity:.35;font-size:18px;transition:transform .25s,opacity .25s} .wel-c:hover .wel-ar{opacity:1;transform:translateX(4px)}
 .wel-flash{animation:welFlash 2.2s ease} @keyframes welFlash{0%,100%{box-shadow:none}15%,55%{box-shadow:0 0 0 2px #60a5fa,0 0 40px rgba(96,165,250,.45)}}
 .wel-sep{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase} .wel-sep::before,.wel-sep::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -153,6 +153,7 @@ html.no-anim .wel-in .wel-h span,html.no-anim .wel-in .wel-c{animation:none;opac
 .nw-bar .sp{flex:1}
 .br-row{display:flex;gap:10px;align-items:flex-end} .br-row .input{flex:1;resize:vertical}
 .br-ans{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);font-size:13.5px;line-height:1.6}
+.br-sum{margin:4px 0 14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(168,85,247,.10));border:1px solid rgba(245,158,11,.25)} .br-sum b{font-size:12px;letter-spacing:.02em} .br-sum p{margin:6px 0 0;font-size:13.5px;line-height:1.5;color:#e6e9f0}
 .br-md{font-size:14px;line-height:1.65} .br-md h2{font-size:18px;margin:6px 0} .br-md h3,.br-md h4{font-size:15px;margin:10px 0 4px} .br-md p{margin:6px 0} .br-md ul{margin:6px 0 6px 18px}
 .br-md blockquote{border-left:3px solid var(--line-2);padding-left:10px;color:var(--muted)} .br-md code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px}
 .br-md .tag{font-size:11px} .br-ans p{margin:4px 0}
@@ -207,7 +208,7 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 @media (max-width:560px){.gc-dt{display:none}}
 .mk-list{display:flex;flex-direction:column} .mk-r{display:grid;grid-template-columns:1fr auto 84px;gap:6px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)} .mk-r:first-child{border-top:0}
 .mk-star{background:none;border:0;padding:0 2px 0 0;font-size:16px;line-height:1;color:var(--faint);cursor:pointer} .mk-star:hover{color:#fcd34d} .mk-star.on{color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,.5)}
-.mk-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start} .mk-side{position:sticky;top:16px} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{position:static;order:-1}}
+.mk-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start} .mk-side{display:flex;flex-direction:column;gap:20px} .mk-side .hm-g{display:block;margin-bottom:10px} .mk-side .hm-g>span{display:block;margin:0 0 6px} .mk-side .hm-ts{grid-template-columns:repeat(3,1fr)} .mk-side .hm-t b{font-size:11px} .mk-side #mk-map-card .lnk{display:none} .mk-side .hm-leg{flex-wrap:wrap} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{position:static;order:-1}}
 .mk-fav{padding:12px 0;border-top:1px solid var(--line)} .mk-fav:first-child{border-top:0;padding-top:4px} .mk-fav .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px} .mk-fav .px{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .mk-fav .p{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums} .mk-fav svg,.mk-fav .mk-sp{display:block !important;width:100%;height:40px;margin-top:6px} .mk-fav .w{font-size:12px;line-height:1.4;color:var(--muted);margin-top:4px}
 .dash-l{display:flex;flex-direction:column;gap:20px;align-self:start} .dash-l>.glass{margin:0}
@@ -878,28 +879,41 @@ let chartMode = "24h";
 /* ---------- benvenuto animato: Aris ti propone cosa guardare ---------- */
 let WEL_SEEN = false;
 function welHints(){
-  const n = NEWS && NEWS.items.filter(x => x.d > Date.now() - 864e5).sort((a, b) => b.n - a.n)[0];
-  const m = MK && MK.items.filter(mkFresh).slice().sort((a, b) => Math.abs(b.z || 0) - Math.abs(a.z || 0))[0];
-  const up = MK ? MK.items.filter(mkFresh).filter(x => x.pct > 0).length : 0, tot = MK ? MK.items.filter(mkFresh).length : 0;
-  let ev = null; try { const t = ymd(new Date()); ev = gvItems().filter(x => x.day >= t && x.imp >= 4).sort((a, b) => (a.day + a.time).localeCompare(b.day + b.time))[0]; } catch {}
-  const open = S.rem.filter(r => !r.done), diary = (BR.files || []).find(x => x.path === `${BR_DIR}diario/${brToday()}.md`);
-  const c = wOk() ? W.current : null, vids = (S.vid || []).filter(v => v.st === "fatto").length;
-  const ai = n => n && NEWS ? NEWS.items.filter(x => x.cats.includes("llm") && x.d > Date.now() - 864e5).length : 0;
+  const day = Date.now() - 864e5, cut = (t, n = 90) => { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+  const n = NEWS && NEWS.items.filter(x => x.d > day).sort((a, b) => b.n - a.n)[0];
+  const ai = NEWS && NEWS.items.filter(x => x.cats.includes("llm") && x.d > day).sort((a, b) => b.n - a.n);
+  const L = MK ? MK.items.filter(mkFresh) : [], m = L.slice().sort((a, b) => Math.abs(b.pct || 0) - Math.abs(a.pct || 0))[0];
+  const up = L.filter(x => x.pct > 0).length, tot = L.length, ix = ["^GSPC", "^SSMI", "^STOXX50E", "BTC-USD", "GC=F"].map(s => L.find(x => x.s === s)).filter(Boolean).slice(0, 3);
+  const mood = !tot ? "" : up / tot >= .62 ? "Giornata positiva" : up / tot <= .38 ? "Giornata negativa" : "Giornata mista";
+  let ev = null; try { const t = ymd(new Date()), e7 = ymd(new Date(Date.now() + 7 * 864e5)); ev = gvItems().filter(x => x.day >= t && x.day <= e7).sort((a, b) => b.imp - a.imp || (a.day + a.time).localeCompare(b.day + b.time))[0]; } catch {}
+  const evDay = ev ? (ev.day === ymd(new Date()) ? "Oggi" : ev.day === ymd(new Date(Date.now() + 864e5)) ? "Domani" : new Date(ev.day + "T12:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { weekday: "long", day: "numeric" })) : "";
+  const open = S.rem.filter(r => !r.done).sort((a, b) => remAt(a) - remAt(b)), r0 = open[0];
+  const diary = (BR.files || []).find(x => x.path === `${BR_DIR}diario/${brToday()}.md`), dtxt = diary ? String(diary.text || diary.body || diary.content || "").replace(/^---[\s\S]*?---/, "").replace(/^#.*$/m, "").replace(/[#*>_`-]/g, " ").trim() : "";
+  const c = wOk() ? W.current : null, d = wOk() ? W.daily : null, vd = (S.vid || []).find(v => v.ai), nt = notes.length ? notes[Math.floor(Date.now() / 36e5) % notes.length] : null;
   return [
-    { go: "notizie", i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", q: "Vuoi vedere le ultime notizie?", h: n ? nT(n) : "Le più riprese dai giornali di oggi" },
-    { go: "mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", q: "Come stanno andando i mercati oggi?", h: m ? `${m.n} ${mkPct(m.pct)}: il movimento più insolito` : "Indici, azioni, valute e cripto" },
-    { go: "oggi", to: "mk-map-card", i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", q: "Vuoi vedere la mappa dei mercati?", h: tot ? `${up} su ${tot} in rialzo` : "Tutto il mercato a colori" },
-    { go: "globale", i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", q: "Cosa succede nel mondo nei prossimi giorni?", h: ev ? `${ev.title}${ev.day === ymd(new Date()) ? " · oggi" : ""}` : "Il calendario degli eventi importanti" },
-    { go: "notizie", cat: "llm", i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", q: "Novità sull'intelligenza artificiale?", h: ai(1) ? `${ai(1)} novità nelle ultime 24 ore` : "Nuovi modelli, funzioni e strumenti" },
-    { go: "conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", q: "Ti va di ripassare la tua conoscenza?", h: notes.length ? `${notes.length} note · fai un test` : "Esplora o fai un test" },
-    { go: "cervello", i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", q: diary ? "Riprendiamo il diario di oggi?" : "Scriviamo il diario di oggi?", h: diary ? "Hai già scritto qualcosa oggi" : "Due righe su com'è andata" },
-    { go: "promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)", q: "Promemoria e sveglie", h: open.length ? `${open.length} da fare${S.alarms[0] ? " · sveglia " + S.alarms[0].h : ""}` : "Niente in sospeso" },
-    { go: "video", i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)", q: "Riguardiamo i tuoi video salvati?", h: vids ? `${vids} video già analizzati da Aris` : "Manda un reel e Aris lo spiega" },
-    { go: "meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", q: "Che tempo fa?", h: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° a ${S.city.name}` : S.city.name },
+    { i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", k: "La notizia del giorno", q: n ? cut(nT(n)) : "Le notizie più riprese di oggi", h: n ? `${n.n} testate ne parlano` : "Carico le notizie…",
+      act: () => { newsDay = 0; go("notizie"); if (n) setTimeout(() => nwOpen(n.u), 60); } },
+    { i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", k: "Il movimento più forte", q: m ? `${m.n} ${mkPct(m.pct)}` : "I mercati di oggi", h: m ? (mkAI(m) ? cut(mkAI(m).perche, 80) : `${m.cls} · ${mkFmt(m)}${m.cls === "Tassi" ? "%" : " " + m.cur}`) : "Carico i prezzi…",
+      act: () => { go("mercati"); if (m) setTimeout(() => mkOpen(m.s), 60); } },
+    { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "I mercati in generale", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
+      act: () => go("mercati") },
+    { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
+      act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
+    { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? `${ai.length} novità nelle ultime 24 ore` : "LLM e intelligenza artificiale",
+      act: () => { newsCat1 = "llm"; newsDay = 0; go("notizie"); newsCat1 = "llm"; if (ai && ai[0]) setTimeout(() => nwOpen(ai[0].u), 60); } },
+    { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Dalla tua conoscenza", q: nt ? cut(nt.titolo, 60) : "Il tuo portale della conoscenza", h: nt ? cut(nt.sintesi || nt.categoria || "", 80) || `${notes.length} note` : "Esplora o fai un test",
+      act: () => go("conoscenza") },
+    { i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", k: "Diario di oggi", q: dtxt ? cut(dtxt, 80) : "Non hai ancora scritto oggi", h: dtxt ? "Tocca per continuare" : "Due righe su com'è andata",
+      act: () => go("cervello") },
+    { i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)", k: "Prossimo promemoria", q: r0 ? cut(r0.t, 70) : "Niente in sospeso", h: r0 ? `${new Date(remAt(r0)).toLocaleString(EN ? "en-GB" : "it-IT", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}${open.length > 1 ? ` · altri ${open.length - 1}` : ""}` : (S.alarms[0] ? "Sveglia " + S.alarms[0].h : "Promemoria e sveglie"),
+      act: () => go("promemoria") },
+    { i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)", k: "Ultimo video salvato", q: vd ? cut(vd.ai.titolo, 70) : "I tuoi video salvati", h: vd ? cut(vd.ai.riassunto, 80) : "Manda un reel e Aris lo spiega",
+      act: () => { if (vd) VD_OPEN = vd.id; go("video"); } },
+    { i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", k: `Meteo · ${S.city.name}`, q: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° · ${WMO(c.weather_code)[1] || ""}` : S.city.name, h: d ? `Oggi max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°` : "Previsioni",
+      act: () => go("meteo") },
   ];
 }
-function welGo(i){ const x = welHints()[i]; if (!x) return;
-  if (x.to){ const el = document.getElementById(x.to); if (el){ el.scrollIntoView({ behavior: S.anim === false ? "auto" : "smooth", block: "start" }); el.classList.remove("wel-flash"); void el.offsetWidth; el.classList.add("wel-flash"); setTimeout(() => el.classList.remove("wel-flash"), 2200); return; } x.go = "mercati"; } if (x.cat){ newsCat1 = x.cat; newsDay = 0; } go(x.go); if (x.cat) newsCat1 = x.cat; }
+function welGo(i){ const x = welHints()[i]; if (x) x.act(); }
 function welcome(){
   const first = !WEL_SEEN, hello = `${greet()}, ${S.name}.`;
   if (first) setTimeout(() => { WEL_SEEN = true; }, 4000);
@@ -909,13 +923,13 @@ function welcome(){
       <div><h1 class="wel-h">${[...hello].map((ch, i) => `<span style="--d:${(i * 0.035).toFixed(3)}s">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</h1>
       <p class="wel-q">Sono Aris. <b class="wel-rot"><span>Cosa ti va di guardare?</span><span>Ecco qualche idea per te.</span><span>Scegli da dove partire.</span></b></p></div></div>
     <div class="wel-grid">${welHints().map((x, i) => `<button class="wel-c" style="--i:${i}" onclick="welGo(${i})" onmousemove="welTilt(event,this)" onmouseleave="this.style.transform=''">
-      <span class="wel-ic" style="background:${x.g}">${ico(x.i)}</span><span class="wel-t"><b>${esc(x.q)}</b><small>${esc(x.h)}</small></span><span class="wel-ar">→</span></button>`).join("")}</div>
+      <span class="wel-ic" style="background:${x.g}">${ico(x.i)}</span><span class="wel-t"><i class="wel-k">${esc(x.k)}</i><b>${esc(x.q)}</b><small>${esc(x.h)}</small></span><span class="wel-ar">→</span></button>`).join("")}</div>
   </section>`;
 }
 function welTilt(e, el){ if (S.anim === false) return; const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
   el.style.transform = `perspective(700px) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg) translateY(-3px)`; el.style.setProperty("--mx", (x + .5) * 100 + "%"); el.style.setProperty("--my", (y + .5) * 100 + "%"); }
 function DASH(){
-  return welcome() + `<div id="dash-rest">` + DASH_REST() + `</div>`;
+  return welcome() + `<div id="dash-rest"></div>`;
 }
 function DASH_REST(){
   // la home tiene solo le due cose che non hanno una sezione propria: la mappa e le notizie che muovono i mercati
@@ -1423,6 +1437,23 @@ async function vdAnalyze(v, force){
   } catch (e){ v.aerr = e.message; save(); if (/limite|rate limit/i.test(e.message)) setTimeout(() => vdAnalyze(v), 45000); }
   delete VD_BUSY[v.id]; if (cur === "video") reView();
 }
+/* Idee: in cima un riassunto breve di cosa parla il video (dall'analisi del video, altrimenti lo scrive Aris una volta e lo tiene) */
+const BR_SUM_BUSY = {};
+function brSumVid(f){ return (S.vid || []).find(v => v.ai && (v.brain === f.path || (v.u && f.text.includes(v.u)))); }
+function brSumBox(f){
+  const v = brSumVid(f), c = S.brSum && S.brSum[f.path], txt = v ? v.ai.riassunto : c && c.sha === (f.sha || f.text.length) ? c.t : "";
+  if (!txt && !BR_SUM_BUSY[f.path]) setTimeout(() => brSumMake(f), 50);
+  return `<div class="br-sum"><b>${v ? "🎬 Di cosa parla il video" : "✨ In breve"}</b><p>${txt ? esc(txt) : BR_SUM_BUSY[f.path] === "err" ? "Non riesco a fare il riassunto adesso." : mkKey() ? "Aris sta scrivendo il riassunto…" : "Per il riassunto serve la chiave Groq gratuita (in Conoscenza)."}</p></div>`;
+}
+async function brSumMake(f){
+  const key = mkKey(); if (!key || BR_SUM_BUSY[f.path]) return; BR_SUM_BUSY[f.path] = 1;
+  try {
+    const o = await groqJSON(key, `Riassumi in italiano semplice, in 2 o 3 frasi brevi (massimo 50 parole), di cosa parla questa nota${/video/i.test(f.text) ? ", che viene da un video" : ""}: l'argomento e l'idea principale. Rispondi solo in JSON: {"riassunto":"..."}` + LANG_SFX, f.text.slice(0, 6000), 300);
+    const t = String(o.riassunto || "").trim(); if (!t) throw new Error("vuoto");
+    S.brSum = S.brSum || {}; S.brSum[f.path] = { sha: f.sha || f.text.length, t }; save(); delete BR_SUM_BUSY[f.path];
+  } catch { BR_SUM_BUSY[f.path] = "err"; }
+  if (cur === "cervello") reView();
+}
 async function vdBrain(v){
   if (!brCfg().gh || !v.ai || v.brain) return;
   const a = v.ai, path = `${BR_DIR}idee/${brSlug("video " + a.titolo)}.md`;
@@ -1586,7 +1617,7 @@ function mkView(){
     <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
     <div class="mk-wrap"><div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>
-      <div class="mk-side">${mkFavCard()}</div></div>`;
+      <div class="mk-side">${mkMapCard()}${mkFavCard()}</div></div>`;
 }
 function mkFavCard(){
   const F = mkFavs().map(s => MK && MK.items.find(x => x.s === s)).filter(Boolean);
@@ -2430,7 +2461,7 @@ function brView(){
   const note = open ? `<div class="glass c br-note"><div class="hd"><div><h3>${esc(brTitle(open))}</h3><small><span class="br-dot" style="background:${BR_COL[brType(open.path)]}"></span>${esc(open.path.slice(BR_DIR.length))}</small></div>
         <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" title="Elimina la nota" onclick="brDel(this)">${ico("trash")}</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
       ${BR.edit ? `<textarea id="br-ta" class="input br-ta">${esc(open.text)}</textarea><small class="muted">Scrivi [[nome]] per collegare un'altra nota. Markdown: # titolo, **grassetto**, - elenco, - [ ] da fare.</small>`
-        : `<div class="br-md">${brMd(open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
+        : `${brType(open.path) === "idee" ? brSumBox(open) : ""}<div class="br-md">${brMd(open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
   const list = BR_TYPES.map(([k, t, col]) => { const L = shown.filter(f => brType(f.path) === k); if (!L.length) return "";
     return `<div class="br-grp"><div class="br-h"><span class="br-dot" style="background:${col}"></span>${t} <span class="muted">${L.length}</span></div>${L.slice().reverse().map(f => `<button class="br-it ${open && open.path === f.path ? "on" : ""}" onclick="BR.open=decodeURIComponent('${jq(f.path)}');BR.edit=false;reView()"><b>${esc(brTitle(f))}</b><small>${esc(f.text.replace(/^#.*$/m, "").replace(/[#*\[\]>`-]/g, "").trim().slice(0, 90))}</small></button>`).join("")}</div>`; }).join("");
   return head("Cervello", BR.busy ? "Sincronizzo con GitHub…" : `${files.length} note · ${esc(c.repo)}/cervello`) + ai + `
@@ -2744,7 +2775,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim"];
+const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "brSum", "plasma", "plI"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -2990,8 +3021,7 @@ function refresh(){
 }
 /* quando arrivano dati nuovi il benvenuto non viene ridisegnato (la sua animazione ripartirebbe da capo): aggiorno solo i testi */
 function welUpdate(){
-  const H = welHints(); document.querySelectorAll("#pc-body .wel-c").forEach((el, i) => { const x = H[i]; if (!x) return; el.querySelector(".wel-t b").textContent = x.q; el.querySelector(".wel-t small").textContent = x.h; });
-  $("#dash-rest").innerHTML = DASH_REST();
+  const H = welHints(); document.querySelectorAll("#pc-body .wel-c").forEach((el, i) => { const x = H[i]; if (!x) return; el.querySelector(".wel-k").textContent = x.k; el.querySelector(".wel-t b").textContent = x.q; el.querySelector(".wel-t small").textContent = x.h; });
 }
 if ($("#new-btn")) $("#new-btn").onclick = e => { e.stopPropagation(); $("#new-menu").classList.toggle("open"); };
 document.addEventListener("click", e => { if (!e.target.closest("#new-menu")) $("#new-menu").classList.remove("open"); });
@@ -3020,7 +3050,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "61";
+const APP_V = "62";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
