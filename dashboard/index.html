@@ -737,7 +737,7 @@ if (EN){
   addEventListener("DOMContentLoaded", () => trTree(document.body));
   trTree(document.body);
 }
-function paintLang(){ document.querySelectorAll(".lang-btn").forEach(b => { b.textContent = EN ? "IT" : "EN"; b.title = EN ? "Passa all'italiano" : "Switch to English"; }); }
+function paintLang(){ document.querySelectorAll(".lang-btn").forEach(b => { b.textContent = EN ? "EN" : "IT"; b.title = EN ? "Passa all'italiano" : "Switch to English"; }); }
 /* piccole scintille colorate quando tocchi una voce del menu o un'app */
 document.addEventListener("click", e => {
   if (S.anim === false) return; const t = e.target.closest(".nav a, .apps .app-i, .ab-orb, .mk-star"); if (!t) return;
@@ -3079,7 +3079,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "63";
+const APP_V = "64";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
