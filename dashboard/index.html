@@ -116,7 +116,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wel-sep{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase} .wel-sep::before,.wel-sep::after{content:"";flex:1;height:1px;background:var(--line)}
 .wel-c{flex-direction:column;align-items:stretch;gap:10px;padding:16px 16px 14px}
 .wel-k{position:relative;padding-left:14px} .wel-k::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--kc)}
-.wel-v{display:block;min-height:64px} .wel-v:empty{display:none}
+.wel-c.tt .wel-t{order:1} .wel-c.tt .wel-v{order:2;min-height:0} .wel-t small:empty{display:none} .wel-v{display:block;min-height:64px} .wel-v:empty{display:none}
 .wv-svg{display:block;width:100%;height:64px} .wv-uni{height:96px}
 .wv-chart{position:relative} .wv-chart em{position:absolute;right:0;top:-2px;font-style:normal;font-size:22px;font-weight:700;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)} .wv-chart em.up{color:#4ade80} .wv-chart em.dn{color:#fb7185}
 .wv-met .wv-emo{position:absolute;left:0;top:-4px;font-size:26px} .wv-met em{color:#e0f2fe}
@@ -932,7 +932,7 @@ function welHints(){
   const diary = (BR.files || []).find(x => x.path === `${BR_DIR}diario/${brToday()}.md`), dtxt = diary ? String(diary.text || diary.body || diary.content || "").replace(/^---[\s\S]*?---/, "").replace(/^#.*$/m, "").replace(/[#*>_`-]/g, " ").trim() : "";
   const c = wOk() ? W.current : null, d = wOk() ? W.daily : null, vd = (S.vid || []).find(v => v.ai), nt = notes.length ? notes[Math.floor(Date.now() / 36e5) % notes.length] : null;
   return [
-    { i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", k: "La notizia del giorno", v: n ? `<div class="wv-big"><b>${n.n}</b><span>testate<br>ne parlano</span></div>` + wvPills((n.srcs || [[n.src]]).map(x => x[0]).filter(Boolean)) : "", q: n ? cut(nT(n)) : "Le notizie più riprese di oggi", h: n ? `${n.n} testate ne parlano` : "Carico le notizie…",
+    { i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", k: "La notizia del giorno", tt: 1, v: n ? `<div class="wv-big"><b>${n.n}</b><span>testate<br>ne parlano</span></div>` + wvPills((n.srcs || [[n.src]]).map(x => x[0]).filter(Boolean)) : "", q: n ? cut(nT(n)) : "Le notizie più riprese di oggi", h: n ? "" : "Carico le notizie…",
       act: () => { newsDay = 0; go("notizie"); if (n) setTimeout(() => nwOpen(n.u), 60); } },
     { i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", k: "Il movimento più forte", v: m ? `<div class="wv-chart">${wvArea(m.spark, m.pct >= 0 ? "#22c55e" : "#f43f5e")}<em class="${m.pct >= 0 ? "up" : "dn"}">${mkPct(m.pct)}</em></div>` : "", q: m ? `${m.n} ${mkPct(m.pct)}` : "I mercati di oggi", h: m ? (mkAI(m) ? cut(mkAI(m).perche, 80) : `${m.cls} · ${mkFmt(m)}${m.cls === "Tassi" ? "%" : " " + m.cur}`) : "Carico i prezzi…",
       act: () => { go("mercati"); if (m) setTimeout(() => mkOpen(m.s), 60); } },
@@ -940,7 +940,7 @@ function welHints(){
       act: () => go("mercati") },
     { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", v: ev ? `<div class="wv-date"><span><small>${new Date(ev.day + "T12:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { month: "short" })}</small><b>${+ev.day.slice(8)}</b></span><div class="wv-imp">${"●".repeat(Math.max(1, Math.min(5, ev.imp)))}<em>${"●".repeat(5 - Math.max(1, Math.min(5, ev.imp)))}</em><small>importanza</small></div></div>` : "", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
       act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
-    { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? `${ai.length} novità nelle ultime 24 ore` : "LLM e intelligenza artificiale",
+    { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", tt: 1, v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? "" : "LLM e intelligenza artificiale",
       act: () => { newsCat1 = "llm"; newsDay = 0; go("notizie"); newsCat1 = "llm"; if (ai && ai[0]) setTimeout(() => nwOpen(ai[0].u), 60); } },
     { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Il tuo universo", v: wvUniverse(), q: notes.length ? "La mia conoscenza" : "Il tuo portale della conoscenza", h: notes.length ? `${notes.length} note in ${new Set(notes.map(n => n.categoria || "Altro")).size} categorie · tocca per esplorare` : "Esplora o fai un test",
       act: () => go("conoscenza") },
@@ -963,7 +963,7 @@ function welcome(){
     <div class="wel-top"><span class="orb wel-orb"><i></i></span>
       <div><h1 class="wel-h">${[...hello].map((ch, i) => `<span style="--d:${(i * 0.035).toFixed(3)}s">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</h1>
       <p class="wel-q">Sono Aris. <b class="wel-rot"><span>Cosa ti va di guardare?</span><span>Ecco qualche idea per te.</span><span>Scegli da dove partire.</span></b></p></div></div>
-    <div class="wel-grid">${welHints().map((x, i) => `<button class="wel-c" style="--i:${i}" onclick="welGo(${i})" onmousemove="welTilt(event,this)" onmouseleave="this.style.transform=''">
+    <div class="wel-grid">${welHints().map((x, i) => `<button class="wel-c ${x.tt ? "tt" : ""}" style="--i:${i}" onclick="welGo(${i})" onmousemove="welTilt(event,this)" onmouseleave="this.style.transform=''">
       <i class="wel-k" style="--kc:${x.g}">${esc(x.k)}</i><span class="wel-v">${x.v || `<span class="wel-ic" style="background:${x.g}">${ico(x.i)}</span>`}</span><span class="wel-t"><b>${esc(x.q)}</b><small>${esc(x.h)}</small></span></button>`).join("")}</div>
   </section>`;
 }
@@ -3107,7 +3107,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "66";
+const APP_V = "67";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
