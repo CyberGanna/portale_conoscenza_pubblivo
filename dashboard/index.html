@@ -121,6 +121,10 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .pv-h{display:flex;justify-content:space-between;align-items:center} .pv-h b{font-size:15px} .pv-dir{font-size:12px;font-weight:700;color:var(--pc);text-transform:uppercase;letter-spacing:.04em}
 .pv-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden} .pv-bar i{display:block;height:100%;background:var(--pc)} .pv-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
 .pv-sp .wv-svg{height:46px} .pv-c p{margin:0;font-size:12.8px;line-height:1.5;color:#e2e8f0} .pv-risk{font-size:11.5px;color:#fbbf24;line-height:1.4} .pv-chk{font-size:11.5px;font-weight:600} .pv-chk.ok{color:#4ade80} .pv-chk.ko{color:#fb7185}
+.pv-evs{display:flex;flex-direction:column;gap:12px} .pv-ev{padding:14px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--line)} .pv-evh{display:flex;gap:14px;align-items:flex-start} .pv-evh>div{display:flex;flex-direction:column;gap:3px;min-width:0} .pv-evh b{font-size:15px} .pv-evh small{font-size:11.5px;color:var(--muted)} .pv-evh p{margin:4px 0 0;font-size:12.8px;line-height:1.5;color:#e2e8f0}
+.pv-sc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 10px} .pv-sc div{padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.04);display:flex;flex-direction:column;gap:3px} .pv-sc b{font-size:12px} .pv-sc span{font-size:12px;color:#cbd5e1;line-height:1.45}
+.pv-imps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px} .pv-imp{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:center;padding:9px 11px;border-radius:12px;border:1px solid var(--line);border-left:3px solid var(--pc);cursor:pointer} .pv-imp:hover{background:rgba(255,255,255,.05)} .pv-imp .pv-dir{color:var(--pc)} .pv-imp b{font-size:13px} .pv-imp em{font-style:normal;font-size:12px;color:var(--pc);font-weight:700} .pv-imp small,.pv-imp .pv-chk{grid-column:1/-1;font-size:11.5px;color:#cbd5e1;line-height:1.4}
+@media (max-width:700px){.pv-sc{grid-template-columns:1fr}}
 .pv-old{margin-top:8px} .pv-old summary{cursor:pointer;font-size:12.5px;color:#cbd5e1;padding:6px 0} .pv-old .pv-grid{margin-top:8px}
 .wel-c{flex-direction:column;align-items:stretch;gap:10px;padding:16px 16px 14px}
 .wel-k{position:relative;padding-left:14px} .wel-k::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--kc)}
@@ -1603,7 +1607,7 @@ function mkSpark(a, col, w = 90, h = 28){
   return `<svg class="mk-sp" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
 const mkNorm = s => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-function mkAI(x){ const it = MKAI.items || {}; if (it[x.s]) return it[x.s]; const a = mkNorm(x.s), b = mkNorm(x.n); for (const k in it){ const n = mkNorm(k); if (n && (n === a || n === b || a.startsWith(n) || n.startsWith(b))) return it[k]; } return null; }
+function mkAI(x){ const it = MKAI.items || {}; if (it[x.s]) return it[x.s]; const a = pvNorm(x.s), b = pvNorm(x.n); for (const k in it){ const n = pvNorm(k); if (n && (n === a || n === b || a.startsWith(n) || n.startsWith(b))) return it[k]; } return null; }
 const mkFavs = () => S.mkFav || (S.mkFav = []);
 const mkIsFav = s => mkFavs().includes(s);
 function mkFav(s){ const f = mkFavs(), i = f.indexOf(s); if (i >= 0) f.splice(i, 1); else f.push(s); save(); toast(i >= 0 ? "Tolto dai preferiti" : "Salvato nei preferiti"); reView(); }
@@ -1699,8 +1703,11 @@ async function prevRun(mode){
   try {
     const since = Date.now() - 48 * 3600e3;
     const nw = NEWS ? NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "politica", "esteri", "ai", "tech", "clima", "llm"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 45).map(x => `- (${x.n} testate) ${x.t}`) : [];
-    let ev = []; try { const t = ymd(new Date()), e = ymd(new Date(Date.now() + 8 * 864e5)); ev = gvItems().filter(x => x.day >= t && x.day <= e && x.imp >= 3).slice(0, 30).map(x => `- ${x.day}${x.time ? " " + x.time : ""} ${x.title}${x.where ? " (" + x.where + ")" : ""} importanza ${x.imp}/5`); } catch {}
-    const data = `STRUMENTI (${pick.length}):\n${pick.map(prevStats).join("\n")}\n\n${mode === "scelti" ? `CONTESTO (gli altri mercati oggi):\n${L.filter(x => !PV.sel.includes(x.s)).slice(0, 25).map(x => `${x.n} ${mkPct(x.pct)}`).join(", ")}\n\n` : ""}NOTIZIE DELLE ULTIME 48 ORE:\n${nw.join("\n") || "nessuna"}\n\nEVENTI DEI PROSSIMI GIORNI:\n${ev.join("\n") || "nessuno"}`;
+    let ev = [], EVL = []; try { const t = ymd(new Date()), e = ymd(new Date(Date.now() + 8 * 864e5)); EVL = gvItems().filter(x => x.day >= t && x.day <= e && x.imp >= 3);
+      if (mode === "eventi") EVL = EVL.slice().sort((a, b) => b.imp - a.imp || (a.day + a.time).localeCompare(b.day + b.time)).slice(0, 10).sort((a, b) => (a.day + a.time).localeCompare(b.day + b.time));
+      ev = EVL.slice(0, 30).map(x => `- [${x.k}] ${x.day}${x.time ? " " + x.time : ""} ${x.title}${x.where ? " (" + x.where + ")" : ""} importanza ${x.imp}/5${(x.extra || []).filter(Boolean).length ? " · " + x.extra.filter(Boolean).join(", ") : ""}`); } catch {}
+    if (mode === "eventi" && !ev.length) throw new Error("non ci sono eventi importanti nel calendario globale dei prossimi giorni (aprilo una volta perché si carichi)");
+    const data = mode === "eventi" ? `EVENTI IMPORTANTI DEL CALENDARIO (prossimi giorni):\n${ev.join("\n")}\n\nSTRUMENTI DISPONIBILI (usa questi simboli):\n${L.map(prevStats).join("\n")}\n\nNOTIZIE DELLE ULTIME 48 ORE:\n${nw.join("\n") || "nessuna"}` : `STRUMENTI (${pick.length}):\n${pick.map(prevStats).join("\n")}\n\n${mode === "scelti" ? `CONTESTO (gli altri mercati oggi):\n${L.filter(x => !PV.sel.includes(x.s)).slice(0, 25).map(x => `${x.n} ${mkPct(x.pct)}`).join(", ")}\n\n` : ""}NOTIZIE DELLE ULTIME 48 ORE:\n${nw.join("\n") || "nessuna"}\n\nEVENTI DEI PROSSIMI GIORNI:\n${ev.join("\n") || "nessuno"}`;
     // 1) contesto fresco dal web (se il modello con ricerca è disponibile)
     let web = "";
     try { PV.step = "Cerco sul web cosa sta muovendo i mercati…"; if (cur === "mercati") reView();
@@ -1708,12 +1715,24 @@ async function prevRun(mode){
     } catch {}
     // 2) l'agente collega tutto e fa le previsioni
     PV.step = "Collego i puntini e preparo le previsioni…"; if (cur === "mercati") reView();
+    if (mode === "eventi"){
+      PV.step = "Studio gli eventi del calendario e il loro effetto sui mercati…"; if (cur === "mercati") reView();
+      const sysE = `Sei Aris, un analista macro prudente. Per OGNI evento del calendario fornito (massimo 8, i più importanti) spiega perché conta per i mercati e prevedi come potrebbe muovere gli strumenti forniti, tenendo conto delle attese (previsto/precedente), dell'andamento recente dei prezzi e delle notizie. Indica 2-4 strumenti per evento, scegliendo tra quelli forniti. Probabilità realistiche 50-75. Italiano semplice.
+Rispondi SOLO in JSON: {"sintesi":"2-3 frasi: la settimana in arrivo per i mercati","eventi":[{"k":"codice tra parentesi quadre","titolo":"breve","perche":"perché conta, 1-2 frasi","sopra":"cosa succede se il dato/esito è migliore o più forte del previsto","sotto":"se è peggiore o più debole","impatti":[{"s":"simbolo","dir":"rialzo|ribasso|laterale","prob":60,"perche":"1 frase"}]}]}`;
+      const o = await groqJSON(key, sysE, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3000)}` : ""), 2600);
+      const E = (o.eventi || []).map(e => { const g = EVL.find(x => x.k === e.k) || EVL.find(x => pvNorm(x.title).includes(pvNorm(e.titolo || "").slice(0, 12)));
+        const imp = (e.impatti || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? { ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) } : null; }).filter(Boolean);
+        return { titolo: String(e.titolo || g?.title || ""), day: g?.day || "", time: g?.time || "", where: g?.where || "", k: g?.k || "", imp: g?.imp || 3, perche: String(e.perche || ""), sopra: String(e.sopra || ""), sotto: String(e.sotto || ""), impatti: imp }; }).filter(e => e.titolo && e.impatti.length);
+      if (!E.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
+      S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: [], E, P: E.flatMap(e => e.impatti), web: !!web }, ...(S.prev || [])].slice(0, 8); save();
+      PV.busy = false; PV.step = ""; if (cur === "mercati") reView(); return;
+    }
     const sys = `Sei Aris, un analista quantitativo e macro prudente. Ricevi dati reali di prezzo, notizie ed eventi. Il tuo compito: trovare CONNESSIONI (es. un evento o una notizia che influenza più strumenti, correlazioni tra strumenti, momentum o eccessi da riassorbire) e stimare per i prossimi 1-5 giorni la direzione più probabile.
 Regole: usa solo i dati forniti e il contesto web; non inventare numeri; probabilità realistiche tra 50 e 75 (oltre 70 solo con motivi forti); se il quadro è incerto scegli "laterale". Spiega in italiano semplice.
 ${mode === "scelti" ? "Fai una previsione per OGNI strumento elencato." : "Scegli tu i 6 strumenti con il segnale più interessante (mescola rialzi e ribassi se i dati lo giustificano)."}
 Rispondi SOLO in JSON: {"sintesi":"2-3 frasi sul quadro generale","connessioni":[{"tema":"breve","spiega":"come collega più strumenti","strumenti":["simbolo"]}],"previsioni":[{"s":"simbolo esatto tra parentesi quadre","dir":"rialzo|ribasso|laterale","prob":60,"orizzonte":"1-3 giorni","perche":"2 frasi","segnali":["dato o notizia concreta"],"rischio":"cosa smentirebbe la previsione"}]}`;
     const o = await groqJSON(key, sys, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3500)}` : ""), 2200);
-    const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => mkNorm(i.n) === mkNorm(p.s)); return x ? { ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) } : null; }).filter(Boolean);
+    const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? { ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) } : null; }).filter(Boolean);
     if (!P.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
     S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: (o.connessioni || []).slice(0, 5), P, web: !!web }, ...(S.prev || [])].slice(0, 8); save();
   } catch (e){ PV.err = e.message || String(e); }
@@ -1736,18 +1755,26 @@ function prevCard(p, at){
     ${(p.segnali || []).length ? `<div class="wv-pills">${p.segnali.slice(0, 4).map(t => `<span title="${esc(t)}">${esc(t)}</span>`).join("")}</div>` : ""}
     ${p.rischio ? `<small class="pv-risk">⚠️ ${esc(p.rischio)}</small>` : ""}${prevCheck(p, at)}</div>`;
 }
+const pvNorm = t => String(t || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
+function prevEvents(r){
+  return `<div class="pv-evs">${r.E.map(e => { const d = e.day ? new Date(e.day + "T12:00") : null;
+    return `<div class="pv-ev"><div class="pv-evh">${d ? `<span class="wv-date"><span><small>${d.toLocaleDateString("it-IT", { month: "short" })}</small><b>${d.getDate()}</b></span></span>` : ""}<div><b ${e.k ? `onclick="go('globale');setTimeout(()=>gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}')),80)" style="cursor:pointer"` : ""}>${esc(e.titolo)}</b><small>${[e.time, e.where, "importanza " + "●".repeat(Math.min(5, e.imp))].filter(Boolean).map(esc).join(" · ")}</small><p>${esc(e.perche)}</p></div></div>
+      ${e.sopra || e.sotto ? `<div class="pv-sc">${e.sopra ? `<div><b>⬆ Se esce meglio del previsto</b><span>${esc(e.sopra)}</span></div>` : ""}${e.sotto ? `<div><b>⬇ Se esce peggio</b><span>${esc(e.sotto)}</span></div>` : ""}</div>` : ""}
+      <div class="pv-imps">${e.impatti.map(p => { const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8";
+        return `<div class="pv-imp" style="--pc:${col}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-dir">${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"}</span><b>${esc(p.n)}</b><em>${p.prob}%</em><small>${esc(p.perche || "")}</small>${prevCheck(p, r.at)}</div>`; }).join("")}</div></div>`; }).join("")}</div>`;
+}
 function prevView(){
   const last = (S.prev || [])[0], L = MK.items.filter(mkFresh), favs = mkFavs();
   const order = [...L.filter(x => favs.includes(x.s)), ...L.filter(x => !favs.includes(x.s))];
   return `<div class="pv-top glass c"><div class="hd"><div><h3>✨ Agente previsioni</h3><small>Scansiona prezzi, andamenti, notizie di decine di giornali, eventi in arrivo e il web, e cerca le connessioni</small></div></div>
-      <div class="pv-act"><button class="btn blue" ${PV.busy ? "disabled" : ""} onclick="prevRun('auto')">🔎 Consigliami tu</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('scelti')">Analizza quelli scelti${PV.sel.length ? ` (${PV.sel.length})` : ""}</button>${PV.busy ? `<span class="pv-step"><i class="pv-spin"></i>${esc(PV.step)}</span>` : ""}</div>
+      <div class="pv-act"><button class="btn blue" ${PV.busy ? "disabled" : ""} onclick="prevRun('auto')">🔎 Consigliami tu</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('eventi')">📅 Dagli eventi in calendario</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('scelti')">Analizza quelli scelti${PV.sel.length ? ` (${PV.sel.length})` : ""}</button>${PV.busy ? `<span class="pv-step"><i class="pv-spin"></i>${esc(PV.step)}</span>` : ""}</div>
       <div class="chips pv-chips">${order.map(x => `<button class="chip ${PV.sel.includes(x.s) ? "on" : ""}" onclick="prevTog('${esc(x.s)}')">${favs.includes(x.s) ? "★ " : ""}${esc(x.n)}</button>`).join("")}</div>
       ${PV.err ? `<div class="pv-err">Non ci sono riuscito: ${esc(PV.err)}</div>` : ""}</div>
-    ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}</small></div></div>
+    ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : last.mode === "eventi" ? "Cosa possono muovere gli eventi in calendario" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}</small></div></div>
       ${last.sintesi ? `<p class="pv-sint">${esc(last.sintesi)}</p>` : ""}
       ${last.conn && last.conn.length ? `<div class="pv-conn">${last.conn.map(c => `<div><b>🔗 ${esc(c.tema)}</b><span>${esc(c.spiega)}</span></div>`).join("")}</div>` : ""}
-      <div class="pv-grid">${last.P.map(p => prevCard(p, last.at)).join("")}</div></div>` : `<div class="glass c muted">Premi "Consigliami tu" e l'agente sceglie gli strumenti più interessanti, oppure tocca gli strumenti che ti interessano e premi "Analizza quelli scelti". Ci mette circa 20-40 secondi.</div>`}
-    ${(S.prev || []).length > 1 ? `<div class="glass c"><div class="hd"><div><h3>Previsioni precedenti</h3><small>Con il controllo di com'è andata finora</small></div></div>${S.prev.slice(1).map(r => `<details class="pv-old"><summary>${new Date(r.at).toLocaleString("it-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${r.P.map(p => `${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"} ${esc(p.n)}`).join(" · ")}</summary><div class="pv-grid">${r.P.map(p => prevCard(p, r.at)).join("")}</div></details>`).join("")}</div>` : ""}
+      ${last.E ? prevEvents(last) : `<div class="pv-grid">${last.P.map(p => prevCard(p, last.at)).join("")}</div>`}</div>` : `<div class="glass c muted">Premi "Consigliami tu" e l'agente sceglie gli strumenti più interessanti, oppure tocca gli strumenti che ti interessano e premi "Analizza quelli scelti". Ci mette circa 20-40 secondi.</div>`}
+    ${(S.prev || []).length > 1 ? `<div class="glass c"><div class="hd"><div><h3>Previsioni precedenti</h3><small>Con il controllo di com'è andata finora</small></div></div>${S.prev.slice(1).map(r => `<details class="pv-old"><summary>${new Date(r.at).toLocaleString("it-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${r.P.map(p => `${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"} ${esc(p.n)}`).join(" · ")}</summary>${r.E ? prevEvents(r) : `<div class="pv-grid">${r.P.map(p => prevCard(p, r.at)).join("")}</div>`}</details>`).join("")}</div>` : ""}
     <p class="muted" style="font-size:11.5px">Sono stime di un'intelligenza artificiale gratuita (Groq) su dati pubblici: possono sbagliare e non sono consigli d'investimento.</p>`;
 }
 function mkFavCard(){
@@ -3181,7 +3208,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "69";
+const APP_V = "70";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
