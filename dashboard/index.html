@@ -1106,7 +1106,7 @@ const VIEWS = {
         return `<div class="alt-r"><div class="alt-h"><b>${a.n}</b>${a.get ? ` <a href="${a.get}" target="_blank" rel="noopener">prendi la chiave gratis ↗</a>` : ""}<span class="tag alt-st ${st === "ok" ? "ok" : st && st !== "…" ? "ko" : ""}">${st === "ok" ? "✓ collegata e funziona" : st === "…" ? "provo…" : st ? "✗ " + esc(st) : on ? "chiave inserita" : "non collegata"}</span>${on ? `<button class="btn" style="margin-left:auto;padding:5px 12px" onclick="altTest('${a.id}')">Prova</button>` : ""}</div>
           ${a.id === "omni" ? `<small class="muted" style="display:block;margin:4px 0 6px;font-size:11.5px">Funziona solo sul PC dove gira OmniRoute, quando è acceso. Indirizzo:</small><input class="input" placeholder="${a.url0}" value="${esc(lsGet(a.urlLs))}" onchange="try{localStorage.setItem('${a.urlLs}',this.value.trim());localStorage.setItem('pc_omni_on','1')}catch{};OM_M=null;reView()" style="margin-bottom:6px">
             <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px"><input type="checkbox" ${lsGet("pc_omni_on") ? "checked" : ""} onchange="try{this.checked?localStorage.setItem('pc_omni_on','1'):localStorage.removeItem('pc_omni_on')}catch{};reView()"> Usa OmniRoute su questo dispositivo</label>` : ""}
-          <input class="input" type="password" placeholder="${esc(a.ph)}" value="${esc(lsGet(a.ls))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};OR_M=null;OM_M=null;delete ALT_ST['${a.id}'];reView();if(this.value.trim())altTest('${a.id}')"></div>`; }).join("")}
+          <input class="input" type="password" placeholder="${esc(a.ph)}" value="${esc(lsGet(a.ls))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};OR_M=null;OM_M=null;GEM_M=null;delete ALT_ST['${a.id}'];reView();if(this.value.trim())altTest('${a.id}')"></div>`; }).join("")}
       <small class="muted" style="display:block;margin-top:10px;font-size:11.5px">Le chiavi restano solo su questo dispositivo. Sono gratuite: non serve la carta. OpenRouter gratis ha limiti bassi (circa 50 richieste al giorno), quindi è l'ultima riserva.</small></div>
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
       ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
@@ -2295,7 +2295,7 @@ const groqOpt = (model, max) => /gpt-oss/.test(model) ? { max_tokens: max + 800,
 /* Groq gratis: prova più modelli, aspetta se c'è il limite al minuto, e se la modalità JSON fallisce estrae il JSON dal testo */
 /* AI di riserva gratuite: quando Groq finisce i limiti si passa da sole a Google Gemini e poi a OpenRouter (modelli gratis) */
 const ALT_AI = [
-  { id: "gemini", n: "Google Gemini", ls: "pc_gemini", ph: "AIza…", get: "https://aistudio.google.com/apikey", models: async () => ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"] },
+  { id: "gemini", n: "Google Gemini", ls: "pc_gemini", ph: "AIza…", get: "https://aistudio.google.com/apikey", models: () => gemModels() },
   { id: "omni", n: "OmniRoute (sul PC)", ls: "pc_omni", ph: "chiave di OmniRoute (se l'hai impostata)", urlLs: "pc_omni_url", url0: "http://localhost:20128/v1", opt: true, models: () => omniModels() },
   { id: "openrouter", n: "OpenRouter", ls: "pc_openrouter", ph: "sk-or-…", get: "https://openrouter.ai/settings/keys", url: "https://openrouter.ai/api/v1", models: () => orModels() },
 ];
@@ -2303,7 +2303,15 @@ const lsGet = k => { try { return localStorage.getItem(k) || ""; } catch { retur
 const altKey = a => lsGet(a.ls) || (a.id === "omni" && lsGet("pc_omni_on") ? "-" : "");
 const altUrl = a => (a.urlLs && lsGet(a.urlLs) || a.url0 || a.url || "").replace(/\/+$/, "");
 const altAny = () => ALT_AI.some(altKey);
-let OR_M = null, OM_M = null, AI_USED = "Groq";
+let OR_M = null, OM_M = null, GEM_M = null, AI_USED = "Groq";
+/* modelli Gemini: li legge dal tuo account Google (i nomi cambiano spesso) e sceglie i "flash", veloci e gratuiti */
+async function gemModels(){
+  if (GEM_M) return GEM_M; let L = [];
+  try { const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=" + encodeURIComponent(lsGet("pc_gemini"))); if (r.ok) L = ((await r.json()).models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => m.name.replace(/^models\//, "")).filter(id => /^gemini/.test(id) && !/image|tts|audio|live|embed|vision|robotics|computer|exp|preview-tts|native/i.test(id)); } catch {}
+  const ver = id => +((id.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0), rank = id => (/flash/.test(id) ? 0 : /pro/.test(id) ? 2 : 1) + (/lite/.test(id) ? .5 : 0) + (/preview/.test(id) ? .3 : 0) + (/-\d{3}$|-\d{2}-\d{4}$/.test(id) ? .2 : 0);
+  L.sort((a, b) => rank(a) - rank(b) || ver(b) - ver(a));
+  return GEM_M = L.length ? L.slice(0, 4) : ["gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"];
+}
 const ALT_ST = {};
 async function orModels(){
   if (OR_M) return OR_M; let ids = [];
@@ -2316,14 +2324,14 @@ async function omniModels(){
   try { const r = await fetch(altUrl(a) + "/models", { headers: k ? { authorization: "Bearer " + k } : {} }); if (r.ok) ids = ((await r.json()).data || []).map(m => m.id); } catch {}
   return OM_M = ids.length ? ids.slice(0, 4) : ["auto"];
 }
-const altErr = (a, st, body) => st === 429 ? "limite raggiunto" : st === 401 || st === 403 || /API_KEY_INVALID|API key not valid/i.test(body) ? "chiave non valida" : st === 402 ? "credito finito" : "errore " + st;
+const altErr = (a, st, body) => st === 404 ? "modello non trovato" : st === 429 ? "limite raggiunto" : st === 401 || st === 403 || /API_KEY_INVALID|API key not valid/i.test(body) ? "chiave non valida" : st === 402 ? "credito finito" : "errore " + st;
 async function altCall(a, model, messages, max){
   const k = lsGet(a.ls);
   if (a.id === "gemini"){ // API nativa di Google (funziona dal browser)
     const sys = messages.filter(m => m.role === "system").map(m => m.content).join("\n");
     const contents = messages.filter(m => m.role !== "system").map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content) }] }));
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(k)}`, { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}), contents, generationConfig: { temperature: 0.3, maxOutputTokens: max + 600, ...(/2\.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}) } }) });
+      body: JSON.stringify({ ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}), contents, generationConfig: { temperature: 0.3, maxOutputTokens: max + 2500, ...(/2\.5-flash/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}) } }) });
     if (!r.ok) return { err: altErr(a, r.status, await r.text().catch(() => "")), st: r.status };
     const j = await r.json(); return { t: (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim() };
   }
@@ -2344,7 +2352,7 @@ async function altChat(messages, max){
   throw new Error(errs.join(" · ") || "nessuna AI di riserva collegata");
 }
 async function altTest(id){
-  const a = ALT_AI.find(x => x.id === id); ALT_ST[id] = "…"; reView(); if (a.id === "openrouter") OR_M = null; if (a.id === "omni") OM_M = null;
+  const a = ALT_AI.find(x => x.id === id); ALT_ST[id] = "…"; reView(); if (a.id === "openrouter") OR_M = null; if (a.id === "omni") OM_M = null; if (a.id === "gemini") GEM_M = null;
   let last = "";
   for (const model of await a.models()){
     try { const o = await altCall(a, model, [{ role: "user", content: "Rispondi solo con la parola: ok" }], 20); if (o.t){ ALT_ST[id] = "ok"; return reView(); } last = o.err || "risposta vuota"; if (/chiave/.test(last)) break; }
@@ -3328,7 +3336,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "74";
+const APP_V = "75";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
