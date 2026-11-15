@@ -262,6 +262,34 @@ a.nw-t,a.mk-nt{cursor:pointer}
 .view{display:flex;flex-direction:column;gap:18px}
 .view .c,.view .soon{max-width:980px}
 
+
+/* ================= EFFETTO PLASMA ================= */
+@property --pa{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes plRot{to{--pa:360deg}}
+@keyframes plBreath{0%,100%{opacity:calc(.55 * var(--pl))}50%{opacity:calc(1 * var(--pl))}}
+html{--pl:.8}
+:where(html.plasma .glass,html.plasma .wel){position:relative}
+html.plasma :where(.glass,.wel)::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:conic-gradient(from var(--pa),#f472b6,#a855f7 18%,#6366f1 30%,#22d3ee 42%,rgba(255,255,255,.08) 52%,rgba(255,255,255,.04) 62%,#fb923c 76%,#f472b6);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  opacity:calc(.25 + .45 * var(--pl));animation:plRot 14s linear infinite}
+html.plasma :where(.glass,.wel)::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
+  box-shadow:-16px -12px 46px -18px var(--g1,#a855f7),16px 14px 50px -20px var(--g2,#22d3ee),0 0 26px -10px var(--g1,#a855f7);
+  animation:plBreath 7s ease-in-out infinite}
+html.plasma :where(.glass):nth-of-type(4n+2){--g1:#22d3ee;--g2:#6366f1} html.plasma :where(.glass):nth-of-type(4n+2)::before{animation-delay:-2s}
+html.plasma :where(.glass):nth-of-type(4n+3){--g1:#ec4899;--g2:#fb923c} html.plasma :where(.glass):nth-of-type(4n+3)::before{animation-delay:-4s}
+html.plasma :where(.glass):nth-of-type(4n+4){--g1:#8b5cf6;--g2:#f472b6} html.plasma :where(.glass):nth-of-type(4n+4)::before{animation-delay:-5.5s}
+html.plasma :where(.glass)[style*="overflow:hidden"]::before{display:none}
+html.plasma.no-anim :where(.glass,.wel)::before{opacity:calc(.8 * var(--pl))}
+.pl-frame{display:none}
+@media (max-width:899px){
+  html.plasma .pl-frame{display:block;position:fixed;inset:0;z-index:60;pointer-events:none;border-radius:0;
+    box-shadow:inset 0 22px 40px -26px rgba(168,85,247,calc(.9 * var(--pl))),inset -22px 0 40px -28px rgba(34,211,238,calc(.85 * var(--pl))),inset 0 -24px 44px -26px rgba(251,146,60,calc(.8 * var(--pl))),inset 22px 0 40px -28px rgba(236,72,153,calc(.85 * var(--pl)));
+    animation:plBreath 8s ease-in-out infinite}
+  html.plasma :where(.glass,.wel)::before{box-shadow:-10px -8px 30px -14px var(--g1,#a855f7),10px 10px 32px -16px var(--g2,#22d3ee)}
+}
+@media (prefers-reduced-motion:reduce){html.plasma :where(.glass,.wel)::after,html.plasma :where(.glass,.wel)::before,html.plasma .pl-frame{animation:none}}
+
 /* ================= TELEFONO ================= */
 .phone,.sheet{display:none}
 @media (max-width:899px){
@@ -461,6 +489,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 </style>
 </head>
 <body>
+<div class="pl-frame" aria-hidden="true"></div>
 <div class="orbs" aria-hidden="true"><i class="o1"></i><i class="o2"></i><i class="o3"></i><i class="o4"></i></div>
 
 <!-- ============ PC ============ -->
@@ -702,6 +731,8 @@ document.addEventListener("click", e => {
     document.body.appendChild(s); setTimeout(() => s.remove(), 650); }
 }, true);
 if (S.anim === false) document.documentElement.classList.add("no-anim");
+function plApply(){ const h = document.documentElement; h.classList.toggle("plasma", S.plasma !== false); h.style.setProperty("--pl", S.plI ?? .8); }
+plApply();
 function setLang(l){ if (S.lang === l) return; S.lang = l; save(); setTimeout(() => location.reload(), 150); }
 const LANG_SFX = EN ? " IMPORTANT: write every text value of your answer in English (keep JSON keys as they are)." : "";
 const $ = s => document.querySelector(s);
@@ -990,6 +1021,8 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3 data-raw>Lingua · Language</h3><small>${EN ? "Menus, dates, news and AI explanations" : "Menu, date, notizie e spiegazioni dell'AI"}</small></div><span class="muted">🌐</span></div>
       <div class="chips"><button class="chip ${EN ? "" : "on"}" data-raw onclick="setLang('it')">🇮🇹 Italiano</button><button class="chip ${EN ? "on" : ""}" data-raw onclick="setLang('en')">🇬🇧 English</button></div></div>
+    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
+      ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
@@ -2985,7 +3018,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "59";
+const APP_V = "60";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
