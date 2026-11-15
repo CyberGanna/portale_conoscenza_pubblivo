@@ -344,6 +344,8 @@ html.plasma.no-anim :where(.glass,.wel)::before{opacity:calc(.8 * var(--pl))}
   html.plasma :where(.glass,.wel)::before{box-shadow:-10px -8px 30px -14px var(--g1,#a855f7),10px 10px 32px -16px var(--g2,#22d3ee)}
 }
 @media (prefers-reduced-motion:reduce){html.plasma :where(.glass,.wel)::after,html.plasma :where(.glass,.wel)::before,html.plasma .pl-frame{animation:none}}
+/* in Conoscenza niente bagliore plasma ai bordi (richiesta di Ale) */
+html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.wel)::before,html.in-portal :where(.glass,.wel)::after{display:none}
 
 /* ================= TELEFONO ================= */
 .phone,.sheet{display:none}
@@ -3503,7 +3505,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "81";
+const APP_V = "82";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
