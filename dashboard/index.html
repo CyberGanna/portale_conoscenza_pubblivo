@@ -141,6 +141,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wv-met .wv-emo{position:absolute;left:0;top:-4px;font-size:26px} .wv-met em{color:#e0f2fe}
 .wv-big{display:flex;align-items:center;gap:10px} .wv-big b{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1} .wv-big span{font-size:11.5px;color:var(--muted);line-height:1.25}
 .wv-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px} .wv-pills span{font-size:10.5px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#cbd5e1;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.alt-r{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)} .alt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px} .alt-h b{font-size:13px} .alt-h a{color:var(--blue-2);font-size:12px} .alt-st{font-size:11px;background:rgba(255,255,255,.06);color:var(--muted)} .alt-st.ok{background:rgba(34,197,94,.15);color:#4ade80} .alt-st.ko{background:rgba(244,63,94,.15);color:#fb7185}
 .wv-pv{display:flex;flex-direction:column;gap:5px;width:100%} .wv-pv span{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;border-radius:9px;font-size:12px;background:rgba(255,255,255,.05);border-left:3px solid #4ade80} .wv-pv span.short{border-left-color:#fb7185} .wv-pv em{font-style:normal;font-weight:800;color:#4ade80} .wv-pv .short em{color:#fb7185}
 .wv-heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px} .wv-heat i{display:block;height:11px;border-radius:3px}
 .wv-ratio{margin-top:8px;height:6px;border-radius:4px;background:#e11d48;overflow:hidden} .wv-ratio i{display:block;height:100%;background:#16a34a}
@@ -1100,10 +1101,13 @@ const VIEWS = {
     return head("Impostazioni") + `
     <div class="glass c"><div class="hd"><div><h3 data-raw>Lingua · Language</h3><small>${EN ? "Menus, dates, news and AI explanations" : "Menu, date, notizie e spiegazioni dell'AI"}</small></div><span class="muted">🌐</span></div>
       <div class="chips"><button class="chip ${EN ? "" : "on"}" data-raw onclick="setLang('it')">🇮🇹 Italiano</button><button class="chip ${EN ? "on" : ""}" data-raw onclick="setLang('en')">🇬🇧 English</button></div></div>
-    <div class="glass c"><div class="hd"><div><h3>AI di riserva (gratis)</h3><small>Quando Groq finisce i limiti, Aris passa da solo a queste. Basta incollare le chiavi gratuite una volta.</small></div></div>
-      ${ALT_AI.map(a => `<div style="margin-top:10px"><b style="font-size:13px">${a.n}</b> <a href="${a.id === "gemini" ? "https://aistudio.google.com/apikey" : "https://openrouter.ai/settings/keys"}" target="_blank" rel="noopener" style="color:var(--blue-2);font-size:12px">prendi la chiave gratis ↗</a>${altKey(a) ? ` <span class="tag" style="background:rgba(34,197,94,.15);color:#4ade80">✓ attiva</span>` : ""}
-        <input class="input" type="password" placeholder="${a.id === "gemini" ? "AIza…" : "sk-or-…"}" value="${esc(altKey(a))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};${a.id === "openrouter" ? "OR_M=null;" : ""}toast('Salvato');reView()" style="margin-top:6px"></div>`).join("")}
-      <small class="muted" style="display:block;margin-top:10px;font-size:11.5px">Le chiavi restano solo su questo dispositivo. Sono gratuite: non serve la carta.</small></div>
+    <div class="glass c"><div class="hd"><div><h3>AI di riserva (gratis)</h3><small>Quando Groq finisce i limiti, Aris passa da solo a queste, in quest'ordine. Premi "Prova" per controllare che siano collegate.</small></div></div>
+      ${ALT_AI.map(a => { const st = ALT_ST[a.id], on = !!altKey(a);
+        return `<div class="alt-r"><div class="alt-h"><b>${a.n}</b>${a.get ? ` <a href="${a.get}" target="_blank" rel="noopener">prendi la chiave gratis ↗</a>` : ""}<span class="tag alt-st ${st === "ok" ? "ok" : st && st !== "…" ? "ko" : ""}">${st === "ok" ? "✓ collegata e funziona" : st === "…" ? "provo…" : st ? "✗ " + esc(st) : on ? "chiave inserita" : "non collegata"}</span>${on ? `<button class="btn" style="margin-left:auto;padding:5px 12px" onclick="altTest('${a.id}')">Prova</button>` : ""}</div>
+          ${a.id === "omni" ? `<small class="muted" style="display:block;margin:4px 0 6px;font-size:11.5px">Funziona solo sul PC dove gira OmniRoute, quando è acceso. Indirizzo:</small><input class="input" placeholder="${a.url0}" value="${esc(lsGet(a.urlLs))}" onchange="try{localStorage.setItem('${a.urlLs}',this.value.trim());localStorage.setItem('pc_omni_on','1')}catch{};OM_M=null;reView()" style="margin-bottom:6px">
+            <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px"><input type="checkbox" ${lsGet("pc_omni_on") ? "checked" : ""} onchange="try{this.checked?localStorage.setItem('pc_omni_on','1'):localStorage.removeItem('pc_omni_on')}catch{};reView()"> Usa OmniRoute su questo dispositivo</label>` : ""}
+          <input class="input" type="password" placeholder="${esc(a.ph)}" value="${esc(lsGet(a.ls))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};OR_M=null;OM_M=null;delete ALT_ST['${a.id}'];reView();if(this.value.trim())altTest('${a.id}')"></div>`; }).join("")}
+      <small class="muted" style="display:block;margin-top:10px;font-size:11.5px">Le chiavi restano solo su questo dispositivo. Sono gratuite: non serve la carta. OpenRouter gratis ha limiti bassi (circa 50 richieste al giorno), quindi è l'ultima riserva.</small></div>
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
       ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
@@ -1807,7 +1811,7 @@ function prevView(){
   return `<div class="pv-top glass c"><div class="hd"><div><h3>✨ Agente previsioni</h3><small>Scansiona prezzi, andamenti, notizie di decine di giornali, eventi in arrivo e il web, e cerca le connessioni</small></div></div>
       <div class="pv-act"><button class="btn blue" ${PV.busy ? "disabled" : ""} onclick="prevRun('auto')">🔎 Consigliami tu</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('eventi')">📅 Dagli eventi in calendario</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('scelti')">Analizza quelli scelti${PV.sel.length ? ` (${PV.sel.length})` : ""}</button>${PV.busy ? `<span class="pv-step"><i class="pv-spin"></i>${esc(PV.step)}</span>` : ""}</div>
       <div class="chips pv-chips">${order.map(x => `<button class="chip ${PV.sel.includes(x.s) ? "on" : ""}" onclick="prevTog('${esc(x.s)}')">${favs.includes(x.s) ? "★ " : ""}${esc(x.n)}</button>`).join("")}</div>
-      ${PV.err ? `<div class="pv-err">Non ci sono riuscito: ${esc(PV.err)}</div>` : ""}</div>
+      ${PV.err ? `<div class="pv-err">Non ci sono riuscito: ${esc(PV.err)} <a href="#impostazioni" onclick="event.preventDefault();go('impostazioni')" style="color:#93c5fd;white-space:nowrap">Controlla le AI di riserva →</a></div>` : ""}</div>
     ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : last.mode === "eventi" ? "Cosa possono muovere gli eventi in calendario" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}${last.ai && last.ai !== "Groq" ? " · fatta con " + esc(last.ai) : ""}</small></div><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRedo()">🔄 Aggiorna</button></div>
       ${!last.P.some(p => p.op) && !PV.busy ? `<div class="pv-err" style="border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.1);color:#bfdbfe">Questa previsione è nel formato vecchio (senza compra/short, quanto e quando). Premi 🔄 Aggiorna e la rifaccio in quello nuovo.</div>` : ""}
       ${last.sintesi ? `<p class="pv-sint">${esc(last.sintesi)}</p>` : ""}
@@ -2049,7 +2053,9 @@ let GROQ_WEB_OFF = 0;
 async function groqText(key, sys, msgs, maxTokens, opt = {}){
   AI_USED = "Groq";
   try { if (!key || key === "-") throw new Error("senza chiave Groq"); return await groqText0(key, sys, msgs, maxTokens, opt); }
-  catch (e){ if (!altAny()) throw e; groqText.web = false; return await altChat([{ role: "system", content: sys + LANG_SFX }, ...msgs.slice(-8)], maxTokens); }
+  catch (e){ if (!altAny()) throw e; groqText.web = false;
+    try { return await altChat([{ role: "system", content: sys + LANG_SFX }, ...msgs.slice(-8)], maxTokens); }
+    catch (e2){ throw new Error("Groq: " + String(e.message || e).replace(/^.*\(|\)$/g, "") + " · " + e2.message); } }
 }
 async function groqText0(key, sys, msgs, maxTokens, opt = {}){
   let last = ""; groqText.web = false;
@@ -2289,37 +2295,69 @@ const groqOpt = (model, max) => /gpt-oss/.test(model) ? { max_tokens: max + 800,
 /* Groq gratis: prova più modelli, aspetta se c'è il limite al minuto, e se la modalità JSON fallisce estrae il JSON dal testo */
 /* AI di riserva gratuite: quando Groq finisce i limiti si passa da sole a Google Gemini e poi a OpenRouter (modelli gratis) */
 const ALT_AI = [
-  { id: "gemini", n: "Google Gemini", ls: "pc_gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", models: async () => ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"] },
-  { id: "openrouter", n: "OpenRouter", ls: "pc_openrouter", url: "https://openrouter.ai/api/v1/chat/completions", models: () => orModels() },
+  { id: "gemini", n: "Google Gemini", ls: "pc_gemini", ph: "AIza…", get: "https://aistudio.google.com/apikey", models: async () => ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"] },
+  { id: "omni", n: "OmniRoute (sul PC)", ls: "pc_omni", ph: "chiave di OmniRoute (se l'hai impostata)", urlLs: "pc_omni_url", url0: "http://localhost:20128/v1", opt: true, models: () => omniModels() },
+  { id: "openrouter", n: "OpenRouter", ls: "pc_openrouter", ph: "sk-or-…", get: "https://openrouter.ai/settings/keys", url: "https://openrouter.ai/api/v1", models: () => orModels() },
 ];
-const altKey = a => { try { return localStorage.getItem(a.ls) || ""; } catch { return ""; } };
+const lsGet = k => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
+const altKey = a => lsGet(a.ls) || (a.id === "omni" && lsGet("pc_omni_on") ? "-" : "");
+const altUrl = a => (a.urlLs && lsGet(a.urlLs) || a.url0 || a.url || "").replace(/\/+$/, "");
 const altAny = () => ALT_AI.some(altKey);
-let OR_M = null, AI_USED = "Groq";
+let OR_M = null, OM_M = null, AI_USED = "Groq";
+const ALT_ST = {};
 async function orModels(){
   if (OR_M) return OR_M; let ids = [];
   try { const r = await fetch("https://openrouter.ai/api/v1/models"); if (r.ok) ids = ((await r.json()).data || []).map(m => m.id).filter(id => /:free$/.test(id)); } catch {}
   const out = []; for (const re of [/deepseek-chat|deepseek-v3/, /llama-3\.3-70b/, /qwen3-235b|qwen-2\.5-72b/, /gpt-oss-120b/, /gemini/, /llama-4/, /mistral|gemma/]) for (const id of ids) if (re.test(id) && !out.includes(id)) out.push(id);
-  return OR_M = out.length ? out.slice(0, 4) : ["deepseek/deepseek-chat-v3-0324:free", "meta-llama/llama-3.3-70b-instruct:free"];
+  return OR_M = out.length ? out.slice(0, 5) : ["deepseek/deepseek-chat-v3-0324:free", "meta-llama/llama-3.3-70b-instruct:free"];
+}
+async function omniModels(){
+  if (OM_M) return OM_M; const a = ALT_AI[1], k = lsGet(a.ls); let ids = [];
+  try { const r = await fetch(altUrl(a) + "/models", { headers: k ? { authorization: "Bearer " + k } : {} }); if (r.ok) ids = ((await r.json()).data || []).map(m => m.id); } catch {}
+  return OM_M = ids.length ? ids.slice(0, 4) : ["auto"];
+}
+const altErr = (a, st, body) => st === 429 ? "limite raggiunto" : st === 401 || st === 403 || /API_KEY_INVALID|API key not valid/i.test(body) ? "chiave non valida" : st === 402 ? "credito finito" : "errore " + st;
+async function altCall(a, model, messages, max){
+  const k = lsGet(a.ls);
+  if (a.id === "gemini"){ // API nativa di Google (funziona dal browser)
+    const sys = messages.filter(m => m.role === "system").map(m => m.content).join("\n");
+    const contents = messages.filter(m => m.role !== "system").map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content) }] }));
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(k)}`, { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}), contents, generationConfig: { temperature: 0.3, maxOutputTokens: max + 600, ...(/2\.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}) } }) });
+    if (!r.ok) return { err: altErr(a, r.status, await r.text().catch(() => "")), st: r.status };
+    const j = await r.json(); return { t: (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim() };
+  }
+  const r = await fetch(altUrl(a) + "/chat/completions", { method: "POST", headers: { "content-type": "application/json", ...(k ? { authorization: "Bearer " + k } : {}) }, body: JSON.stringify({ model, temperature: 0.3, max_tokens: max, messages }) });
+  if (!r.ok) return { err: altErr(a, r.status, await r.text().catch(() => "")), st: r.status };
+  return { t: ((await r.json()).choices?.[0]?.message?.content || "").trim() };
 }
 async function altChat(messages, max){
-  let last = "";
-  for (const a of ALT_AI){ const k = altKey(a); if (!k) continue;
+  const errs = [];
+  for (const a of ALT_AI){ if (!altKey(a)) continue; let last = "";
     for (const model of await a.models()){
-      let r; try { r = await fetch(a.url, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + k }, body: JSON.stringify({ model, temperature: 0.3, max_tokens: max + (a.id === "gemini" ? 2000 : 0), messages }) }); }
-      catch { last = a.n + ": rete"; continue; }
-      if (r.status === 401 || r.status === 403){ last = a.n + ": chiave non valida"; break; }
-      if (!r.ok){ last = a.n + " " + r.status; continue; }
-      const t = ((await r.json()).choices?.[0]?.message?.content || "").trim(); if (t){ AI_USED = a.n; return t; }
-      last = a.n + ": risposta vuota";
+      let o; try { o = await altCall(a, model, messages, max); } catch { last = a.id === "omni" ? "non raggiungibile (è acceso sul PC?)" : "rete"; break; }
+      if (o.t){ AI_USED = a.n; ALT_ST[a.id] = "ok"; return o.t; }
+      last = o.err || "risposta vuota"; if (o.st === 401 || o.st === 403 || /chiave/.test(last)) break;
     }
+    ALT_ST[a.id] = last; errs.push(`${a.n}: ${last}`);
   }
-  throw new Error(last || "nessuna AI di riserva");
+  throw new Error(errs.join(" · ") || "nessuna AI di riserva collegata");
+}
+async function altTest(id){
+  const a = ALT_AI.find(x => x.id === id); ALT_ST[id] = "…"; reView(); if (a.id === "openrouter") OR_M = null; if (a.id === "omni") OM_M = null;
+  let last = "";
+  for (const model of await a.models()){
+    try { const o = await altCall(a, model, [{ role: "user", content: "Rispondi solo con la parola: ok" }], 20); if (o.t){ ALT_ST[id] = "ok"; return reView(); } last = o.err || "risposta vuota"; if (/chiave/.test(last)) break; }
+    catch { last = a.id === "omni" ? "non raggiungibile: avvia OmniRoute sul PC (comando omniroute) e usa la dashboard su quel PC" : "rete"; break; }
+  }
+  ALT_ST[id] = last; reView();
 }
 async function groqJSON(key, sys, user, maxTokens){
   AI_USED = "Groq";
   try { if (!key || key === "-") throw new Error("senza chiave Groq"); return await groqJSON0(key, sys, user, maxTokens); }
-  catch (e){ if (!altAny()) throw e;
-    const t = await altChat([{ role: "system", content: sys + LANG_SFX + " Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo." }, { role: "user", content: user }], maxTokens);
+  catch (e){ if (!altAny()) throw e; let t;
+    try { t = await altChat([{ role: "system", content: sys + LANG_SFX + " Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo." }, { role: "user", content: user }], maxTokens); }
+    catch (e2){ throw new Error("Groq: " + String(e.message || e).replace(/^l'AI non risponde adesso \(|\)$/g, "") + " · " + e2.message); }
     const m = t.replace(/```(json)?/g, "").match(/\{[\s\S]*\}/); try { return JSON.parse(m ? m[0] : t); } catch { throw new Error(AI_USED + ": risposta non valida"); } }
 }
 async function groqJSON0(key, sys, user, maxTokens){
@@ -3290,7 +3328,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "73";
+const APP_V = "74";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
