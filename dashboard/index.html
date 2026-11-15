@@ -125,6 +125,13 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .pv-sc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 10px} .pv-sc div{padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.04);display:flex;flex-direction:column;gap:3px} .pv-sc b{font-size:12px} .pv-sc span{font-size:12px;color:#cbd5e1;line-height:1.45}
 .pv-imps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px} .pv-imp{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:center;padding:9px 11px;border-radius:12px;border:1px solid var(--line);border-left:3px solid var(--pc);cursor:pointer} .pv-imp:hover{background:rgba(255,255,255,.05)} .pv-imp .pv-dir{color:var(--pc)} .pv-imp b{font-size:13px} .pv-imp em{font-style:normal;font-size:12px;color:var(--pc);font-weight:700} .pv-imp small,.pv-imp .pv-chk{grid-column:1/-1;font-size:11.5px;color:#cbd5e1;line-height:1.4}
 @media (max-width:700px){.pv-sc{grid-template-columns:1fr}}
+.pv-op{align-self:flex-start;font-size:11.5px;font-weight:800;letter-spacing:.03em;padding:4px 9px;border-radius:8px} .pv-op.long{background:rgba(34,197,94,.16);color:#4ade80} .pv-op.short{background:rgba(244,63,94,.16);color:#fb7185} .pv-op.out{background:rgba(148,163,184,.14);color:#cbd5e1}
+.pv-goal{display:flex;gap:12px;align-items:center} .pv-goal b{font-size:26px;color:var(--pc);letter-spacing:-.02em} .pv-goal span{font-size:12px;color:#cbd5e1;line-height:1.45}
+.pv-plan{margin:4px 0 14px;padding:12px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px} .pv-plh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px} .pv-plh small,.pv-note{font-size:11.5px;color:var(--muted)}
+.pv-row{display:grid;grid-template-columns:96px minmax(110px,1.2fr) 70px 2.4fr 120px;gap:10px;align-items:center;padding:8px 10px;border-radius:11px;cursor:pointer;font-size:13px} .pv-row:hover{background:rgba(255,255,255,.05)}
+.pv-rop{font-size:11px;font-weight:800;padding:3px 7px;border-radius:7px;text-align:center} .pv-row.long .pv-rop{background:rgba(34,197,94,.16);color:#4ade80} .pv-row.short .pv-rop{background:rgba(244,63,94,.16);color:#fb7185}
+.pv-mv{font-weight:800;font-size:14px} .pv-row.long .pv-mv{color:#4ade80} .pv-row.short .pv-mv{color:#fb7185} .pv-q{font-size:12px;color:#cbd5e1} .pv-pr{position:relative;height:18px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden} .pv-pr i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#3b82f6,#a855f7);opacity:.55} .pv-pr em{position:relative;font-style:normal;font-size:11.5px;font-weight:700;padding-left:7px;line-height:18px}
+@media (max-width:760px){.pv-row{grid-template-columns:84px 1fr 62px;row-gap:4px} .pv-q{grid-column:1/-1} .pv-pr{grid-column:1/-1}}
 .pv-old{margin-top:8px} .pv-old summary{cursor:pointer;font-size:12.5px;color:#cbd5e1;padding:6px 0} .pv-old .pv-grid{margin-top:8px}
 .wel-c{flex-direction:column;align-items:stretch;gap:10px;padding:16px 16px 14px}
 .wel-k{position:relative;padding-left:14px} .wel-k::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--kc)}
@@ -1717,11 +1724,11 @@ async function prevRun(mode){
     PV.step = "Collego i puntini e preparo le previsioni…"; if (cur === "mercati") reView();
     if (mode === "eventi"){
       PV.step = "Studio gli eventi del calendario e il loro effetto sui mercati…"; if (cur === "mercati") reView();
-      const sysE = `Sei Aris, un analista macro prudente. Per OGNI evento del calendario fornito (massimo 8, i più importanti) spiega perché conta per i mercati e prevedi come potrebbe muovere gli strumenti forniti, tenendo conto delle attese (previsto/precedente), dell'andamento recente dei prezzi e delle notizie. Indica 2-4 strumenti per evento, scegliendo tra quelli forniti. Probabilità realistiche 50-75. Italiano semplice.
-Rispondi SOLO in JSON: {"sintesi":"2-3 frasi: la settimana in arrivo per i mercati","eventi":[{"k":"codice tra parentesi quadre","titolo":"breve","perche":"perché conta, 1-2 frasi","sopra":"cosa succede se il dato/esito è migliore o più forte del previsto","sotto":"se è peggiore o più debole","impatti":[{"s":"simbolo","dir":"rialzo|ribasso|laterale","prob":60,"perche":"1 frase"}]}]}`;
+      const sysE = `Sei Aris, un analista macro prudente. Per OGNI evento del calendario fornito (massimo 8, i più importanti) spiega perché conta per i mercati e prevedi come potrebbe muovere gli strumenti forniti, tenendo conto delle attese (previsto/precedente), dell'andamento recente dei prezzi e delle notizie. Indica 2-4 strumenti per evento, scegliendo tra quelli forniti. Probabilità realistiche 50-80. Oggi è ${new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} (${ymd(new Date())}). Per ogni strumento indica l'operazione ("long" = comprare, "short" = vendere allo scoperto, "fuori" = non operare), la variazione % attesa "mossa" (numero con segno, realistica) e quando (giorno e ora dell'evento). Italiano semplice.
+Rispondi SOLO in JSON: {"sintesi":"2-3 frasi: la settimana in arrivo per i mercati","eventi":[{"k":"codice tra parentesi quadre","titolo":"breve","perche":"perché conta, 1-2 frasi","sopra":"cosa succede se il dato/esito è migliore o più forte del previsto","sotto":"se è peggiore o più debole","impatti":[{"s":"simbolo","dir":"rialzo|ribasso|laterale","prob":60,"perche":"1 frase","op":"long|short|fuori","mossa":2.5}]}]}`;
       const o = await groqJSON(key, sysE, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3000)}` : ""), 2600);
       const E = (o.eventi || []).map(e => { const g = EVL.find(x => x.k === e.k) || EVL.find(x => pvNorm(x.title).includes(pvNorm(e.titolo || "").slice(0, 12)));
-        const imp = (e.impatti || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? { ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) } : null; }).filter(Boolean);
+        const imp = (e.impatti || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)), entro: p.entro || g?.day || "", quando: p.quando || [g?.day && new Date(g.day + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "short" }), g?.time && "alle " + g.time, "con " + (e.titolo || g?.title || "")].filter(Boolean).join(" ") }) : null; }).filter(Boolean);
         return { titolo: String(e.titolo || g?.title || ""), day: g?.day || "", time: g?.time || "", where: g?.where || "", k: g?.k || "", imp: g?.imp || 3, perche: String(e.perche || ""), sopra: String(e.sopra || ""), sotto: String(e.sotto || ""), impatti: imp }; }).filter(e => e.titolo && e.impatti.length);
       if (!E.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
       S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: [], E, P: E.flatMap(e => e.impatti), web: !!web }, ...(S.prev || [])].slice(0, 8); save();
@@ -1729,10 +1736,11 @@ Rispondi SOLO in JSON: {"sintesi":"2-3 frasi: la settimana in arrivo per i merca
     }
     const sys = `Sei Aris, un analista quantitativo e macro prudente. Ricevi dati reali di prezzo, notizie ed eventi. Il tuo compito: trovare CONNESSIONI (es. un evento o una notizia che influenza più strumenti, correlazioni tra strumenti, momentum o eccessi da riassorbire) e stimare per i prossimi 1-5 giorni la direzione più probabile.
 Regole: usa solo i dati forniti e il contesto web; non inventare numeri; probabilità realistiche tra 50 e 75 (oltre 70 solo con motivi forti); se il quadro è incerto scegli "laterale". Spiega in italiano semplice.
-${mode === "scelti" ? "Fai una previsione per OGNI strumento elencato." : "Scegli tu i 6 strumenti con il segnale più interessante (mescola rialzi e ribassi se i dati lo giustificano)."}
-Rispondi SOLO in JSON: {"sintesi":"2-3 frasi sul quadro generale","connessioni":[{"tema":"breve","spiega":"come collega più strumenti","strumenti":["simbolo"]}],"previsioni":[{"s":"simbolo esatto tra parentesi quadre","dir":"rialzo|ribasso|laterale","prob":60,"orizzonte":"1-3 giorni","perche":"2 frasi","segnali":["dato o notizia concreta"],"rischio":"cosa smentirebbe la previsione"}]}`;
-    const o = await groqJSON(key, sys, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3500)}` : ""), 2200);
-    const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? { ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) } : null; }).filter(Boolean);
+${mode === "scelti" ? "Fai una previsione per OGNI strumento elencato." : "Scegli tu i 10 strumenti con il segnale più forte e chiaro, ordinati dal più sicuro al meno sicuro. Niente \"laterale\" qui: solo rialzi o ribassi netti (mescolali se i dati lo giustificano)."}
+Oggi è ${new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} (${ymd(new Date())}). Per ogni previsione indica: l'operazione ("long" = comprare per guadagnare dal rialzo, "short" = vendere allo scoperto per guadagnare dal ribasso, "fuori" = non operare), la variazione percentuale attesa "mossa" (numero con segno, realistica rispetto a quanto si muove di solito lo strumento), QUANDO dovrebbe avvenire il movimento (giorno e, se c'è, l'evento o l'ora che lo innesca, es. "mercoledì 18 nov alle 14:30 con il dato sull'inflazione USA") e la data "entro" (AAAA-MM-GG).
+Rispondi SOLO in JSON: {"sintesi":"2-3 frasi sul quadro generale","connessioni":[{"tema":"breve","spiega":"come collega più strumenti","strumenti":["simbolo"]}],"previsioni":[{"s":"simbolo esatto tra parentesi quadre","dir":"rialzo|ribasso|laterale","prob":60,"orizzonte":"1-3 giorni","perche":"2 frasi","segnali":["dato o notizia concreta"],"rischio":"cosa smentirebbe la previsione","op":"long|short|fuori","mossa":-3.0,"quando":"giorno e motivo/ora","entro":"AAAA-MM-GG"}]}`;
+    const o = await groqJSON(key, sys, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3500)}` : ""), 3600);
+    const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => pvNorm(i.n) === pvNorm(p.s)); return x ? pvFix({ ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) }) : null; }).filter(Boolean).sort((a, b) => (b.op !== "fuori") - (a.op !== "fuori") || b.prob - a.prob);
     if (!P.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
     S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: (o.connessioni || []).slice(0, 5), P, web: !!web }, ...(S.prev || [])].slice(0, 8); save();
   } catch (e){ PV.err = e.message || String(e); }
@@ -1742,18 +1750,37 @@ function prevTog(s){ PV.sel = PV.sel.includes(s) ? PV.sel.filter(x => x !== s) :
 function prevCheck(p, at){ // com'è andata: confronto col prezzo di adesso
   const x = MK && MK.items.find(i => i.s === p.s); if (!x || !p.px0 || Date.now() - at < 6 * 3600e3) return "";
   const ch = (x.px / p.px0 - 1) * 100, ok = p.dir === "rialzo" ? ch > 0 : p.dir === "ribasso" ? ch < 0 : Math.abs(ch) < 1;
-  return `<span class="pv-chk ${ok ? "ok" : "ko"}">${ok ? "✓ finora giusta" : "✗ finora sbagliata"} (${mkPct(ch)} da allora)</span>`;
+  const hit = p.tgt && (p.op === "long" ? x.px >= p.tgt : p.op === "short" ? x.px <= p.tgt : false);
+  return `<span class="pv-chk ${ok ? "ok" : "ko"}">${hit ? "🎯 obiettivo raggiunto" : ok ? "✓ finora giusta" : "✗ finora sbagliata"} (${mkPct(ch)} da allora)</span>`;
 }
 function prevCard(p, at){
   const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8", ar = p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆";
   const x = MK && MK.items.find(i => i.s === p.s);
   return `<div class="pv-c" style="--pc:${col}" onclick="if(!event.target.closest('a'))mkOpen('${esc(p.s)}')">
     <div class="pv-h"><b>${esc(p.n)}</b><span class="pv-dir">${ar} ${esc(p.dir)}</span></div>
-    <div class="pv-bar"><i style="width:${p.prob}%"></i></div><div class="pv-meta"><span>${p.prob}% di probabilità</span><span>${esc(p.orizzonte || "1-5 giorni")}</span></div>
+    ${p.op ? `${pvOp(p)}${p.mossa != null && p.op !== "fuori" ? `<div class="pv-goal"><b>${mkPct(p.mossa)}</b><span>obiettivo ${pvTgt(p)}<br>📅 ${esc(pvWhen(p))}</span></div>` : ""}` : ""}
+    <div class="pv-bar"><i style="width:${p.prob}%"></i></div><div class="pv-meta"><span>${p.prob}% di probabilità</span><span>${esc(p.op ? "" : p.orizzonte || "1-5 giorni")}</span></div>
     ${x && x.spark ? `<div class="pv-sp">${wvArea(x.spark, col, 240, 46)}</div>` : ""}
     <p>${esc(p.perche || "")}</p>
     ${(p.segnali || []).length ? `<div class="wv-pills">${p.segnali.slice(0, 4).map(t => `<span title="${esc(t)}">${esc(t)}</span>`).join("")}</div>` : ""}
     ${p.rischio ? `<small class="pv-risk">⚠️ ${esc(p.rischio)}</small>` : ""}${prevCheck(p, at)}</div>`;
+}
+/* rende coerenti operazione, direzione e mossa attesa */
+function pvFix(p){
+  let m = parseFloat(String(p.mossa ?? "").replace(",", ".")); if (!isFinite(m)) m = null;
+  let op = String(p.op || "").toLowerCase(); if (!["long", "short", "fuori"].includes(op)) op = p.dir === "rialzo" ? "long" : p.dir === "ribasso" ? "short" : "fuori";
+  if (p.dir === "laterale") op = "fuori";
+  p.dir = op === "long" ? "rialzo" : op === "short" ? "ribasso" : "laterale";
+  if (m != null && op !== "fuori") m = op === "long" ? Math.abs(m) : -Math.abs(m);
+  p.op = op; p.mossa = m; p.tgt = m != null && p.px0 && op !== "fuori" ? p.px0 * (1 + m / 100) : null; return p;
+}
+function pvOp(p){ return p.op === "long" ? `<span class="pv-op long">🟢 COMPRA · long</span>` : p.op === "short" ? `<span class="pv-op short">🔴 VENDI ALLO SCOPERTO · short</span>` : `<span class="pv-op out">⚪ STAI FUORI</span>`; }
+function pvWhen(p){ const d = p.entro && /^\d{4}-\d\d-\d\d$/.test(p.entro) ? new Date(p.entro + "T12:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" }) : ""; return p.quando || (d ? "entro " + d : p.orizzonte || ""); }
+function pvTgt(p){ const x = MK && MK.items.find(i => i.s === p.s); return p.tgt && x ? mkFmt({ ...x, px: p.tgt }) : ""; }
+function prevPlan(r){ // il riepilogo chiaro: cosa fare, di quanto, quando
+  const P = (r.P || []).filter(p => p.op && p.op !== "fuori").sort((a, b) => b.prob - a.prob); if (!P.length) return "";
+  return `<div class="pv-plan"><div class="pv-plh"><b>📋 Cosa farebbe l'agente</b><small>dal più probabile al meno probabile</small></div>${P.map(p => `<div class="pv-row ${p.op}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-rop">${p.op === "long" ? "▲ COMPRA" : "▼ SHORT"}</span><b>${esc(p.n)}</b><span class="pv-mv">${p.mossa != null ? mkPct(p.mossa) : "—"}</span><span class="pv-q">${esc(pvWhen(p))}</span><span class="pv-pr"><i style="width:${p.prob}%"></i><em>${p.prob}%</em></span></div>`).join("")}
+    <small class="pv-note">Nessuna previsione è davvero "quasi certa": anche quelle migliori si fermano intorno al 70-80%. Usa sempre uno stop loss.</small></div>`;
 }
 const pvNorm = t => String(t || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
 function prevEvents(r){
@@ -1761,7 +1788,7 @@ function prevEvents(r){
     return `<div class="pv-ev"><div class="pv-evh">${d ? `<span class="wv-date"><span><small>${d.toLocaleDateString("it-IT", { month: "short" })}</small><b>${d.getDate()}</b></span></span>` : ""}<div><b ${e.k ? `onclick="go('globale');setTimeout(()=>gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}')),80)" style="cursor:pointer"` : ""}>${esc(e.titolo)}</b><small>${[e.time, e.where, "importanza " + "●".repeat(Math.min(5, e.imp))].filter(Boolean).map(esc).join(" · ")}</small><p>${esc(e.perche)}</p></div></div>
       ${e.sopra || e.sotto ? `<div class="pv-sc">${e.sopra ? `<div><b>⬆ Se esce meglio del previsto</b><span>${esc(e.sopra)}</span></div>` : ""}${e.sotto ? `<div><b>⬇ Se esce peggio</b><span>${esc(e.sotto)}</span></div>` : ""}</div>` : ""}
       <div class="pv-imps">${e.impatti.map(p => { const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8";
-        return `<div class="pv-imp" style="--pc:${col}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-dir">${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"}</span><b>${esc(p.n)}</b><em>${p.prob}%</em><small>${esc(p.perche || "")}</small>${prevCheck(p, r.at)}</div>`; }).join("")}</div></div>`; }).join("")}</div>`;
+        return `<div class="pv-imp" style="--pc:${col}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-dir">${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"}</span><b>${esc(p.n)}</b><em>${p.op && p.op !== "fuori" ? (p.op === "long" ? "COMPRA " : "SHORT ") + (p.mossa != null ? mkPct(p.mossa) + " · " : "") : ""}${p.prob}%</em><small>${esc(p.perche || "")}</small>${prevCheck(p, r.at)}</div>`; }).join("")}</div></div>`; }).join("")}</div>`;
 }
 function prevView(){
   const last = (S.prev || [])[0], L = MK.items.filter(mkFresh), favs = mkFavs();
@@ -1773,6 +1800,7 @@ function prevView(){
     ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : last.mode === "eventi" ? "Cosa possono muovere gli eventi in calendario" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}</small></div></div>
       ${last.sintesi ? `<p class="pv-sint">${esc(last.sintesi)}</p>` : ""}
       ${last.conn && last.conn.length ? `<div class="pv-conn">${last.conn.map(c => `<div><b>🔗 ${esc(c.tema)}</b><span>${esc(c.spiega)}</span></div>`).join("")}</div>` : ""}
+      ${prevPlan(last)}
       ${last.E ? prevEvents(last) : `<div class="pv-grid">${last.P.map(p => prevCard(p, last.at)).join("")}</div>`}</div>` : `<div class="glass c muted">Premi "Consigliami tu" e l'agente sceglie gli strumenti più interessanti, oppure tocca gli strumenti che ti interessano e premi "Analizza quelli scelti". Ci mette circa 20-40 secondi.</div>`}
     ${(S.prev || []).length > 1 ? `<div class="glass c"><div class="hd"><div><h3>Previsioni precedenti</h3><small>Con il controllo di com'è andata finora</small></div></div>${S.prev.slice(1).map(r => `<details class="pv-old"><summary>${new Date(r.at).toLocaleString("it-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${r.P.map(p => `${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"} ${esc(p.n)}`).join(" · ")}</summary>${r.E ? prevEvents(r) : `<div class="pv-grid">${r.P.map(p => prevCard(p, r.at)).join("")}</div>`}</details>`).join("")}</div>` : ""}
     <p class="muted" style="font-size:11.5px">Sono stime di un'intelligenza artificiale gratuita (Groq) su dati pubblici: possono sbagliare e non sono consigli d'investimento.</p>`;
@@ -3208,7 +3236,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "70";
+const APP_V = "71";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
