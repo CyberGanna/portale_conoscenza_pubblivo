@@ -743,6 +743,7 @@ const isPhone = () => matchMedia("(max-width:899px)").matches;
 
 const AIT_URL = "https://ale-x.pages.dev/";
 function go(id, opt = {}){
+  if (id === "aitrading" && !opt.noOpen) window.open(AIT_URL, "_blank", "noopener");
   if (id !== "notizie" && typeof newsCat1 !== "undefined") newsCat1 = null;
   $("#new-menu").classList.remove("open");
   const changed = go.prev !== id; go.prev = id;
@@ -969,7 +970,9 @@ const VIEWS = {
     return `<div class="portal portal-slot"></div>`;
   },
   aitrading(){
-    return `<div class="ait-bar"><span class="muted">Se non ti fa entrare qui dentro, aprilo a parte</span><a class="btn" href="${AIT_URL}" target="_blank" rel="noopener">Apri a parte ↗</a></div><div class="portal portal-slot ait-slot"></div>`;
+    return head("AI-TRADING", "Il tuo sito di trading") + `
+    <div class="glass c"><div class="hd"><div><h3>ale-x.pages.dev</h3><small>Si apre in una scheda a parte</small></div></div>
+      <a class="btn blue" style="margin-top:8px" href="${AIT_URL}" target="_blank" rel="noopener">Apri AI-TRADING ↗</a></div>`;
   },
   promemoria(){ return remView(); },
   sveglie(){ return alarmView(); },
@@ -2124,7 +2127,6 @@ function useGeo(){
    così un test o una spiegazione in corso continua anche se vai in un'altra sezione. */
 const EMBEDS = {
   conoscenza: { host: "portal-host", t: "Portale conoscenza", src: () => "../?v=" + Date.now() },
-  aitrading: { host: "embed-aitrading", t: "AI-TRADING", src: () => AIT_URL },
 };
 function portalSync(){
   const slot = EMBEDS[cur] ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
@@ -2983,7 +2985,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "58";
+const APP_V = "59";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
