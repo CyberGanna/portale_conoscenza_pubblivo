@@ -784,7 +784,7 @@ setInterval(() => { if (document.visibilityState === "visible") scheduleSync(0);
 /* collegamento di un altro dispositivo: link/QR con le impostazioni nel frammento (#), che non viene mai inviato a nessun server */
 const PAIR = "#collega=";
 function pairLink(){
-  const c = CFG(), d = { groq: c.groq, openrouter: c.openrouter, gh: c.gh, repo: c.repo };
+  const c = CFG(), d = { groq: c.groq, openrouter: c.openrouter, gemini: LS("gemini"), gh: c.gh, repo: c.repo };
   const b = b64enc(JSON.stringify(d)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   return (location.protocol === "https:" ? location.origin + location.pathname : SITE) + PAIR + b;
 }
@@ -798,7 +798,7 @@ function applyPair(raw){
   try {
     const b = code.replace(/-/g, "+").replace(/_/g, "/");
     const d = JSON.parse(b64dec(b + "=".repeat((4 - b.length % 4) % 4)));
-    for (const k of ["groq", "openrouter", "gh", "repo"]) if (d[k]) LSset(k, String(d[k]));
+    for (const k of ["groq", "openrouter", "gemini", "gh", "repo"]) if (d[k]) LSset(k, String(d[k]));
     LSset("pairCode", code);
     return true;
   } catch { return false; }
