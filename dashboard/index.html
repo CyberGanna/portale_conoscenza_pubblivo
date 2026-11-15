@@ -378,13 +378,16 @@ html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.
   .app-i{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;color:#e6e9f0;text-align:center;-webkit-tap-highlight-color:transparent}
   .app-i .sq{position:relative;width:62px;height:62px;border-radius:16px;display:grid;place-items:center;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.35)}
   /* icone nere con bordo neon (richiesta di Ale) */
-  /* icone "liquid glass": vetro trasparente e sfocato, riflessi sui bordi, solo un velo del colore dell'app */
-  .app-i .sq[style*="--nb"]{color:color-mix(in srgb,var(--gl) 22%,#fff);border:0;
-    background:radial-gradient(120% 90% at 50% 115%,color-mix(in srgb,var(--gl) 34%,transparent),transparent 70%),linear-gradient(150deg,rgba(255,255,255,.24),rgba(255,255,255,.07) 48%,rgba(255,255,255,.12));
-    -webkit-backdrop-filter:blur(22px) saturate(1.8) brightness(1.08);backdrop-filter:blur(22px) saturate(1.8) brightness(1.08);
-    box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.5),inset -1px -1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.1),inset 0 -14px 22px -14px color-mix(in srgb,var(--gl) 55%,transparent),0 14px 30px -12px rgba(0,0,0,.55)}
-  .app-i .sq[style*="--nb"]::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(130% 70% at 30% -8%,rgba(255,255,255,.34),rgba(255,255,255,0) 58%)}
-  .app-i .sq[style*="--nb"] svg.i{position:relative;z-index:1;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--gl) 75%,transparent)) drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  /* icone come i riquadri della Home: vetro scuro, bordo sottile sfumato (plasma) e alone morbido del colore dell'app */
+  .app-i .sq[style*="--nb"]{color:color-mix(in srgb,var(--gl) 30%,#fff);border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,rgba(32,38,52,.6),rgba(14,17,24,.8));-webkit-backdrop-filter:blur(22px) saturate(140%);backdrop-filter:blur(22px) saturate(140%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),-8px -6px 22px -12px var(--gl),8px 8px 24px -12px var(--g2,var(--gl)),0 12px 26px -10px rgba(0,0,0,.6)}
+  .app-i .sq[style*="--nb"]::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;
+    background:conic-gradient(from var(--pa),#f472b6,#a855f7 18%,#6366f1 30%,#22d3ee 42%,rgba(255,255,255,.08) 52%,rgba(255,255,255,.04) 62%,#fb923c 76%,#f472b6);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    opacity:.75;animation:plRot 14s linear infinite}
+  .no-anim .app-i .sq[style*="--nb"]::after{animation:none}
+  .app-i .sq[style*="--nb"] svg.i{position:relative;z-index:1;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--gl) 45%,transparent))}
   .app-i .sq svg.i{width:28px;height:28px;stroke-width:2}
   .app-i:active .sq{transform:scale(.92)}
   .app-i .badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);font-size:11px;font-weight:600;display:grid;place-items:center;border:2px solid var(--bg)}
@@ -3513,7 +3516,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "89";
+const APP_V = "90";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
