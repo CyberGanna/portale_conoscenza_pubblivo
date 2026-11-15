@@ -114,6 +114,14 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wel-ar{opacity:.35;font-size:18px;transition:transform .25s,opacity .25s} .wel-c:hover .wel-ar{opacity:1;transform:translateX(4px)}
 .wel-flash{animation:welFlash 2.2s ease} @keyframes welFlash{0%,100%{box-shadow:none}15%,55%{box-shadow:0 0 0 2px #60a5fa,0 0 40px rgba(96,165,250,.45)}}
 .wel-sep{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase} .wel-sep::before,.wel-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.pv-act{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 12px} .pv-step{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)} .pv-spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.2);border-top-color:#a78bfa;animation:pvSpin .8s linear infinite} @keyframes pvSpin{to{transform:rotate(360deg)}}
+.pv-chips{max-height:120px;overflow:auto} .pv-chips .chip{font-size:11.5px;padding:5px 10px} .pv-err{margin-top:10px;color:#fb7185;font-size:12.5px}
+.pv-sint{font-size:14px;line-height:1.55;margin:4px 0 12px} .pv-conn{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:14px} .pv-conn div{padding:10px 12px;border-radius:12px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);display:flex;flex-direction:column;gap:4px} .pv-conn b{font-size:12.5px} .pv-conn span{font-size:12px;color:#cbd5e1;line-height:1.45}
+.pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px} .pv-c{padding:14px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-top:3px solid var(--pc);cursor:pointer;display:flex;flex-direction:column;gap:8px} .pv-c:hover{background:rgba(255,255,255,.06)}
+.pv-h{display:flex;justify-content:space-between;align-items:center} .pv-h b{font-size:15px} .pv-dir{font-size:12px;font-weight:700;color:var(--pc);text-transform:uppercase;letter-spacing:.04em}
+.pv-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden} .pv-bar i{display:block;height:100%;background:var(--pc)} .pv-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.pv-sp .wv-svg{height:46px} .pv-c p{margin:0;font-size:12.8px;line-height:1.5;color:#e2e8f0} .pv-risk{font-size:11.5px;color:#fbbf24;line-height:1.4} .pv-chk{font-size:11.5px;font-weight:600} .pv-chk.ok{color:#4ade80} .pv-chk.ko{color:#fb7185}
+.pv-old{margin-top:8px} .pv-old summary{cursor:pointer;font-size:12.5px;color:#cbd5e1;padding:6px 0} .pv-old .pv-grid{margin-top:8px}
 .wel-c{flex-direction:column;align-items:stretch;gap:10px;padding:16px 16px 14px}
 .wel-k{position:relative;padding-left:14px} .wel-k::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--kc)}
 .wel-c.tt .wel-t{order:1} .wel-c.tt .wel-v{order:2;min-height:0} .wel-t small:empty{display:none} .wel-v{display:block;min-height:64px} .wel-v:empty{display:none}
@@ -820,7 +828,7 @@ function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; c
 function renderNav(){
   $("#nav").innerHTML = NAV.map(([h, ids]) => `<div class="nav-h">${h}</div>` + ids.map(id => { const a = appById(id);
     const n = id === "collegamenti" ? `<span class="n">${S.links.length}</span>` : "";
-    const sub = id === "mercati" && cur === "mercati" ? [["tutti", "Tutti gli strumenti"], ["mappa", "Mappa dei mercati"]].map(([k, t]) => `<a href="#mercati" class="sub ${mkTab === k ? "on2" : ""}" onclick="event.preventDefault();mkTab='${k}';reView();renderNav()">${t}</a>`).join("") : "";
+    const sub = id === "mercati" && cur === "mercati" ? [["tutti", "Tutti gli strumenti"], ["mappa", "Mappa dei mercati"], ["prev", "✨ Previsioni"]].map(([k, t]) => `<a href="#mercati" class="sub ${mkTab === k ? "on2" : ""}" onclick="event.preventDefault();mkTab='${k}';reView();renderNav()">${t}</a>`).join("") : "";
     return `<a href="#${id}" class="${cur === id ? "on" : ""}" onclick="event.preventDefault();go('${id}')">${ico(a.i)}${a.t}${n}</a>${sub}`; }).join("")).join("");
 }
 
@@ -1668,13 +1676,79 @@ function mkView(){
   const classes = ["Tutti", ...new Set(MK.items.map(x => x.cls))];
   const L = MK.items.filter(x => mkCls === "Tutti" || x.cls === mkCls);
   const top = new Set(mkTop(8).map(x => x.s));
-  const tabs = `<div class="seg mk-tabs"><button class="${mkTab === "tutti" ? "on" : ""}" onclick="mkTab='tutti';reView();renderNav()">Tutti gli strumenti</button><button class="${mkTab === "mappa" ? "on" : ""}" onclick="mkTab='mappa';reView();renderNav()">Mappa dei mercati</button></div>`;
+  const tabs = `<div class="seg mk-tabs"><button class="${mkTab === "tutti" ? "on" : ""}" onclick="mkTab='tutti';reView();renderNav()">Tutti gli strumenti</button><button class="${mkTab === "mappa" ? "on" : ""}" onclick="mkTab='mappa';reView();renderNav()">Mappa dei mercati</button><button class="${mkTab === "prev" ? "on" : ""}" onclick="mkTab='prev';reView();renderNav()">✨ Previsioni</button></div>`;
+  if (mkTab === "prev") return head("Previsioni", "L'agente di Aris cerca connessioni tra prezzi, notizie ed eventi") + tabs + prevView();
   if (mkTab === "mappa") return head("Mappa dei mercati", `Tutti gli strumenti di oggi a colori · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `<div class="mk-mapfull">${mkMapCard()}</div>`;
   return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `
     <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
     <div class="mk-wrap"><div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>
       <div class="mk-side">${mkFavCard()}</div></div>`;
+}
+/* ---------------- PREVISIONI: agente che cerca connessioni e possibili rialzi/ribassi ----------------
+   Gratis: usa Groq (con ricerca sul web quando disponibile). Legge prezzi e andamenti, notizie dei giornali,
+   eventi in arrivo; risponde con previsioni a breve (1-5 giorni) con probabilità e motivi. Non è un consiglio finanziario. */
+const PV = { busy: false, step: "", err: "", sel: [] };
+function prevStats(x){ return `${x.n} [${x.s}] (${x.cls}) prezzo ${mkFmt(x)} ${x.cur || ""}; oggi ${mkPct(x.pct)}; 5 giorni ${x.wk != null ? mkPct(x.wk) : "n.d."}; movimento insolito z=${(x.z || 0).toFixed(1)} (di solito ±${x.vol}% al giorno)`; }
+async function prevRun(mode){
+  const key = mkKey(); if (!key) return toast("Serve la chiave Groq gratuita (in Conoscenza)");
+  if (!MK) return toast("Aspetta che carichino i prezzi"); if (PV.busy) return;
+  const L = MK.items.filter(mkFresh), pick = mode === "scelti" ? L.filter(x => PV.sel.includes(x.s)) : L;
+  if (mode === "scelti" && !pick.length) return toast("Scegli almeno uno strumento");
+  PV.busy = true; PV.err = ""; PV.step = "Leggo prezzi, notizie ed eventi…"; if (cur === "mercati") reView();
+  try {
+    const since = Date.now() - 48 * 3600e3;
+    const nw = NEWS ? NEWS.items.filter(x => x.d > since && x.cats.some(c => ["economia", "politica", "esteri", "ai", "tech", "clima", "llm"].includes(c))).sort((a, b) => b.n - a.n).slice(0, 45).map(x => `- (${x.n} testate) ${x.t}`) : [];
+    let ev = []; try { const t = ymd(new Date()), e = ymd(new Date(Date.now() + 8 * 864e5)); ev = gvItems().filter(x => x.day >= t && x.day <= e && x.imp >= 3).slice(0, 30).map(x => `- ${x.day}${x.time ? " " + x.time : ""} ${x.title}${x.where ? " (" + x.where + ")" : ""} importanza ${x.imp}/5`); } catch {}
+    const data = `STRUMENTI (${pick.length}):\n${pick.map(prevStats).join("\n")}\n\n${mode === "scelti" ? `CONTESTO (gli altri mercati oggi):\n${L.filter(x => !PV.sel.includes(x.s)).slice(0, 25).map(x => `${x.n} ${mkPct(x.pct)}`).join(", ")}\n\n` : ""}NOTIZIE DELLE ULTIME 48 ORE:\n${nw.join("\n") || "nessuna"}\n\nEVENTI DEI PROSSIMI GIORNI:\n${ev.join("\n") || "nessuno"}`;
+    // 1) contesto fresco dal web (se il modello con ricerca è disponibile)
+    let web = "";
+    try { PV.step = "Cerco sul web cosa sta muovendo i mercati…"; if (cur === "mercati") reView();
+      web = await groqText(key, "Sei un analista dei mercati. Cerca sul web le notizie più recenti (ultime 24-48 ore) che stanno muovendo i mercati: banche centrali, dati macro, geopolitica, utili, materie prime, cripto. Rispondi in italiano con un elenco di massimo 12 punti brevi e concreti, con date.", [{ role: "user", content: `Cosa sta muovendo i mercati oggi ${ymd(new Date())}?${mode === "scelti" ? " Concentrati anche su: " + pick.map(x => x.n).join(", ") : ""}` }], 900);
+    } catch {}
+    // 2) l'agente collega tutto e fa le previsioni
+    PV.step = "Collego i puntini e preparo le previsioni…"; if (cur === "mercati") reView();
+    const sys = `Sei Aris, un analista quantitativo e macro prudente. Ricevi dati reali di prezzo, notizie ed eventi. Il tuo compito: trovare CONNESSIONI (es. un evento o una notizia che influenza più strumenti, correlazioni tra strumenti, momentum o eccessi da riassorbire) e stimare per i prossimi 1-5 giorni la direzione più probabile.
+Regole: usa solo i dati forniti e il contesto web; non inventare numeri; probabilità realistiche tra 50 e 75 (oltre 70 solo con motivi forti); se il quadro è incerto scegli "laterale". Spiega in italiano semplice.
+${mode === "scelti" ? "Fai una previsione per OGNI strumento elencato." : "Scegli tu i 6 strumenti con il segnale più interessante (mescola rialzi e ribassi se i dati lo giustificano)."}
+Rispondi SOLO in JSON: {"sintesi":"2-3 frasi sul quadro generale","connessioni":[{"tema":"breve","spiega":"come collega più strumenti","strumenti":["simbolo"]}],"previsioni":[{"s":"simbolo esatto tra parentesi quadre","dir":"rialzo|ribasso|laterale","prob":60,"orizzonte":"1-3 giorni","perche":"2 frasi","segnali":["dato o notizia concreta"],"rischio":"cosa smentirebbe la previsione"}]}`;
+    const o = await groqJSON(key, sys, data + (web ? `\n\nCONTESTO DAL WEB:\n${String(web).slice(0, 3500)}` : ""), 2200);
+    const P = (o.previsioni || []).map(p => { const x = MK.items.find(i => i.s === p.s) || MK.items.find(i => mkNorm(i.n) === mkNorm(p.s)); return x ? { ...p, s: x.s, n: x.n, px0: x.px, prob: Math.max(50, Math.min(85, +p.prob || 55)) } : null; }).filter(Boolean);
+    if (!P.length) throw new Error("l'agente non ha prodotto previsioni valide, riprova");
+    S.prev = [{ at: Date.now(), mode, sintesi: String(o.sintesi || ""), conn: (o.connessioni || []).slice(0, 5), P, web: !!web }, ...(S.prev || [])].slice(0, 8); save();
+  } catch (e){ PV.err = e.message || String(e); }
+  PV.busy = false; PV.step = ""; if (cur === "mercati") reView();
+}
+function prevTog(s){ PV.sel = PV.sel.includes(s) ? PV.sel.filter(x => x !== s) : [...PV.sel, s].slice(-8); reView(); }
+function prevCheck(p, at){ // com'è andata: confronto col prezzo di adesso
+  const x = MK && MK.items.find(i => i.s === p.s); if (!x || !p.px0 || Date.now() - at < 6 * 3600e3) return "";
+  const ch = (x.px / p.px0 - 1) * 100, ok = p.dir === "rialzo" ? ch > 0 : p.dir === "ribasso" ? ch < 0 : Math.abs(ch) < 1;
+  return `<span class="pv-chk ${ok ? "ok" : "ko"}">${ok ? "✓ finora giusta" : "✗ finora sbagliata"} (${mkPct(ch)} da allora)</span>`;
+}
+function prevCard(p, at){
+  const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8", ar = p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆";
+  const x = MK && MK.items.find(i => i.s === p.s);
+  return `<div class="pv-c" style="--pc:${col}" onclick="if(!event.target.closest('a'))mkOpen('${esc(p.s)}')">
+    <div class="pv-h"><b>${esc(p.n)}</b><span class="pv-dir">${ar} ${esc(p.dir)}</span></div>
+    <div class="pv-bar"><i style="width:${p.prob}%"></i></div><div class="pv-meta"><span>${p.prob}% di probabilità</span><span>${esc(p.orizzonte || "1-5 giorni")}</span></div>
+    ${x && x.spark ? `<div class="pv-sp">${wvArea(x.spark, col, 240, 46)}</div>` : ""}
+    <p>${esc(p.perche || "")}</p>
+    ${(p.segnali || []).length ? `<div class="wv-pills">${p.segnali.slice(0, 4).map(t => `<span title="${esc(t)}">${esc(t)}</span>`).join("")}</div>` : ""}
+    ${p.rischio ? `<small class="pv-risk">⚠️ ${esc(p.rischio)}</small>` : ""}${prevCheck(p, at)}</div>`;
+}
+function prevView(){
+  const last = (S.prev || [])[0], L = MK.items.filter(mkFresh), favs = mkFavs();
+  const order = [...L.filter(x => favs.includes(x.s)), ...L.filter(x => !favs.includes(x.s))];
+  return `<div class="pv-top glass c"><div class="hd"><div><h3>✨ Agente previsioni</h3><small>Scansiona prezzi, andamenti, notizie di decine di giornali, eventi in arrivo e il web, e cerca le connessioni</small></div></div>
+      <div class="pv-act"><button class="btn blue" ${PV.busy ? "disabled" : ""} onclick="prevRun('auto')">🔎 Consigliami tu</button><button class="btn" ${PV.busy ? "disabled" : ""} onclick="prevRun('scelti')">Analizza quelli scelti${PV.sel.length ? ` (${PV.sel.length})` : ""}</button>${PV.busy ? `<span class="pv-step"><i class="pv-spin"></i>${esc(PV.step)}</span>` : ""}</div>
+      <div class="chips pv-chips">${order.map(x => `<button class="chip ${PV.sel.includes(x.s) ? "on" : ""}" onclick="prevTog('${esc(x.s)}')">${favs.includes(x.s) ? "★ " : ""}${esc(x.n)}</button>`).join("")}</div>
+      ${PV.err ? `<div class="pv-err">Non ci sono riuscito: ${esc(PV.err)}</div>` : ""}</div>
+    ${last ? `<div class="glass c"><div class="hd"><div><h3>${last.mode === "scelti" ? "I tuoi strumenti" : "I consigli dell'agente"}</h3><small>${new Date(last.at).toLocaleString("it-CH", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${last.web ? " · con ricerca sul web" : ""}</small></div></div>
+      ${last.sintesi ? `<p class="pv-sint">${esc(last.sintesi)}</p>` : ""}
+      ${last.conn && last.conn.length ? `<div class="pv-conn">${last.conn.map(c => `<div><b>🔗 ${esc(c.tema)}</b><span>${esc(c.spiega)}</span></div>`).join("")}</div>` : ""}
+      <div class="pv-grid">${last.P.map(p => prevCard(p, last.at)).join("")}</div></div>` : `<div class="glass c muted">Premi "Consigliami tu" e l'agente sceglie gli strumenti più interessanti, oppure tocca gli strumenti che ti interessano e premi "Analizza quelli scelti". Ci mette circa 20-40 secondi.</div>`}
+    ${(S.prev || []).length > 1 ? `<div class="glass c"><div class="hd"><div><h3>Previsioni precedenti</h3><small>Con il controllo di com'è andata finora</small></div></div>${S.prev.slice(1).map(r => `<details class="pv-old"><summary>${new Date(r.at).toLocaleString("it-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${r.P.map(p => `${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"} ${esc(p.n)}`).join(" · ")}</summary><div class="pv-grid">${r.P.map(p => prevCard(p, r.at)).join("")}</div></details>`).join("")}</div>` : ""}
+    <p class="muted" style="font-size:11.5px">Sono stime di un'intelligenza artificiale gratuita (Groq) su dati pubblici: possono sbagliare e non sono consigli d'investimento.</p>`;
 }
 function mkFavCard(){
   const F = mkFavs().map(s => MK && MK.items.find(x => x.s === s)).filter(Boolean);
@@ -2832,7 +2906,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "plasma", "plI"];
+const SYNC_KEYS = ["vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -3107,7 +3181,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "68";
+const APP_V = "69";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
