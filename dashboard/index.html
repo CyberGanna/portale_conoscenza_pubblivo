@@ -143,6 +143,11 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .wv-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px} .wv-pills span{font-size:10.5px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#cbd5e1;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
 .alt-r{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)} .alt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px} .alt-h b{font-size:13px} .alt-h a{color:var(--blue-2);font-size:12px} .alt-st{font-size:11px;background:rgba(255,255,255,.06);color:var(--muted)} .alt-st.ok{background:rgba(34,197,94,.15);color:#4ade80} .alt-st.ko{background:rgba(244,63,94,.15);color:#fb7185}
 .br-redo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px} .br-redo.thin{padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)} .br-redo span{font-size:12.5px;color:#fcd34d;flex:1}
+.wv-fc{width:100%;height:auto;display:block;overflow:visible} .wv-fc-t{font-size:7.5px;font-weight:700;letter-spacing:.08em;fill:rgba(255,255,255,.55)} .wv-fc-l{font-size:12px;font-weight:800} .wv-fc-q{font-size:22px;font-weight:800;fill:rgba(255,255,255,.75)}
+.wv-fc-p{stroke-linecap:round;animation:wvfc 1.1s var(--d,0s) ease-out both} @keyframes wvfc{from{opacity:0;transform:translateX(-14px)}}
+.wv-fc-now{filter:drop-shadow(0 0 6px #93c5fd);animation:wvpulse 2s ease-in-out infinite} .wv-fc-end{animation:wvpulse 2s .5s ease-in-out infinite} @keyframes wvpulse{50%{opacity:.45}}
+.wv-fc-cone{animation:wvcone 4s ease-in-out infinite} @keyframes wvcone{50%{opacity:.6}}
+.no-anim .wv-fc-p,.no-anim .wv-fc-now,.no-anim .wv-fc-end,.no-anim .wv-fc-cone{animation:none}
 .wv-pv{display:flex;flex-direction:column;gap:5px;width:100%} .wv-pv span{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;border-radius:9px;font-size:12px;background:rgba(255,255,255,.05);border-left:3px solid #4ade80} .wv-pv span.short{border-left-color:#fb7185} .wv-pv em{font-style:normal;font-weight:800;color:#4ade80} .wv-pv .short em{color:#fb7185}
 .wv-heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px} .wv-heat i{display:block;height:11px;border-radius:3px}
 .wv-ratio{margin-top:8px;height:6px;border-radius:4px;background:#e11d48;overflow:hidden} .wv-ratio i{display:block;height:100%;background:#16a34a}
@@ -926,6 +931,28 @@ function wvArea(a, col, w = 240, h = 64){
   return `<svg class="wv-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
     <polygon points="0,${h} ${line} ${w},${h}" fill="url(#${id})"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="${col}"/></svg>`;
 }
+/* previsioni: il prezzo fino a oggi e poi un ventaglio di strade possibili; se c'è una previsione, la sua strada è evidenziata */
+function wvForecast(a, dir, lab){
+  const w = 260, h = 84, x0 = 150, id = "wvf" + (++WV_ID);
+  a = a && a.length > 2 ? a.slice(-28) : Array.from({ length: 24 }, (_, i) => 50 + Math.sin(i / 2.2) * 6 + Math.sin(i / 1.1) * 3 + i * .5);
+  const lo = Math.min(...a), hi = Math.max(...a), k = (hi - lo) || 1;
+  const P = a.map((v, i) => [i / (a.length - 1) * x0, 60 - (v - lo) / k * 30]), [lx, ly] = P[P.length - 1];
+  const past = P.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ");
+  const fut = [[10, "#4ade80"], [Math.min(ly - 6, 30), "#86efac"], [ly + 1, "#94a3b8"], [Math.max(ly + 12, 60), "#fda4af"], [78, "#fb7185"]];
+  const path = (ty, j) => `M${lx.toFixed(1)},${ly.toFixed(1)} C${(lx + 35).toFixed(1)},${(ly + (j % 2 ? 4 : -4)).toFixed(1)} ${(w - 50).toFixed(1)},${ty.toFixed(1)} ${w - 6},${ty.toFixed(1)}`;
+  const hiIdx = dir === "rialzo" ? 0 : dir === "ribasso" ? 4 : dir === "laterale" ? 2 : -1;
+  return `<svg class="wv-fc" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a855f7" stop-opacity=".35"/><stop offset="1" stop-color="#3b82f6" stop-opacity=".04"/></linearGradient>
+      <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93c5fd" stop-opacity=".35"/><stop offset="1" stop-color="#93c5fd" stop-opacity="0"/></linearGradient></defs>
+    <polygon points="0,${h} ${past} ${lx.toFixed(1)},${h}" fill="url(#${id}p)"/>
+    <path d="M${lx.toFixed(1)},${ly.toFixed(1)} L${w - 6},4 L${w - 6},${h - 2} Z" fill="url(#${id})" class="wv-fc-cone"/>
+    <line x1="${lx.toFixed(1)}" y1="2" x2="${lx.toFixed(1)}" y2="${h}" stroke="rgba(255,255,255,.35)" stroke-dasharray="2 3"/>
+    <text x="${(lx - 4).toFixed(1)}" y="9" text-anchor="end" class="wv-fc-t">OGGI</text>
+    <polyline points="${past}" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${fut.map(([ty, c], j) => `<path d="${path(ty, j)}" fill="none" stroke="${c}" stroke-width="${j === hiIdx ? 2.6 : 1.3}" stroke-dasharray="${j === hiIdx ? "none" : "3 4"}" opacity="${hiIdx < 0 || j === hiIdx ? 1 : .35}" class="wv-fc-p" style="--d:${(j * .12).toFixed(2)}s"/>`).join("")}
+    ${hiIdx >= 0 ? `<circle cx="${w - 6}" cy="${fut[hiIdx][0]}" r="3.5" fill="${fut[hiIdx][1]}" class="wv-fc-end"/>${lab ? `<text x="${w - 12}" y="${hiIdx === 4 ? fut[hiIdx][0] - 15 : fut[hiIdx][0] + 17}" text-anchor="end" class="wv-fc-l" fill="${fut[hiIdx][1]}">${esc(lab)}</text>` : ""}`
+      : `<text x="${w - 8}" y="${(h / 2 + 5).toFixed(1)}" text-anchor="end" class="wv-fc-q">?</text>`}
+    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4" fill="#fff" class="wv-fc-now"/></svg>`;
+}
 /* il tuo universo: le categorie della conoscenza come stelle grandi, le note come puntini intorno */
 function wvUniverse(){
   if (!notes.length) return "";
@@ -961,7 +988,8 @@ function welHints(){
     { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "Mappa dei mercati", v: tot ? `<div class="wv-heat">${L.slice().sort((a, b) => b.pct - a.pct).map(x => `<i style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}"></i>`).join("")}</div><div class="wv-ratio"><i style="width:${(up / tot * 100).toFixed(1)}%"></i></div>` : "", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
       act: () => { mkTab = "mappa"; go("mercati"); } },
     (() => { const r = (S.prev || [])[0], P = r ? r.P.map(p => pvFix({ ...p })).filter(p => p.op !== "fuori").sort((a, b) => b.prob - a.prob) : [], t = P[0];
-      return { i: "chart", g: "linear-gradient(135deg,#a855f7,#3b82f6)", k: "Previsioni", v: P.length ? `<div class="wv-pv">${P.slice(0, 3).map(p => `<span class="${p.op}"><b>${p.op === "long" ? "▲" : "▼"} ${esc(p.n)}</b><em>${p.mossa != null ? mkPct(p.mossa) : p.prob + "%"}</em></span>`).join("")}</div>` : "",
+      const sx = MK && ((t && MK.items.find(i => i.s === t.s)) || MK.items.find(i => i.s === "^GSPC") || MK.items[0]);
+      return { i: "chart", g: "linear-gradient(135deg,#a855f7,#3b82f6)", k: "Previsioni", v: wvForecast(sx && sx.spark, t && t.dir, t && t.mossa != null ? mkPct(t.mossa) : ""),
         q: t ? `${t.op === "long" ? "Compra" : "Short"} ${t.n}${t.mossa != null ? " " + mkPct(t.mossa) : ""}` : "Cosa potrebbe muoversi", h: t ? `${t.prob}% · ${cut(pvWhen(t), 60)}` : "Tocca e l'agente analizza i mercati",
         act: () => { mkTab = "prev"; go("mercati"); } }; })(),
     { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", v: ev ? `<div class="wv-date"><span><small>${new Date(ev.day + "T12:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { month: "short" })}</small><b>${+ev.day.slice(8)}</b></span><div class="wv-imp">${"●".repeat(Math.max(1, Math.min(5, ev.imp)))}<em>${"●".repeat(5 - Math.max(1, Math.min(5, ev.imp)))}</em><small>importanza</small></div></div>` : "", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
@@ -3373,7 +3401,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "77";
+const APP_V = "78";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
