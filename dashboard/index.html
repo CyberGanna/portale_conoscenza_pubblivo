@@ -935,9 +935,9 @@ function welHints(){
     { i: "news", g: "linear-gradient(135deg,#f43f5e,#be123c)", k: "La notizia del giorno", tt: 1, v: n ? `<div class="wv-big"><b>${n.n}</b><span>testate<br>ne parlano</span></div>` + wvPills((n.srcs || [[n.src]]).map(x => x[0]).filter(Boolean)) : "", q: n ? cut(nT(n)) : "Le notizie più riprese di oggi", h: n ? "" : "Carico le notizie…",
       act: () => { newsDay = 0; go("notizie"); if (n) setTimeout(() => nwOpen(n.u), 60); } },
     { i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", k: "Il movimento più forte", v: m ? `<div class="wv-chart">${wvArea(m.spark, m.pct >= 0 ? "#22c55e" : "#f43f5e")}<em class="${m.pct >= 0 ? "up" : "dn"}">${mkPct(m.pct)}</em></div>` : "", q: m ? `${m.n} ${mkPct(m.pct)}` : "I mercati di oggi", h: m ? (mkAI(m) ? cut(mkAI(m).perche, 80) : `${m.cls} · ${mkFmt(m)}${m.cls === "Tassi" ? "%" : " " + m.cur}`) : "Carico i prezzi…",
-      act: () => { go("mercati"); if (m) setTimeout(() => mkOpen(m.s), 60); } },
-    { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "I mercati in generale", v: tot ? `<div class="wv-heat">${L.slice().sort((a, b) => b.pct - a.pct).map(x => `<i style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}"></i>`).join("")}</div><div class="wv-ratio"><i style="width:${(up / tot * 100).toFixed(1)}%"></i></div>` : "", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
-      act: () => go("mercati") },
+      act: () => { mkTab = "tutti"; go("mercati"); if (m) setTimeout(() => mkOpen(m.s), 60); } },
+    { i: "grid", g: "linear-gradient(135deg,#10b981,#0e7490)", k: "Mappa dei mercati", v: tot ? `<div class="wv-heat">${L.slice().sort((a, b) => b.pct - a.pct).map(x => `<i style="background:${mkHeat(x)}" title="${esc(x.n)} ${mkPct(x.pct)}"></i>`).join("")}</div><div class="wv-ratio"><i style="width:${(up / tot * 100).toFixed(1)}%"></i></div>` : "", q: tot ? `${mood}: ${up} su ${tot} in rialzo` : "Come vanno i mercati", h: ix.length ? ix.map(x => `${x.n} ${mkPct(x.pct)}`).join(" · ") : "Indici, azioni, valute e cripto",
+      act: () => { mkTab = "mappa"; go("mercati"); } },
     { i: "globe", g: "linear-gradient(135deg,#06b6d4,#0e7490)", k: "L'evento più importante in arrivo", v: ev ? `<div class="wv-date"><span><small>${new Date(ev.day + "T12:00").toLocaleDateString(EN ? "en-GB" : "it-IT", { month: "short" })}</small><b>${+ev.day.slice(8)}</b></span><div class="wv-imp">${"●".repeat(Math.max(1, Math.min(5, ev.imp)))}<em>${"●".repeat(5 - Math.max(1, Math.min(5, ev.imp)))}</em><small>importanza</small></div></div>` : "", q: ev ? cut(ev.title) : "I grandi eventi dei prossimi giorni", h: ev ? `${evDay}${ev.time ? " · " + ev.time : ""}${ev.where ? " · " + ev.where : ""}` : "Calendario globale",
       act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
     { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", tt: 1, v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? "" : "LLM e intelligenza artificiale",
@@ -3107,7 +3107,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "67";
+const APP_V = "68";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
