@@ -2873,7 +2873,7 @@ function homeTile(x){
 function renderHomeApps(){
   const box = $("#ph-apps"), cfg = homeCfg();
   box.className = `apps c${cfg.cols} ${homeEdit ? "edit" : ""}`;
-  box.innerHTML = homeItems().map(homeTile).join("");
+  setHTML(box, homeItems().map(homeTile).join(""));
   $("#ph-edit").innerHTML = homeEdit ? `<div class="hm-bar glass"><span>Grandezza icone</span><div class="seg">${[[5, "Piccole"], [4, "Normali"], [3, "Grandi"]].map(([n, t]) => `<button class="${cfg.cols === n ? "on" : ""}" onclick="homeCfg().cols=${n};save();renderHomeApps()">${t}</button>`).join("")}</div>
     <button class="btn blue" onclick="homeEditSet(false)">Fine</button></div><div class="hm-tip">Trascina un'icona per spostarla · tocca + o − per ingrandirla o rimpicciolirla</div>` : "";
 }
@@ -2966,11 +2966,13 @@ function phCalWidget(now){
   return left + `<div class="cw-r">${body}</div>`;
 }
 setTimeout(() => document.querySelector(".phone").classList.remove("anim-home"), 1500); // animazione delle icone solo alla prima apertura
+/* riscrive solo se il contenuto è cambiato: così le icone non si ricreano (e non rifanno l'animazione) ogni volta che arrivano i dati */
+function setHTML(el, h){ if (el._h === h && el.childElementCount) return; el._h = h; el.innerHTML = h; }
 function renderPhone(){
   const now = new Date();
   $("#ph-date").textContent = dateLong(now);
   $("#ph-hello").textContent = `${greet()}, ${S.name}`;
-  $("#ph-cal").innerHTML = phCalWidget(now);
+  setHTML($("#ph-cal"), phCalWidget(now));
   renderHomeApps();
   $("#ph-dock").style.display = "none";
 }
@@ -3018,13 +3020,13 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "60";
+const APP_V = "61";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => { swReg = r; r.update().catch(() => {}); }).catch(() => {});
   let reloading = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadCtl || reloading) return; reloading = true; location.reload(); });
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadCtl || reloading) return; reloading = true; updLater(); });
 }
 async function checkAppUpdate(manual){
   try {
@@ -3034,12 +3036,21 @@ async function checkAppUpdate(manual){
       let last = 0; try { last = +localStorage.getItem(KEY + "-upd-" + v) || 0; } catch {}
       if (!manual && Date.now() - last < 5 * 6e4) return;
       try { localStorage.setItem(KEY + "-upd-" + v, Date.now()); } catch {}
-      if (manual) toast("Aggiorno l'app…"); swReg && await swReg.update().catch(() => {}); setTimeout(() => location.reload(), 600); return;
+      swReg && await swReg.update().catch(() => {});
+      if (manual){ toast("Aggiorno l'app…"); setTimeout(() => location.reload(), 600); } else updLater(); return;
     }
     if (manual) toast("Hai già l'ultima versione");
   } catch { if (manual) toast("Nessuna connessione"); }
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden) checkAppUpdate(false); });
+/* La nuova versione non ricarica la pagina mentre la stai guardando (si vedeva lo schermo nero):
+   si applica quando esci dall'app, o subito se eri via da più di 10 minuti. */
+let UPD_PENDING = false, HID_AT = 0;
+function updLater(){ UPD_PENDING = true; if (document.hidden) location.reload(); }
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden){ HID_AT = Date.now(); if (UPD_PENDING) location.reload(); return; }
+  if (UPD_PENDING && HID_AT && Date.now() - HID_AT > 10 * 6e4) return location.reload();
+  checkAppUpdate(false);
+});
 setTimeout(() => checkAppUpdate(false), 3000);
 
 const start = (location.hash || "").slice(1);
