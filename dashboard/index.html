@@ -376,7 +376,10 @@ html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.
   .wid .emo{font-size:30px;line-height:1;margin-bottom:6px}
   .apps{display:grid;grid-template-columns:repeat(4,1fr);gap:22px 10px}
   .app-i{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;color:#e6e9f0;text-align:center;-webkit-tap-highlight-color:transparent}
-  .app-i .sq{position:relative;width:62px;height:62px;border-radius:16px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 22px -4px var(--gl,transparent),0 8px 18px rgba(0,0,0,.35)}
+  .app-i .sq{position:relative;width:62px;height:62px;border-radius:16px;display:grid;place-items:center;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+  /* icone nere con bordo neon (richiesta di Ale) */
+  .app-i .sq[style*="--nb"]{background:linear-gradient(#08090d,#0d0f16) padding-box,var(--nb) border-box;border:2px solid transparent;color:var(--gl);box-shadow:0 0 14px -6px var(--gl),0 8px 18px rgba(0,0,0,.35)}
+  .app-i .sq[style*="--nb"] svg.i{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--gl) 55%,transparent))}
   .app-i .sq svg.i{width:28px;height:28px;stroke-width:2}
   .app-i:active .sq{transform:scale(.92)}
   .app-i .badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);font-size:11px;font-weight:600;display:grid;place-items:center;border:2px solid var(--bg)}
@@ -822,7 +825,7 @@ const APPS = [
   { id: "video", t: "Video salvati", s: "Video", i: "play", g: "linear-gradient(135deg,#f472b6,#8b5cf6)" },
   { id: "sveglie", t: "Sveglie", i: "alarm", g: "linear-gradient(135deg,#4f46e5,#a855f7)" },
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#22d3ee,#a855f7)" },
-  { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#64748b,#8b5cf6)" },
+  { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#a5b4fc,#8b5cf6)" },
 ];
 const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
@@ -3341,14 +3344,14 @@ function homeItems(){
 function appIcon(a, withLab = true){
   const now = new Date();
   const inner = a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : ico(a.i);
-  return `<button class="app-i" onclick="go('${a.id}')"><span class="sq ${a.id === "calendario" ? "cal-i" : ""}" style="background:${a.g};--gl:${(String(a.g).match(/#[0-9a-f]{6}/i) || [""])[0]}">${inner}</span>${withLab ? `<span class="lab">${a.t}</span>` : ""}</button>`;
+  return `<button class="app-i" onclick="go('${a.id}')"><span class="sq ${a.id === "calendario" ? "cal-i" : ""}" style="${a.id === "calendario" ? `background:${a.g}` : `--nb:${a.g};--gl:${(String(a.g).match(/#[0-9a-f]{6}/i) || [""])[0]}`}">${inner}</span>${withLab ? `<span class="lab">${a.t}</span>` : ""}</button>`;
 }
 function homeTile(x){
   const big = !!homeCfg().big[x.k], now = new Date();
   let sq, lab, act;
   if (x.a){ const a = x.a;
     const wc = a.id === "meteo" && wOk() ? W.current : null;
-    sq = `<span class="sq ${a.id === "calendario" ? "cal-i" : wc ? "met-i" : ""}" style="background:${a.g};--gl:${(String(a.g).match(/#[0-9a-f]{6}/i) || [""])[0]}">${a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : wc ? `<i>${WMO(wc.weather_code)[0]}</i><b>${Math.round(wc.temperature_2m)}°</b>` : ico(a.i)}</span>`;
+    sq = `<span class="sq ${a.id === "calendario" ? "cal-i" : wc ? "met-i" : ""}" style="${a.id === "calendario" ? `background:${a.g}` : `--nb:${a.g};--gl:${(String(a.g).match(/#[0-9a-f]{6}/i) || [""])[0]}`}">${a.id === "calendario" ? `<small>${GIORNI[now.getDay()].slice(0, 3).toUpperCase()}</small><b>${now.getDate()}</b>` : wc ? `<i>${WMO(wc.weather_code)[0]}</i><b>${Math.round(wc.temperature_2m)}°</b>` : ico(a.i)}</span>`;
     lab = a.s || a.t; act = `go('${a.id}')`; }
   else { const l = x.l;
     sq = `<span class="sq" style="background:linear-gradient(135deg,#1f2937,#0b1220);border:1px solid var(--line-2)">${ico(l.i || "link")}</span>`;
@@ -3505,7 +3508,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "86";
+const APP_V = "87";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
