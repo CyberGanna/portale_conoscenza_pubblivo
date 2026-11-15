@@ -816,7 +816,7 @@ const APPS = [
   { id: "conoscenza", t: "Conoscenza", i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)" },
   { id: "aitrading", t: "AI-TRADING", i: "chart", g: "linear-gradient(135deg,#10b981,#0f172a)" },
   { id: "cervello", t: "Cervello", i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)" },
-  { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)", pcOnly: true },
+  { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#22c55e,#15803d)" },
   { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)" },
   { id: "promemoria", t: "Promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#ea580c)" },
   { id: "video", t: "Video salvati", s: "Video", i: "play", g: "linear-gradient(135deg,#f472b6,#9333ea 55%,#f59e0b)" },
@@ -3505,7 +3505,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "84";
+const APP_V = "85";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
