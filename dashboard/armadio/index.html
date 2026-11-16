@@ -55,12 +55,12 @@ main{grid-area:main;overflow:auto;background:var(--bg)}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .hud{position:absolute;left:22px;top:22px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .hud .size{font-size:12px;font-weight:600;color:var(--fg);background:rgba(255,255,255,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);padding:6px 12px;border-radius:999px;align-self:flex-start;font-family:var(--f-mono);letter-spacing:-.01em}
-.hud .meas{font-size:12px;color:var(--muted);font-family:var(--f-mono);padding-left:4px}
+.hud .meas{font-size:12px;color:var(--fg2);font-family:var(--f-mono);padding-left:4px}
 .viewbtns{position:absolute;right:20px;top:20px;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass)}
 .pill{background:transparent;border:0;border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:500;color:var(--fg2)}
 .pill:hover{background:rgba(24,24,27,.05)}
 .pill[aria-pressed="true"]{background:var(--fg);color:#fff}
-.stagehint{position:absolute;left:22px;bottom:20px;color:var(--muted);font-size:12px;pointer-events:none}
+.stagehint{position:absolute;left:22px;bottom:20px;color:var(--fg2);font-size:12px;pointer-events:none;background:rgba(255,255,255,.7);padding:5px 10px;border-radius:999px;backdrop-filter:blur(10px)}
 .skel{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;transition:opacity .6s var(--ease)}
 .skel .fig{width:22%;max-width:150px;aspect-ratio:1/4;border-radius:80px 80px 30px 30px;background:linear-gradient(100deg,#eceef2 30%,#f8f9fb 50%,#eceef2 70%);background-size:300% 100%;animation:shimmer 1.6s linear infinite}
 .skel.gone{opacity:0}
@@ -166,6 +166,17 @@ main{grid-area:main;overflow:auto;background:var(--bg)}
 .range{width:100%;accent-color:var(--fg)}
 
 .bottombar{display:none}
+.look{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.lookcard{display:flex;flex-direction:column;gap:10px;min-width:0}
+.lookcard .ph{position:relative;aspect-ratio:3/4;border-radius:24px;border:1px solid var(--line);background:var(--tile);box-shadow:var(--shadow);overflow:hidden;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:10px}
+.lookcard .ph img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0}
+.lookcard .ph.face img{object-fit:cover}
+.lookcard .t{font-weight:600;font-size:14px}
+.lookcard .btns{display:flex;gap:6px;flex-wrap:wrap}
+.lookcard .btns .btn{flex:1 1 auto;padding:10px 12px;font-size:13px;border-radius:12px}
+.sliders{display:flex;flex-direction:column;gap:6px}
+.sliders label{font-size:12px;color:var(--muted)}
+@media (max-width:420px){ .look{grid-template-columns:1fr 1fr;gap:10px} }
 
 @media (max-width:900px){
   .app{display:flex;flex-direction:column;height:auto;min-height:100%;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -192,11 +203,13 @@ main{grid-area:main;overflow:auto;background:var(--bg)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <style>
-/* dentro la dashboard: tasto indietro e spazio per la barra di stato dell'iPhone */
+/* dentro la dashboard: tasto indietro (solo se aperto da solo) e spazio per la barra di stato dell'iPhone */
 .back-dash{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--fg);flex:none}
 .back-dash svg{width:20px;height:20px}
-body{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;padding-top:env(safe-area-inset-top,0px)}
+html.emb .back-dash{display:none} html.emb body{padding-top:0}
 </style>
+<script>if (window.parent !== window) document.documentElement.classList.add("emb");</script>
 </head>
 <body>
 
@@ -265,7 +278,35 @@ body{padding-top:env(safe-area-inset-top,0px)}
         <div class="field"><label for="m-fianchi">Fianchi (cm)</label><input id="m-fianchi" type="number" min="60" max="170" inputmode="numeric" placeholder="auto"></div>
         <div class="field"><label for="m-spalle">Spalle (cm)</label><input id="m-spalle" type="number" min="30" max="65" inputmode="numeric" placeholder="auto"></div>
       </div>
-      <div class="note">La scansione del corpo con la fotocamera arriverà in una versione successiva. Con le misure il manichino è già fedele alle tue proporzioni.</div>
+      <div class="sep" style="height:1px;background:var(--line)"></div>
+      <h2>Il tuo aspetto</h2>
+      <p class="hint">Fai una foto del tuo corpo intero e i vestiti verranno provati su di te invece che sul manichino. Oppure aggiungi solo il viso sulla testa del manichino.</p>
+      <div class="seg" id="modeSeg">
+        <button type="button" data-v="manichino" aria-pressed="true">Manichino</button>
+        <button type="button" data-v="foto" aria-pressed="false">La mia foto</button>
+      </div>
+      <div class="look">
+        <div class="lookcard">
+          <div class="ph" id="bodyPh">Nessuna foto del corpo</div>
+          <span class="t">Foto del corpo</span>
+          <div class="btns"><button class="btn" type="button" id="bodyCam">Scatta</button><button class="btn ghost" type="button" id="bodyGal">Galleria</button></div>
+        </div>
+        <div class="lookcard">
+          <div class="ph face" id="facePh">Nessun selfie</div>
+          <span class="t">Foto del viso</span>
+          <div class="btns"><button class="btn" type="button" id="faceCam">Selfie</button><button class="btn ghost" type="button" id="faceGal">Galleria</button></div>
+          <div class="sliders" id="faceSl" hidden>
+            <label for="faceZoom">Grandezza</label><input class="range" id="faceZoom" type="range" min="80" max="220" value="120">
+            <label for="faceDy">Su e giù</label><input class="range" id="faceDy" type="range" min="-40" max="40" value="0">
+          </div>
+        </div>
+      </div>
+      <div class="note">Per la foto del corpo: in piedi, di fronte, braccia un po' staccate dai fianchi, davanti a un muro liscio, dalla testa ai piedi. Fatti aiutare da qualcuno o usa il timer. La foto resta solo su questo dispositivo.</div>
+      <h2>Sfondo</h2>
+      <div class="seg" id="bgSeg">
+        <button type="button" data-v="muro" aria-pressed="true">Muro grigio</button>
+        <button type="button" data-v="studio" aria-pressed="false">Studio bianco</button>
+      </div>
     </section>
   </main>
 
@@ -278,6 +319,10 @@ body{padding-top:env(safe-area-inset-top,0px)}
 
 <input id="fileInput" type="file" accept="image/*" hidden>
 <input id="camInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="bodyCamIn" type="file" accept="image/*" capture="environment" hidden>
+<input id="bodyGalIn" type="file" accept="image/*" hidden>
+<input id="faceCamIn" type="file" accept="image/*" capture="user" hidden>
+<input id="faceGalIn" type="file" accept="image/*" hidden>
 
 <div class="sheetwrap" id="addSheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
@@ -321,11 +366,13 @@ body{padding-top:env(safe-area-inset-top,0px)}
       <button class="btn ghost" id="edReset" type="button">Ricomincia</button>
       <button class="btn ghost" id="edKeep" type="button" aria-pressed="false">Tieni lo sfondo</button>
     </div>
+    <div id="edItem" style="display:flex;flex-direction:column;gap:14px">
     <label class="lab2" for="edName">Nome del capo</label>
     <input class="input" id="edName" placeholder="Es. Maglia nera">
     <span class="lab2">Categoria</span>
     <div class="chipsel" id="edCats"></div>
     <div class="colorline"><span class="dot" id="edDot"></span><span id="edColor">–</span></div>
+    </div>
     <button class="btn" id="edSave" type="button">Aggiungi all'armadio</button>
   </div>
 </div>
@@ -423,16 +470,39 @@ const dressAll=()=>draw();
 let drawTok=0;
 async function draw(){ if(!P||!canvas.width) return; const tok=++drawTok;
   const imgs={}; for(const s of SLOTS){ const it=state.items.find(i=>i.id===state.wearing[s]); if(it){ try{ imgs[s]=[it,await loadImg(it.img)]; }catch(e){} } }
+  if(look.mode==='foto'&&look.body){ try{ imgs._body=await loadImg(look.body.img); }catch(e){} }
+  if(look.face){ try{ imgs._face=await loadImg(look.face.img); }catch(e){} }
   if(tok!==drawTok) return; paint(ctx,canvas.width,canvas.height,imgs); }
+/* sfondo: muro grigio intonacato con zoccolino e pavimento, oppure studio bianco */
+let noiseTex=null;
+function getNoise(){ if(noiseTex) return noiseTex; const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); const id=g.createImageData(256,256);
+  for(let i=0;i<id.data.length;i+=4){ const v=128+(Math.random()-.5)*70; id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=26; } g.putImageData(id,0,0);
+  for(let k=0;k<40;k++){ const x=Math.random()*256,y=Math.random()*256,r=10+Math.random()*50, gr=g.createRadialGradient(x,y,0,x,y,r); const dark=Math.random()<.5;
+    gr.addColorStop(0,dark?'rgba(60,60,58,.05)':'rgba(255,255,255,.06)'); gr.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=gr; g.fillRect(0,0,256,256); }
+  return noiseTex=c; }
+function drawBg(g,W,Hc,floorY,cx){
+  if(look.bg==='studio'){ const gr=g.createRadialGradient(cx,Hc*.4,10,cx,Hc*.45,Math.max(W,Hc)*.8); gr.addColorStop(0,'#ffffff'); gr.addColorStop(.65,'#f0f1f4'); gr.addColorStop(1,'#e3e4e9'); g.fillStyle=gr; g.fillRect(0,0,W,Hc); return; }
+  const wall=g.createLinearGradient(0,0,0,floorY); wall.addColorStop(0,'#a3a29e'); wall.addColorStop(.55,'#b6b5b1'); wall.addColorStop(1,'#aeada9');
+  g.fillStyle=wall; g.fillRect(0,0,W,floorY);
+  const pat=g.createPattern(getNoise(),'repeat'); g.fillStyle=pat; g.fillRect(0,0,W,floorY);
+  const bb=Math.max(4,Hc*0.014); g.fillStyle='#c9c7c2'; g.fillRect(0,floorY-bb,W,bb); g.fillStyle='rgba(24,24,27,.12)'; g.fillRect(0,floorY,W,Math.max(1,bb*.25));
+  const fl=g.createLinearGradient(0,floorY,0,Hc); fl.addColorStop(0,'#8f8d88'); fl.addColorStop(1,'#a19f9a'); g.fillStyle=fl; g.fillRect(0,floorY,W,Hc-floorY);
+  g.globalAlpha=.6; g.fillStyle=pat; g.fillRect(0,floorY,W,Hc-floorY); g.globalAlpha=1;
+  const light=g.createRadialGradient(cx,Hc*.38,10,cx,Hc*.42,Math.max(W,Hc)*.55); light.addColorStop(0,'rgba(255,253,248,.38)'); light.addColorStop(1,'rgba(255,253,248,0)'); g.fillStyle=light; g.fillRect(0,0,W,Hc);
+  const vig=g.createRadialGradient(cx,Hc*.5,Math.min(W,Hc)*.35,cx,Hc*.5,Math.max(W,Hc)*.85); vig.addColorStop(0,'rgba(24,24,27,0)'); vig.addColorStop(1,'rgba(24,24,27,.28)'); g.fillStyle=vig; g.fillRect(0,0,W,Hc);
+}
 function paint(g,W,Hc,imgs){
   const H=P.H, figH=H*1.0, s=(Hc*0.86)/figH, cx=W/2, base=Hc*0.94;
   const X=x=>cx+x*s, Y=y=>base-y*s;
-  g.clearRect(0,0,W,Hc);
+  g.clearRect(0,0,W,Hc); drawBg(g,W,Hc,Y(0.12*H),cx);
   // ombra a terra
   const sg=g.createRadialGradient(cx,base,2,cx,base,P.rh*2.6*s); sg.addColorStop(0,'rgba(24,24,27,.16)'); sg.addColorStop(1,'rgba(24,24,27,0)');
   g.save(); g.translate(cx,base); g.scale(1,0.18); g.translate(-cx,-base); g.fillStyle=sg; g.beginPath(); g.arc(cx,base,P.rh*2.6*s,0,7); g.fill(); g.restore();
+  if(imgs._body){ const im=imgs._body, h=H*s, w=im.width*h/im.height;
+    g.save(); g.shadowColor='rgba(24,24,27,.22)'; g.shadowBlur=22*(W/600); g.shadowOffsetX=6*(W/600); g.drawImage(im,X(0)-look.body.cx*w,Y(H),w,h); g.restore(); }
+  else {
   // sagoma
-  const body=new Path2D();
+  const parts=[]; const body={addPath:p=>parts.push(p)};
   const side=(fn,y0,y1,ox=0,steps=60)=>{ const pts=[]; for(let i=0;i<=steps;i++){ const y=y0+(y1-y0)*i/steps; pts.push([y,fn(y)]); } return pts; };
   const poly=(pts,ox)=>{ const p=new Path2D(); pts.forEach(([y,w],i)=>{ const x=X(ox+w), yy=Y(y); i?p.lineTo(x,yy):p.moveTo(x,yy); }); [...pts].reverse().forEach(([y,w])=>p.lineTo(X(ox-w),Y(y))); p.closePath(); return p; };
   body.addPath(poly(side(P.torso,0.425*H,0.875*H),0));
@@ -447,7 +517,13 @@ function paint(g,W,Hc,imgs){
   const head=new Path2D(); head.ellipse(X(0),Y(0.94*H),0.047*H*s,0.06*H*s,0,0,7); body.addPath(head);
   for(const sd of [-1,1]){ const f=new Path2D(); f.ellipse(X(sd*P.rh*0.5),Y(0.018*H),P.t*0.42*s,0.02*H*s,0,0,7); body.addPath(f); }
   const grad=g.createLinearGradient(X(-P.rs*1.4),0,X(P.rs*1.4),0); grad.addColorStop(0,'#dedcd7'); grad.addColorStop(0.45,'#f4f2ee'); grad.addColorStop(1,'#d8d6d1');
-  g.save(); g.shadowColor='rgba(24,24,27,.12)'; g.shadowBlur=24*(W/600); g.shadowOffsetY=6*(W/600); g.fillStyle=grad; g.fill(body); g.restore();
+  g.save(); g.shadowColor='rgba(24,24,27,.12)'; g.shadowBlur=24*(W/600); g.shadowOffsetY=6*(W/600); g.restore();
+  { const oc=document.createElement('canvas'); oc.width=W; oc.height=Hc; const og=oc.getContext('2d'); og.fillStyle=grad; for(const pp of parts) og.fill(pp);
+    g.save(); g.shadowColor='rgba(24,24,27,.14)'; g.shadowBlur=24*(W/600); g.shadowOffsetY=6*(W/600); g.drawImage(oc,0,0); g.restore(); }
+  if(imgs._face){ const hx=X(0), hy=Y(0.94*H), rx=0.047*H*s, ry=0.06*H*s, D=2*ry*look.face.zoom;
+    g.save(); g.beginPath(); g.ellipse(hx,hy,rx,ry,0,0,7); g.clip(); g.drawImage(imgs._face,hx-D/2,hy-D/2+look.face.dy*ry,D,D);
+    const v=g.createRadialGradient(hx,hy,ry*0.55,hx,hy,ry*1.02); v.addColorStop(0,'rgba(24,24,27,0)'); v.addColorStop(1,'rgba(24,24,27,.22)'); g.fillStyle=v; g.fillRect(hx-rx,hy-ry,rx*2,ry*2); g.restore(); }
+  }
   // capi: rettangolo di destinazione in metri
   const put=(img,xMid,yTop,yBot,maxW,minW)=>{ const h=(yTop-yBot); let w=h*img.width/img.height; w=Math.max(minW,Math.min(maxW,w));
     g.save(); g.shadowColor='rgba(24,24,27,.18)'; g.shadowBlur=14*(W/600); g.shadowOffsetY=5*(W/600); g.drawImage(img,X(xMid-w/2),Y(yTop),w*s,h*s); g.restore(); };
@@ -515,15 +591,18 @@ function renderEdit(){ const {w,h,d,mask}=ed, out=new ImageData(w,h), o=out.data
   const ec=document.getElementById('editCanvas'); ec.width=w; ec.height=h; const g=ec.getContext('2d'); g.clearRect(0,0,w,h); g.drawImage(full,0,0);
   ed.rgb=dominant(cut); document.getElementById('edDot').style.background=hex(ed.rgb); document.getElementById('edColor').textContent='Colore principale: '+colorName(ed.rgb);
   autoName(); }
-function autoName(){ if(ed&&!ed.nameTouched) document.getElementById('edName').value=`${CATS[ed.cat].one} ${colorName(ed.rgb)}`; }
+function autoName(){ if(ed&&ed.mode==='capo'&&!ed.nameTouched) document.getElementById('edName').value=`${CATS[ed.cat].one} ${colorName(ed.rgb)}`; }
 function guessCat(c){ const r=c.width/c.height; if(r>1.35) return 'scarpe'; if(r<0.62) return 'pantaloni'; return 'maglietta'; }
 function renderEdCats(){ const box=document.getElementById('edCats'); box.innerHTML='';
   for(const [k,v] of Object.entries(CATS)){ const b=document.createElement('button'); b.type='button'; b.textContent=v.label; b.setAttribute('aria-pressed',ed&&ed.cat===k);
     b.onclick=()=>{ ed.cat=k; renderEdCats(); autoName(); }; box.appendChild(b); } }
-async function openEditor(file){
+async function openEditor(file,mode='capo'){
   const url=URL.createObjectURL(file); let img; try{ img=await loadImg(url); }catch(e){ imgCache.delete(url); showToast('Non riesco ad aprire questa immagine. Prova con una JPG o PNG.'); return; }
   const src=prepSource(img); URL.revokeObjectURL(url); imgCache.delete(url);
-  ed={w:src.width,h:src.height,d:src.getContext('2d').getImageData(0,0,src.width,src.height).data,tol:+document.getElementById('edTol').value,keep:false,clicks:[],nameTouched:false,cat:'maglietta'};
+  ed={mode,w:src.width,h:src.height,d:src.getContext('2d').getImageData(0,0,src.width,src.height).data,tol:+document.getElementById('edTol').value,keep:false,clicks:[],nameTouched:false,cat:'maglietta'};
+  const body=mode==='corpo'; document.getElementById('edItem').hidden=body;
+  document.getElementById('edTitle').firstChild.textContent=body?'La tua foto ':'Nuovo capo ';
+  document.getElementById('edSave').textContent=body?'Usa questa foto':'Aggiungi all\'armadio';
   const k=document.getElementById('edKeep'); k.setAttribute('aria-pressed','false'); k.textContent='Tieni lo sfondo';
   document.getElementById('edName').value=''; openSheet('editor'); document.getElementById('edBusy').hidden=false;
   await new Promise(r=>setTimeout(r,30)); autoMask(); renderEdit(); ed.cat=guessCat(ed.cut); renderEdCats(); autoName(); document.getElementById('edBusy').hidden=true; }
@@ -537,6 +616,7 @@ document.getElementById('editCanvas').addEventListener('click',e=>{ if(!ed||ed.k
   const s=Math.min(r.width/ed.w,r.height/ed.h), ox=(r.width-ed.w*s)/2, oy=(r.height-ed.h*s)/2; const x=Math.floor((e.clientX-r.left-ox)/s), y=Math.floor((e.clientY-r.top-oy)/s);
   if(x<0||y<0||x>=ed.w||y>=ed.h) return; const p=y*ed.w+x; ed.clicks.push(p); clickRemove(ed.mask,p); renderEdit(); });
 document.getElementById('edSave').onclick=async()=>{ if(!ed) return;
+  if(ed.mode==='corpo'){ await saveBodyPhoto(ed.cut); closeEditor(); return; }
   const c=ed.cut, s=Math.min(1,720/Math.max(c.width,c.height)); const o=document.createElement('canvas'); o.width=Math.round(c.width*s); o.height=Math.round(c.height*s); o.getContext('2d').drawImage(c,0,0,o.width,o.height);
   const item={id:uid(),cat:ed.cat,name:document.getElementById('edName').value.trim()||CATS[ed.cat].one,rgb:ed.rgb,colore:colorName(ed.rgb),img:o.toDataURL('image/png'),createdAt:Date.now()};
   state.items.unshift(item); await dbPut('capi',item); closeEditor(); state.wearing[CATS[item.cat].slot]=item.id; dressAll(); renderAll(); showToast('Aggiunto all\'armadio'); };
@@ -594,8 +674,8 @@ function renderSlots(){ const box=document.getElementById('slots'); box.innerHTM
     const step=dir=>{ const opts=[null,...list.map(i=>i.id)]; let k=opts.indexOf(state.wearing[s]); k=(k+dir+opts.length)%opts.length; state.wearing[s]=opts[k]; dressAll(); renderAll(); };
     prev.onclick=()=>step(-1); next.onclick=()=>step(1); box.appendChild(row); } }
 function snapshot(){ const w=320,h=400; const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
-  const gr=g.createRadialGradient(w*.4,h*.35,10,w/2,h*.4,h*.75); gr.addColorStop(0,'#ffffff'); gr.addColorStop(1,'#eceef2'); g.fillStyle=gr; g.fillRect(0,0,w,h);
-  const sc=Math.min(w/canvas.width,h/canvas.height), dw=canvas.width*sc, dh=canvas.height*sc; g.drawImage(canvas,(w-dw)/2,(h-dh)/2,dw,dh); return c.toDataURL('image/jpeg',0.85); }
+  
+  const sc=Math.max(w/canvas.width,h/canvas.height), dw=canvas.width*sc, dh=canvas.height*sc; g.drawImage(canvas,(w-dw)/2,(h-dh)/2,dw,dh); return c.toDataURL('image/jpeg',0.85); }
 document.getElementById('btnSaveOutfit').onclick=async()=>{ if(!SLOTS.some(s=>state.wearing[s])){ showToast('Prima metti addosso almeno un capo'); return; }
   await draw();
   const ne=document.getElementById('outfitName'); const o={id:uid(),name:ne.value.trim()||`Outfit ${state.outfits.length+1}`,wearing:{...state.wearing},thumb:snapshot(),fav:false,createdAt:Date.now()};
@@ -661,6 +741,40 @@ const EX_IDS=['esempio-tshirt','esempio-camicia','esempio-felpa','esempio-giacca
 async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],['camicia','camicia','Camicia bianca'],['felpa','felpa','Felpa grigia'],['giacca','giacca','Giacca di jeans'],['nero','pantaloni','Pantaloni eleganti neri'],['jeans','pantaloni','Jeans chiari'],['sneakers','scarpe','Sneakers bianche']];
   let t=Date.now(); for(const [k,cat,name] of defs){ const c=drawSample(k), rgb=dominant(c); const it={id:'esempio-'+k,cat,name,rgb,colore:colorName(rgb),img:c.toDataURL('image/png'),esempio:true,createdAt:t--}; state.items.push(it); await dbPut('capi',it); } }
 
+/* ---------- Il tuo aspetto: foto del corpo, viso, sfondo ---------- */
+const look={mode:'manichino',bg:'muro',body:null,face:null};
+async function saveLook(){ await dbPut('prefs',{id:'aspetto',v:{mode:look.mode,bg:look.bg,body:look.body,face:look.face}}); }
+async function saveBodyPhoto(cut){
+  const s=Math.min(1,1100/cut.height); const o=document.createElement('canvas'); o.width=Math.round(cut.width*s); o.height=Math.round(cut.height*s); const g=o.getContext('2d'); g.drawImage(cut,0,0,o.width,o.height);
+  // centro del busto: media delle colonne piene tra il 15% e il 55% dell'altezza
+  const d=g.getImageData(0,0,o.width,o.height).data; let sx=0,n=0; for(let y=Math.round(o.height*.15);y<o.height*.55;y+=2) for(let x=0;x<o.width;x+=2){ if(d[(y*o.width+x)*4+3]>128){ sx+=x; n++; } }
+  look.body={img:o.toDataURL('image/png'),cx:n?sx/n/o.width:0.5}; look.mode='foto'; await saveLook(); renderLook(); draw(); showToast('Foto del corpo salvata');
+}
+async function saveFacePhoto(file){
+  const url=URL.createObjectURL(file); let img; try{ img=await loadImg(url); }catch(e){ showToast('Non riesco ad aprire questa foto.'); return; } finally{ imgCache.delete(url); }
+  const side=Math.min(img.width,img.height), size=Math.min(480,side); const c=document.createElement('canvas'); c.width=c.height=size;
+  c.getContext('2d').drawImage(img,(img.width-side)/2,(img.height-side)/2*0.7,side,side,0,0,size,size); URL.revokeObjectURL(url);
+  look.face={img:c.toDataURL('image/jpeg',0.88),zoom:1.2,dy:0}; if(look.mode==='foto'&&!look.body) look.mode='manichino'; await saveLook(); renderLook(); draw(); showToast('Viso aggiunto al manichino');
+}
+function renderLook(){
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===look.mode));
+  document.querySelectorAll('#bgSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===look.bg));
+  const bp=document.getElementById('bodyPh'); bp.innerHTML=look.body?'<img alt="La tua foto del corpo">':'Nessuna foto del corpo'; if(look.body) bp.querySelector('img').src=look.body.img;
+  const fp=document.getElementById('facePh'); fp.innerHTML=look.face?'<img alt="Il tuo viso">':'Nessun selfie'; if(look.face) fp.querySelector('img').src=look.face.img;
+  document.getElementById('faceSl').hidden=!look.face;
+  if(look.face){ document.getElementById('faceZoom').value=Math.round(look.face.zoom*100); document.getElementById('faceDy').value=Math.round(look.face.dy*100); }
+  document.getElementById('bodyCam').textContent=look.body?'Rifai':'Scatta'; document.getElementById('faceCam').textContent=look.face?'Rifai':'Selfie';
+}
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=async()=>{ if(b.dataset.v==='foto'&&!look.body){ showToast('Prima fai la foto del corpo'); document.getElementById('bodyCamIn').click(); return; } look.mode=b.dataset.v; await saveLook(); renderLook(); draw(); });
+document.querySelectorAll('#bgSeg button').forEach(b=>b.onclick=async()=>{ look.bg=b.dataset.v; await saveLook(); renderLook(); draw(); });
+document.getElementById('bodyCam').onclick=()=>document.getElementById('bodyCamIn').click();
+document.getElementById('bodyGal').onclick=()=>document.getElementById('bodyGalIn').click();
+document.getElementById('faceCam').onclick=()=>document.getElementById('faceCamIn').click();
+document.getElementById('faceGal').onclick=()=>document.getElementById('faceGalIn').click();
+for(const id of ['bodyCamIn','bodyGalIn']) document.getElementById(id).onchange=e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) openEditor(f,'corpo'); };
+for(const id of ['faceCamIn','faceGalIn']) document.getElementById(id).onchange=e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) saveFacePhoto(f); };
+let faceT=null; for(const id of ['faceZoom','faceDy']) document.getElementById(id).oninput=()=>{ if(!look.face) return; look.face.zoom=+document.getElementById('faceZoom').value/100; look.face.dy=+document.getElementById('faceDy').value/100; draw(); clearTimeout(faceT); faceT=setTimeout(saveLook,300); };
+
 /* ---------- Avvio ---------- */
 (async function init(){
   const prefs=await dbAll('prefs'); const corpo=prefs.find(p=>p.id==='corpo'); if(corpo) state.body={...state.body,...corpo.v};
@@ -672,7 +786,8 @@ async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],
   state.outfits=(await dbAll('outfit')).sort((a,b)=>b.createdAt-a.createdAt);
   const has=id=>state.items.some(i=>i.id===id);
   if(has('esempio-tshirt')) state.wearing={maglia:'esempio-tshirt',strato:null,sotto:has('esempio-nero')?'esempio-nero':null,scarpe:has('esempio-sneakers')?'esempio-sneakers':null};
-  fillBodyForm(); buildAvatar(); resize(); renderAll(); renderOutfits();
+  const asp=prefs.find(p=>p.id==='aspetto'); if(asp) Object.assign(look,asp.v);
+  renderLook(); fillBodyForm(); buildAvatar(); resize(); renderAll(); renderOutfits();
 })();
 </script>
 
