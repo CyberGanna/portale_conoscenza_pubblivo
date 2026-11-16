@@ -403,6 +403,8 @@ html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.
   .sheet .bar{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 0 14px;background:linear-gradient(var(--bg) 70%,transparent)}
   .sheet .bar button{color:var(--blue-2);font-size:15px;display:flex;align-items:center;gap:2px;justify-self:start}
   .sheet .bar h2{font-size:15px;font-weight:600}
+  .sheet .bar .pc-cnt{display:none;justify-self:end;text-align:right;font:15px/1.05 "VT323",ui-monospace,monospace;letter-spacing:.08em;white-space:pre-line;text-transform:uppercase;color:rgba(190,215,240,.75);text-shadow:0 0 6px rgba(140,190,255,.5)}
+  html.in-portal .sheet .bar .pc-cnt{display:block}
   .sheet .c{padding:16px}
   .stats{grid-template-columns:1fr 1fr 1fr}
   .stat{padding:14px 12px}.stat .v{font-size:22px}
@@ -596,7 +598,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <div class="dock glass" id="ph-dock"></div>
 </div>
 <div id="ab" data-raw><div class="ab-pop" id="ab-pop"></div><form class="ab-row" onsubmit="event.preventDefault();abSend()"><button type="button" class="ab-orb" title="Aris" aria-label="Aris" onclick="abToggle()"><span class="orb"><i></i></span></button><input id="ab-q" autocomplete="off" enterkeyhint="send"><button class="ab-go" id="ab-go" aria-label="Invia">↑</button></form></div>
-<div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span></span></div><div id="sheet-body" class="view"></div><div class="sh-edge"></div><button class="sh-home" aria-label="Torna alla home" onclick="closeSheet()"><i></i></button></div>
+<div class="sheet" id="sheet"><div class="bar"><button onclick="closeSheet()"><svg class="i" style="width:22px;height:22px"><use href="#i-back"/></svg>Home</button><h2 id="sheet-t"></h2><span class="pc-cnt" id="pc-cnt"></span></div><div id="sheet-body" class="view"></div><div class="sh-edge"></div><button class="sh-home" aria-label="Torna alla home" onclick="closeSheet()"><i></i></button></div>
 <div class="toast" id="toast"></div>
 
 <!-- icone -->
@@ -2580,6 +2582,8 @@ function portalSync(){
     Object.assign(host.style, { display: "block", left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", borderRadius: getComputedStyle(slot).borderRadius });
   }
 }
+/* il portale manda il conteggio "N voci · N categorie": sul telefono lo mostro in cima, nella barra della sezione */
+addEventListener("message", e => { if (e.origin === location.origin && e.data && typeof e.data.pcCount === "string"){ const el = document.getElementById("pc-cnt"); if (el) el.textContent = e.data.pcCount.replace(" · ", "\n"); } });
 /* se il portale è stato modificato (nuova versione su GitHub), lo ricarico quando ci rientri */
 let PORTAL_TAG = "", PORTAL_CK = 0;
 async function portalVer(reload){
@@ -3516,7 +3520,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "90";
+const APP_V = "91";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
