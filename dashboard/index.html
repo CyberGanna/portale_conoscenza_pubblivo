@@ -288,6 +288,9 @@ html.noscroll,html.noscroll body{overflow:hidden} html.in-portal #sheet-body{ove
 @keyframes nwDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 .nwd-alt{font-size:13px;line-height:1.45;padding:7px 0;border-top:1px solid var(--line);color:#cbd5e1} .nwd-alt:first-of-type{border-top:0}
 a.nw-t,a.mk-nt{cursor:pointer}
+.wv-uni{border-radius:12px;background:#04070b} .wv-uni-l{font:9px "VT323",ui-monospace,monospace;letter-spacing:.06em;fill:#d6e8fa}
+.wv-ag{display:flex;flex-direction:column;gap:5px;width:100%;font-size:12px;line-height:1.25;text-align:left} .wv-ag>div{display:flex;gap:8px;align-items:baseline;min-width:0}
+.wv-ag em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ec);flex:none;min-width:44px} .wv-ag span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e2e8f0}
 .pvd-act{font-size:15px;font-weight:600;color:var(--ink);margin:10px 0 4px}
 .pvd-when{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px} .pvd-when>div{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line)} .pvd-when .w{grid-column:1/-1}
 .pvd-when small,.pvd-plan small{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em} .pvd-when b{font-size:16px;color:var(--pc)}
@@ -618,6 +621,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M5 15c-1.5 1.3-2 4-2 6 2 0 4.7-.5 6-2"/><path d="M9 18 6 15c1-4 3.5-8 7-10.5C15.5 2.8 18.5 2.6 21 3c.4 2.5.2 5.5-1.5 8-2.5 3.5-6.5 6-10.5 7Z"/><circle cx="15" cy="9" r="1.8"/><path d="M6.5 14.5 4 14l2-4 3.5-.5M9.5 17.5 10 20l4-2 .5-3.5"/></symbol>
   <symbol id="i-news" viewBox="0 0 24 24"><path d="M4 5h13v14a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v10a2 2 0 0 1-2 2"/><path d="M8 9h5M8 13h5M8 17h3"/></symbol>
   <symbol id="i-brain" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="13" r="2.6"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 8.3l2 2.8M16.2 7.6l-2.4 3.4M10.3 15l-2.8 2.6M14 14.9l2.4 1.8"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M9 2.5v1.4M9 14.1v1.4M2.5 9h1.4M3.9 3.9l1 1M13.1 4.9l1-1"/><path d="M17.5 20H9a4.5 4.5 0 1 1 3.9-6.8 4 4 0 0 1 4.6 6.8z"/></symbol>
@@ -649,7 +653,7 @@ const DEF = {
   name: "Ale",
   city: { name: "Lugano", country: "Svizzera", lat: 46.0037, lon: 8.9511 },
   sound: { music: false, ui: true, vol: 0.6, style: "beat" },
-  news: { cats: ["politica", "economia", "ai", "llm", "tecnologia", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
+  news: { cats: ["politica", "economia", "ai", "llm", "tecnologia", "spazio", "hacker", "esteri", "clima", "altro"], countries: ["mondo"] },
   links: [
         { n: "karimvarini.com", u: "https://karimvarini.com", i: "globe" },
     { n: "OmniRoute (solo sul PC)", u: "http://localhost:20128", i: "server" },
@@ -659,6 +663,8 @@ const DEF = {
 let S = load();
 // nuova categoria "LLM e novità AI": chi aveva tutte le categorie la vede subito
 if (S.news && Array.isArray(S.news.cats) && S.news.cats.length >= 8 && !S.news.cats.includes("llm")) S.news.cats.push("llm");
+// nuova categoria "Spazio": chi aveva tutte le categorie la vede subito
+if (S.news && Array.isArray(S.news.cats) && S.news.cats.length >= 9 && !S.news.cats.includes("spazio")) S.news.cats.push("spazio");
 if (S.name === "Karim") { S.name = "Ale"; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 function load(){ try { return { ...structuredClone(DEF), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return structuredClone(DEF); } }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} if (window.syncMark) window.syncMark(); }
@@ -821,7 +827,7 @@ const ico = (n, st = "") => `<svg class="i" style="${st}"><use href="#i-${n}"/><
 const toast = t => { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2200); };
 
 const NEWS_CATS = [
-  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["llm", "LLM e novità AI"], ["tecnologia", "Tecnologia"],
+  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["llm", "LLM e novità AI"], ["tecnologia", "Tecnologia"], ["spazio", "Spazio"],
   ["hacker", "Attacchi hacker"], ["esteri", "Esteri e geopolitica"], ["clima", "COP31 e clima"], ["altro", "Altro"],
 ];
 const COUNTRIES = [
@@ -836,6 +842,7 @@ const APPS = [
   { id: "calendario", t: "Calendario", i: "cal", g: "#fff" },
   { id: "globale", t: "Calendario globale", s: "Globale", i: "globe", g: "linear-gradient(135deg,#38bdf8,#6366f1)" },
   { id: "notizie", t: "Notizie", i: "news", g: "linear-gradient(135deg,#fb7185,#f97316)" },
+  { id: "spazio", t: "Spazio", i: "rocket", g: "linear-gradient(135deg,#93c5fd,#6366f1)" },
   { id: "conoscenza", t: "Conoscenza", i: "brain", g: "linear-gradient(135deg,#c084fc,#6366f1)" },
   { id: "aitrading", t: "AI-TRADING", i: "chart", g: "linear-gradient(135deg,#34d399,#0ea5e9)" },
   { id: "cervello", t: "Cervello", i: "net", g: "linear-gradient(135deg,#fbbf24,#f97316)" },
@@ -847,7 +854,7 @@ const APPS = [
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#2dd4bf,#818cf8)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#cbd5e1,#64748b)" },
 ];
-const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["MONDO", ["oggi", "globale", "notizie", "spazio", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
@@ -990,19 +997,32 @@ function wvForecast(a, dir, lab){
       : `<text x="${w - 8}" y="${(h / 2 + 5).toFixed(1)}" text-anchor="end" class="wv-fc-q">?</text>`}
     <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4" fill="#fff" class="wv-fc-now"/></svg>`;
 }
-/* il tuo universo: le categorie della conoscenza come stelle grandi, le note come puntini intorno */
+/* il tuo universo in stile vecchio monitor (come il grafo 3D della Conoscenza): categorie = stelle luminose su un anello inclinato,
+   note = puntini intorno, colori pastello ghiaccio, righe di scansione e scritte pixel */
 function wvUniverse(){
   if (!notes.length) return "";
-  const W = 260, H = 96, cx = W / 2, cy = H / 2, cols = ["#a78bfa", "#22d3ee", "#f472b6", "#fbbf24", "#34d399", "#60a5fa", "#fb923c", "#e879f9"];
-  const cats = [...new Set(notes.map(n => n.categoria || "Altro"))].slice(0, 8), hs = t => [...String(t)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
-  let lines = "", dots = "", stars = "";
-  cats.forEach((c, i) => { const a = i / cats.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * 96, y = cy + Math.sin(a) * 34, col = cols[i % cols.length];
-    lines += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${col}" stroke-opacity=".35" stroke-width=".8"/>`;
-    const NN = notes.filter(n => (n.categoria || "Altro") === c).slice(0, 14); NN.forEach((n, j) => { const h = hs(n.titolo + j), b = j / NN.length * Math.PI * 2 + (h % 100) / 100, r = 10 + h % 9, nx = x + Math.cos(b) * r * 1.4, ny = y + Math.sin(b) * r * .75;
-      lines += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${col}" stroke-opacity=".25" stroke-width=".6"/>`;
-      dots += `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="1.6" fill="${col}" fill-opacity=".85"/>`; });
-    stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.2" fill="${col}" filter="url(#wvg)"/>`; });
-  return `<svg class="wv-svg wv-uni" viewBox="0 0 ${W} ${H}"><defs><filter id="wvg" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>${lines}${dots}${stars}<circle cx="${cx}" cy="${cy}" r="6" fill="#fff" filter="url(#wvg)"/></svg>`;
+  const W = 260, H = 110, cx = W / 2, cy = H / 2 + 2, pal = ["255,255,255", "178,216,255", "128,186,255", "136,220,244", "182,172,255", "160,238,202"];
+  const cats = [...new Set(notes.map(n => n.categoria || "Altro"))].slice(0, 8), hs = t => [...String(t)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7), id = "wvu" + (++WV_ID);
+  const tilt = .36, P = [];
+  cats.forEach((c, i) => { const a = i / cats.length * Math.PI * 2 + .35, z = Math.sin(a), x = cx + Math.cos(a) * 76, y = cy + z * 92 * tilt, k = .72 + (z + 1) * .2;
+    P.push({ c, x, y, z, k, col: pal[i % pal.length] }); });
+  let back = "", front = "";
+  for (const q of P){
+    let g = `<line x1="${cx}" y1="${cy}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}" stroke="rgba(170,205,240,${(.14 + q.k * .12).toFixed(2)})" stroke-width=".6"/>`;
+    const NN = notes.filter(n => (n.categoria || "Altro") === q.c).slice(0, 16);
+    NN.forEach((n, j) => { const h = hs(n.titolo + j), b = j / NN.length * Math.PI * 2 + (h % 100) / 100, r = (9 + h % 9) * q.k, nx = q.x + Math.cos(b) * r * 1.35, ny = q.y + Math.sin(b) * r * .7;
+      g += `<line x1="${q.x.toFixed(1)}" y1="${q.y.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="rgba(150,190,255,${(.1 + q.k * .1).toFixed(2)})" stroke-width=".5"/><circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${(1.05 * q.k).toFixed(2)}" fill="rgb(${pal[h % pal.length]})" fill-opacity="${(.55 + q.k * .3).toFixed(2)}" filter="url(#${id}g)"/>`; });
+    g += `<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${(3.3 * q.k).toFixed(2)}" fill="rgb(${q.col})" filter="url(#${id}G)"/><circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${(1.5 * q.k).toFixed(2)}" fill="#fff"/>`;
+    g += `<text x="${(q.x + (q.x >= cx ? 6 : -6)).toFixed(1)}" y="${(q.y - 4).toFixed(1)}" text-anchor="${q.x >= cx ? "start" : "end"}" class="wv-uni-l" fill-opacity="${(.5 + q.k * .4).toFixed(2)}">${esc(String(q.c).toUpperCase().slice(0, 14))}</text>`;
+    if (q.z < 0) back += g; else front += g; }
+  return `<svg class="wv-svg wv-uni" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice"><defs>
+    <filter id="${id}g" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="${id}G" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="${id}b" cx="50%" cy="50%" r="65%"><stop offset="0" stop-color="#1a2836"/><stop offset=".6" stop-color="#070b10"/><stop offset="1" stop-color="#020305"/></radialGradient>
+    <radialGradient id="${id}v" cx="50%" cy="50%" r="72%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".75"/></radialGradient><pattern id="${id}s" width="4" height="3" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000" fill-opacity=".38"/></pattern></defs>
+    <rect width="${W}" height="${H}" fill="url(#${id}b)"/>${back}
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#eaf4ff" filter="url(#${id}G)"/>${front}
+    <rect width="${W}" height="${H}" fill="url(#${id}s)" pointer-events="none"/><rect width="${W}" height="${H}" fill="url(#${id}v)"/></svg>`;
 }
 const wvPills = (arr) => `<div class="wv-pills">${arr.slice(0, 4).map(t => `<span>${esc(t)}</span>`).join("")}</div>`;
 function welHints(){
@@ -1033,6 +1053,9 @@ function welHints(){
       act: () => { go("globale"); if (ev) setTimeout(() => gvOpen(ev.k), 60); } },
     { i: "brain", g: "linear-gradient(135deg,#8b5cf6,#ec4899)", k: "Novità AI", tt: 1, v: ai && ai.length ? `<div class="wv-big"><b>${ai.length}</b><span>novità<br>in 24 ore</span></div>` + wvPills([...new Set(ai.slice(0, 8).map(x => x.src))]) : "", q: ai && ai[0] ? cut(nT(ai[0])) : "Nuovi modelli, funzioni e strumenti", h: ai && ai.length ? "" : "LLM e intelligenza artificiale",
       act: () => { newsCat1 = "llm"; newsDay = 0; go("notizie"); newsCat1 = "llm"; if (ai && ai[0]) setTimeout(() => nwOpen(ai[0].u), 60); } },
+    (() => { const A = agendaNext(4), a0 = A[0];
+      return { i: "cal", g: "linear-gradient(135deg,#60a5fa,#2563eb)", k: "La mia agenda", v: A.length ? `<div class="wv-ag">${A.map(e => `<div><em style="--ec:${esc(e.col)}">${esc(e.when)}</em><span>${esc(cut(e.t, 34))}</span></div>`).join("")}</div>` : `<div class="wv-big"><b>✓</b><span>niente in<br>programma</span></div>`,
+        q: a0 ? cut(a0.t, 70) : gcId() && (gcOk() || GC.ev) ? "Niente in programma nei prossimi giorni" : "Collega Google Calendar", h: a0 ? `${a0.day} · ${a0.when}` : gcId() ? "Tocca per aprire il calendario" : "Tocca per vedere appuntamenti e promemoria", act: () => go("calendario") }; })(),
     { i: "brain", g: "linear-gradient(135deg,#a78bfa,#6d28d9)", k: "Il tuo universo", v: wvUniverse(), q: notes.length ? "La mia conoscenza" : "Il tuo portale della conoscenza", h: notes.length ? `${notes.length} note in ${new Set(notes.map(n => n.categoria || "Altro")).size} categorie · tocca per esplorare` : "Esplora o fai un test",
       act: () => go("conoscenza") },
     { i: "net", g: "linear-gradient(135deg,#f59e0b,#b45309)", k: "Diario di oggi", v: `<div class="wv-quote">${dtxt ? "“" + esc(cut(dtxt, 70)) + "”" : '<span style="font-size:32px;font-style:normal">✍️</span>'}</div>`, q: dtxt ? cut(dtxt, 80) : "Non hai ancora scritto oggi", h: dtxt ? "Tocca per continuare" : "Due righe su com'è andata",
@@ -1044,6 +1067,16 @@ function welHints(){
     { i: "sun", g: "linear-gradient(135deg,#38bdf8,#1d4ed8)", k: `Meteo · ${S.city.name}`, v: c ? `<div class="wv-chart wv-met"><span class="wv-emo">${WMO(c.weather_code)[0]}</span>${wvArea(nextHours(12).map(x => x.temp), "#38bdf8")}<em>${Math.round(c.temperature_2m)}°</em></div>` : "", q: c ? `${WMO(c.weather_code)[0]} ${Math.round(c.temperature_2m)}° · ${WMO(c.weather_code)[1] || ""}` : S.city.name, h: d ? `Oggi max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°` : "Previsioni",
       act: () => go("meteo") },
   ];
+}
+/* i prossimi impegni: eventi di Google Calendar (anche quelli salvati sul dispositivo) e promemoria aperti, dai più vicini */
+function agendaNext(n){
+  const now = new Date(), end = new Date(Date.now() + 8 * 864e5), t0 = dayKey(now), t1 = dayKey(new Date(Date.now() + 864e5));
+  const dl = d => dayKey(d) === t0 ? "Oggi" : dayKey(d) === t1 ? "Domani" : cap(d.toLocaleDateString(EN ? "en-GB" : "it-IT", { weekday: "short", day: "numeric" }));
+  const ev = (GC.ev || []).filter(e => { const s = evStart(e), en = evEnd(e); return s < end && (evAllDay(e) ? en > now : en > now); })
+    .map(e => { const s = evStart(e), past = s < now; return { at: past ? +now : +s, t: e.t, col: e.col || "#60a5fa", day: dl(past ? now : s), when: evAllDay(e) ? (past || dayKey(s) === t0 ? "oggi" : dl(s).toLowerCase()) : (past ? "adesso" : (dayKey(s) === t0 ? "" : dl(s) + " ") + hhmm(s)) }; });
+  const rm = (S.rem || []).filter(r => !r.done && remAt(r) < end && remAt(r) > new Date(Date.now() - 36e5) && !(GC.ev || []).some(e => e.t === r.t && Math.abs(evStart(e) - remAt(r)) < 6e4))
+    .map(r => { const d = remAt(r); return { at: +d, t: "🔔 " + (r.t || "Promemoria"), col: "#fb923c", day: dl(d), when: (dayKey(d) === t0 ? "" : dl(d) + " ") + hhmm(d) }; });
+  return [...ev, ...rm].sort((a, b) => a.at - b.at).slice(0, n);
 }
 function welGo(i){ const x = welHints()[i]; if (x) x.act(); }
 function welcome(){
@@ -1101,6 +1134,8 @@ function miniCal(y, m, pick){
 /* ---------------- SEZIONI (PC e telefono) ---------------- */
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 const head = (t, s) => isPhone() ? "" : `<div><h1 style="font-size:20px;font-weight:600">${t}</h1>${s ? `<div class="muted" style="font-size:12.5px;margin-top:4px">${s}</div>` : ""}</div>`;
+// riconosce le notizie sullo spazio anche se il server non le ha ancora etichettate così
+const SPACE_RX = /\b(SpaceX|Starship|Starlink|Falcon ?9|Blue Origin|New Glenn|Rocket Lab|NASA|ESA|Artemis|ISS|astronaut\w*|astronaut[aei]|cosmonaut\w*|spacecraft|veicolo spaziale|stazione spaziale|space station|razz[oi]|rocket\w*|in orbita|orbit(al)?|James Webb|Hubble|telescop\w+|asteroid\w*|Voyager|Marte|Mars rover|lunar|lunare|allunaggio)\b/i;
 const VIEWS = {
   cervello(){ return brView(); },
   mercati(){ return mkView(); },
@@ -1145,6 +1180,13 @@ const VIEWS = {
   },
   conoscenza(){
     return `<div class="portal portal-slot"></div>`;
+  },
+  spazio(){
+    const day = NEWS && NEWS.days ? NEWS.days[newsDay] || NEWS.days[0] : null, score = x => newsDay ? x.n : x.n * Math.pow(0.5, Math.max(0, Date.now() - x.d) / 3600e3 / 18);
+    const L = NEWS ? NEWS.items.filter(x => (x.cats.includes("spazio") || SPACE_RX.test(x.t + " " + (x.ti || ""))) && (!day || x.day === day || !x.day && newsDay === 0)).sort((a, b) => newsSort === "new" ? b.d - a.d : score(b) - score(a)) : [];
+    return head("Spazio", NEWS ? `Razzi, missioni, astronauti e scoperte · ${["Oggi", "Ieri", "L'altro ieri"][newsDay]} · ${L.length} notizie` : "Razzi, missioni, astronauti e scoperte") + `
+    <div class="nw-bar"><div class="seg">${["Oggi", "Ieri", "L'altro ieri"].map((t, k) => `<button class="${newsDay === k ? "on" : ""}" onclick="newsDay=${k};newsLimit=30;reView()">${t}</button>`).join("")}</div><div class="seg"><button class="${newsSort === "top" ? "on" : ""}" onclick="newsSort='top';newsLimit=30;reView()">Più importanti</button><button class="${newsSort === "new" ? "on" : ""}" onclick="newsSort='new';newsLimit=30;reView()">Più recenti</button></div><span class="sp"></span>${newsLangBtn()}</div>
+    ${L.length || !NEWS ? newsBody(L) : `<div class="soon">${ico("rocket")}<span>Nessuna notizia sullo spazio per questo giorno. Le nuove fonti (NASA, SpaceNews, Space.com…) arrivano con il prossimo aggiornamento orario.</span></div>`}`;
   },
   aitrading(){
     return head("AI-TRADING", "Il tuo sito di trading") + `
@@ -1217,7 +1259,7 @@ async function loadNews(){
     if (NEWS && NEWS.updated === d.updated) return;
     NEWS = d; for (const k in SUMS) delete SUMS[k]; try { localStorage.setItem(KEY + "-news", JSON.stringify(d)); } catch { try { localStorage.removeItem(KEY + "-news"); } catch {} }
   } catch { newsErr = true; if (NEWS) return; }
-  if (cur === "oggi" || cur === "notizie") refresh();
+  if (cur === "oggi" || cur === "notizie" || cur === "spazio") refresh();
   mkExplain();
 }
 /* ---------------- CALENDARIO GLOBALE: appuntamenti economici (ForexFactory, dal ramo notizie) + grandi eventi trovati da Aris sul web ---------------- */
@@ -3626,7 +3668,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "93";
+const APP_V = "94";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
