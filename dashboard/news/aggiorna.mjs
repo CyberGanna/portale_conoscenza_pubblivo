@@ -103,6 +103,13 @@ export const FEEDS = [
   { n: "Carbon Brief", u: "https://www.carbonbrief.org/feed/", cat: "clima" },
   { n: "Google News", u: gn("COP31 OR climate change OR climate summit"), cat: "clima" },
   { n: "Google News", u: gn("COP31 OR clima OR cambiamento climatico", "it"), cat: "clima" },
+  // Spazio: razzi, missioni, astronauti, scoperte
+  { n: "Space.com", u: "https://www.space.com/feeds/all", cat: "spazio" },
+  { n: "SpaceNews", u: "https://spacenews.com/feed/", cat: "spazio" },
+  { n: "Spaceflight Now", u: "https://spaceflightnow.com/feed/", cat: "spazio" },
+  { n: "NASA", u: "https://www.nasa.gov/news-release/feed/", cat: "spazio" },
+  { n: "Google News", u: gn("SpaceX OR Starship OR NASA OR rocket launch OR spacecraft OR astronauts"), cat: "spazio" },
+  { n: "Google News", u: gn("SpaceX OR NASA OR ESA OR razzo OR astronauti OR missione spaziale", "it"), cat: "spazio" },
 ];
 
 /* ---------- classificazione ---------- */
@@ -124,6 +131,7 @@ function R(src){
   return { test: s => !!(cs && cs.test(s) || ci && ci.test(s)) };
 }
 export const CAT_RX = {
+  spazio: R(String.raw`\b(SpaceX|Starship|Starlink|Falcon ?9|Falcon Heavy|Super Heavy|Blue Origin|New Glenn|New Shepard|Rocket Lab|Electron|Neutron|ULA|Vulcan|Ariane ?6?|Vega-?C?|Arianespace|NASA|ESA|ASI|JAXA|ISRO|CNSA|Roscosmos|Soyuz|Artemis|Orion|ISS|International Space Station|Stazione spaziale\w*|space station|Tiangong|spacecraft|space probe|veicolo spaziale|navicella|sonda spaziale|spaceflight|space mission|missione spaziale|space agency|agenzia spaziale|spaziale|spaziali|astronaut\w*|cosmonaut\w*|astronauta|astronaute|astronauti|rocket\w*|razzo|razzi|lanciator\w+|orbital|orbit|orbits|orbiting|in orbita|orbitale|low Earth orbit|launch pad|rampa di lancio|booster|lunar|lunare|Moon landing|allunaggio|Mars rover|Marte|Mars|asteroid\w*|comet\w*|cometa|comete|galax\w+|galassi\w+|telescope\w*|telescopi\w*|James Webb|JWST|Hubble|exoplanet\w*|esopianet\w+|black hole\w*|buco nero|buchi neri|Voyager|astronom\w+|astrofisic\w+|astrophysic\w*|cosmic|cosmico|cosmica|supernova\w*|meteor\w*|eclipse|eclissi|aurora boreale|northern lights)\b`),
   hacker: R(String.raw`\b(hacker|hackers|hackerat\w*|hack(ed|ing)?|cyber\w*|ransomware|malware|phishing|data breach|breach|violazione dei dati|furto di dati|leak|ddos|zero-day|0-day|exploit|vulnerabilit\w+|backdoor|spyware|botnet|infostealer|CVE-\d+|patch tuesday|attacco informatico|attacchi informatici)\b`),
   ai: R(String.raw`\b(AI|IA|A\.I\.|artificial intelligence|intelligenza artificiale|machine learning|deep learning|LLM|chatbot|ChatGPT|OpenAI|Anthropic|Claude|Gemini|DeepMind|Copilot|Mistral|Llama|Nvidia|GPU|neural|generative|generativa|Sam Altman|AGI)\b`),
   llm: R(String.raw`\b(LLM|LLMs|large language model\w*|modell\w linguistic\w*|language model\w*|GPT-?\d[\w.-]*|ChatGPT|OpenAI|Anthropic|Claude|Opus|Sonnet|Haiku|Fable|Gemini|Gemma|DeepMind|Llama|Mistral|DeepSeek|Qwen|Kimi K\d[\w.-]*|Moonshot AI|Grok|xAI|Perplexity|Copilot|Cursor|Hugging Face|Midjourney|Sora|Veo|Codex|AI agent\w*|agentic|agent\w* AI|MCP|Model Context Protocol|chatbot\w*|open-weight|open-source model\w*|AI model\w*|modell\w di intelligenza artificiale|modell\w AI|reasoning model\w*)\b`),
