@@ -827,8 +827,8 @@ const ico = (n, st = "") => `<svg class="i" style="${st}"><use href="#i-${n}"/><
 const toast = t => { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2200); };
 
 const NEWS_CATS = [
-  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["llm", "LLM e novità AI"], ["tecnologia", "Tecnologia"], ["spazio", "Spazio"],
-  ["hacker", "Attacchi hacker"], ["esteri", "Esteri e geopolitica"], ["clima", "COP31 e clima"], ["altro", "Altro"],
+  ["politica", "Politica"], ["economia", "Economia e finanza"], ["ai", "Intelligenza artificiale"], ["llm", "LLM e novità AI"], ["tecnologia", "Tecnologia"],
+  ["hacker", "Attacchi hacker"], ["esteri", "Esteri e geopolitica"], ["clima", "COP31 e clima"], ["spazio", "Spazio"], ["altro", "Altro"],
 ];
 const COUNTRIES = [
   ["mondo", "Tutto il mondo"], ["us", "USA"], ["it", "Italia"], ["ch", "Svizzera"], ["eu", "Unione Europea"], ["uk", "Regno Unito"],
@@ -842,7 +842,6 @@ const APPS = [
   { id: "calendario", t: "Calendario", i: "cal", g: "#fff" },
   { id: "globale", t: "Calendario globale", s: "Globale", i: "globe", g: "linear-gradient(135deg,#38bdf8,#6366f1)" },
   { id: "notizie", t: "Notizie", i: "news", g: "linear-gradient(135deg,#fb7185,#f97316)" },
-  { id: "spazio", t: "Spazio", i: "rocket", g: "linear-gradient(135deg,#93c5fd,#6366f1)" },
   { id: "conoscenza", t: "Conoscenza", i: "brain", g: "linear-gradient(135deg,#c084fc,#6366f1)" },
   { id: "aitrading", t: "AI-TRADING", i: "chart", g: "linear-gradient(135deg,#34d399,#0ea5e9)" },
   { id: "cervello", t: "Cervello", i: "net", g: "linear-gradient(135deg,#fbbf24,#f97316)" },
@@ -854,7 +853,7 @@ const APPS = [
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#2dd4bf,#818cf8)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#cbd5e1,#64748b)" },
 ];
-const NAV = [["MONDO", ["oggi", "globale", "notizie", "spazio", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
@@ -1181,13 +1180,7 @@ const VIEWS = {
   conoscenza(){
     return `<div class="portal portal-slot"></div>`;
   },
-  spazio(){
-    const day = NEWS && NEWS.days ? NEWS.days[newsDay] || NEWS.days[0] : null, score = x => newsDay ? x.n : x.n * Math.pow(0.5, Math.max(0, Date.now() - x.d) / 3600e3 / 18);
-    const L = NEWS ? NEWS.items.filter(x => (x.cats.includes("spazio") || SPACE_RX.test(x.t + " " + (x.ti || ""))) && (!day || x.day === day || !x.day && newsDay === 0)).sort((a, b) => newsSort === "new" ? b.d - a.d : score(b) - score(a)) : [];
-    return head("Spazio", NEWS ? `Razzi, missioni, astronauti e scoperte · ${["Oggi", "Ieri", "L'altro ieri"][newsDay]} · ${L.length} notizie` : "Razzi, missioni, astronauti e scoperte") + `
-    <div class="nw-bar"><div class="seg">${["Oggi", "Ieri", "L'altro ieri"].map((t, k) => `<button class="${newsDay === k ? "on" : ""}" onclick="newsDay=${k};newsLimit=30;reView()">${t}</button>`).join("")}</div><div class="seg"><button class="${newsSort === "top" ? "on" : ""}" onclick="newsSort='top';newsLimit=30;reView()">Più importanti</button><button class="${newsSort === "new" ? "on" : ""}" onclick="newsSort='new';newsLimit=30;reView()">Più recenti</button></div><span class="sp"></span>${newsLangBtn()}</div>
-    ${L.length || !NEWS ? newsBody(L) : `<div class="soon">${ico("rocket")}<span>Nessuna notizia sullo spazio per questo giorno. Le nuove fonti (NASA, SpaceNews, Space.com…) arrivano con il prossimo aggiornamento orario.</span></div>`}`;
-  },
+
   aitrading(){
     return head("AI-TRADING", "Il tuo sito di trading") + `
     <div class="glass c"><div class="hd"><div><h3>ale-x.pages.dev</h3><small>Si apre in una scheda a parte</small></div></div>
@@ -1251,15 +1244,17 @@ let newsCat1 = null;
 let NEWS = null, newsErr = false, newsDay = 0, newsSort = "top", newsFilters = false, newsLimit = 30;
 const SUMS = {};
 try { NEWS = JSON.parse(localStorage.getItem(KEY + "-news") || "null"); } catch {}
+try { for (const x of (NEWS && NEWS.items) || []) if (Array.isArray(x.cats) && !x.cats.includes("spazio") && SPACE_RX.test(x.t + " " + (x.ti || ""))) x.cats.push("spazio"); } catch {}
 async function loadNews(){
   try {
     let r; try { r = await fetch(NEWS_URL, { cache: "no-cache" }); if (!r.ok) throw 0; } catch { r = await fetch("news/news.json", { cache: "no-cache" }); }
     if (!r.ok) throw 0;
     const d = await r.json(); newsErr = false;
     if (NEWS && NEWS.updated === d.updated) return;
+    for (const x of d.items || []) if (Array.isArray(x.cats) && !x.cats.includes("spazio") && SPACE_RX.test(x.t + " " + (x.ti || ""))) x.cats.push("spazio");
     NEWS = d; for (const k in SUMS) delete SUMS[k]; try { localStorage.setItem(KEY + "-news", JSON.stringify(d)); } catch { try { localStorage.removeItem(KEY + "-news"); } catch {} }
   } catch { newsErr = true; if (NEWS) return; }
-  if (cur === "oggi" || cur === "notizie" || cur === "spazio") refresh();
+  if (cur === "oggi" || cur === "notizie") refresh();
   mkExplain();
 }
 /* ---------------- CALENDARIO GLOBALE: appuntamenti economici (ForexFactory, dal ramo notizie) + grandi eventi trovati da Aris sul web ---------------- */
@@ -3668,7 +3663,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "94";
+const APP_V = "95";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
