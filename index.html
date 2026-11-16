@@ -14,7 +14,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=VT323&family=Sora:wght@200..700&display=swap">
 </head>
 <body>
-<script>if (window.parent !== window) document.documentElement.classList.add("emb");</script>
+<script>if (window.parent !== window){ document.documentElement.classList.add("emb");
+  /* dentro la dashboard: iOS, aprendo la tastiera, può far scorrere anche la pagina del portale; la riporto subito in cima */
+  addEventListener("scroll", () => { if (scrollX || scrollY) scrollTo(0, 0); }, { passive: true }); }</script>
 <style>
 /* Layout: a living constellation fills the screen; glass panels float over it (archive left, note right, sheets on phone). Single dark look by choice. */
 :root{
