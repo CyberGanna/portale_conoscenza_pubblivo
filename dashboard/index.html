@@ -277,9 +277,9 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .mk-r,.mk-fav{cursor:pointer} .mk-r:hover .mk-n b,.mk-fav:hover b{color:var(--blue-2)}
 html.noscroll,html.noscroll body{overflow:hidden}
 #mk-modal{position:fixed;inset:0;z-index:60;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
-#mk-modal.open,#nw-modal.open,#gv-modal.open{display:flex}  #gv-modal{z-index:61 !important}
-#nw-modal,#gv-modal{position:fixed;inset:0;z-index:62;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
-#nw-modal.open .mkd,#gv-modal.open .mkd{animation:secIn .4s cubic-bezier(.2,.8,.2,1) both}
+#mk-modal.open,#nw-modal.open,#gv-modal.open,#pv-modal.open{display:flex} #pv-modal{z-index:60 !important}  #gv-modal{z-index:61 !important}
+#nw-modal,#gv-modal,#pv-modal{position:fixed;inset:0;z-index:62;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+#nw-modal.open .mkd,#gv-modal.open .mkd,#pv-modal.open .mkd{animation:secIn .4s cubic-bezier(.2,.8,.2,1) both}
 .nwd-meta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px} .nwd-c{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .nwd-t{font-size:22px;line-height:1.3;margin:14px 0 6px} .nwd-orig{font-size:12px;margin:0 0 6px} .nwd-s{font-size:14px;line-height:1.55;color:#cbd5e1;margin:8px 0 0}
 .nwd-ai{background:linear-gradient(135deg,rgba(124,92,255,.10),rgba(47,123,255,.06));border:1px solid rgba(124,92,255,.25);border-radius:16px;padding:6px 16px 12px}
@@ -288,7 +288,17 @@ html.noscroll,html.noscroll body{overflow:hidden}
 @keyframes nwDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 .nwd-alt{font-size:13px;line-height:1.45;padding:7px 0;border-top:1px solid var(--line);color:#cbd5e1} .nwd-alt:first-of-type{border-top:0}
 a.nw-t,a.mk-nt{cursor:pointer}
-@media (max-width:700px){#nw-modal,#gv-modal{padding:0} #nw-modal .mkd,#gv-modal .mkd{border-radius:0;min-height:100%;padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 30px)} .nwd-t{font-size:19px}} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
+.pvd-act{font-size:15px;font-weight:600;color:var(--ink);margin:10px 0 4px}
+.pvd-when{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px} .pvd-when>div{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line)} .pvd-when .w{grid-column:1/-1}
+.pvd-when small,.pvd-plan small{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em} .pvd-when b{font-size:16px;color:var(--pc)}
+.pvd-chain{list-style:none;margin:6px 0 0;padding:0;counter-reset:c} .pvd-chain li{counter-increment:c;position:relative;padding:8px 10px 8px 38px;margin-bottom:18px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13.5px;line-height:1.45}
+.pvd-chain li::before{content:counter(c);position:absolute;left:9px;top:8px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--pc);color:#06090f}
+.pvd-chain li:not(:last-child)::after{content:"↓";position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);color:var(--muted);font-size:13px} .pvd-chain li:last-child{border-color:var(--pc)}
+.pvd-nw{padding:8px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.45} .pvd-nw:first-of-type{border-top:0} .pvd-nw b{display:block;color:var(--ink)} .pvd-nw span{color:#cbd5e1}
+.pvd-plan{display:grid;grid-template-columns:1fr 1fr;gap:8px} .pvd-plan>div{padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13px;line-height:1.4}
+.pvd-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px} .pvd-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+@media (max-width:520px){.pvd-plan{grid-template-columns:1fr}}
+@media (max-width:700px){#nw-modal,#gv-modal,#pv-modal{padding:0} #nw-modal .mkd,#gv-modal .mkd,#pv-modal .mkd{border-radius:0;min-height:100%;padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 30px)} .nwd-t{font-size:19px}} .mkd{width:min(780px,100%);padding:22px 24px;border-radius:22px;background:rgba(14,18,28,.96)}
 .mkd-hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start} .mkd-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .mkd-t h2{margin:0;font-size:22px} .mkd-t .mk-star{font-size:20px}
 .mkd-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:16px 0 10px} .mkd-px b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums} .mkd-px span{color:var(--muted);font-size:13px} .mkd-px i{font-style:normal;font-weight:700;margin-left:6px}
 .mkd-px small,.mkd-day small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px} .mkd-day{text-align:right} .mkd-day b{font-size:20px}
@@ -1848,7 +1858,7 @@ function prevCheck(p, at){ // com'è andata: confronto col prezzo di adesso
 function prevCard(p, at){
   const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8", ar = p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆";
   const x = MK && MK.items.find(i => i.s === p.s);
-  return `<div class="pv-c" style="--pc:${col}" onclick="if(!event.target.closest('a'))mkOpen('${esc(p.s)}')">
+  return `<div class="pv-c" style="--pc:${col}" onclick="if(!event.target.closest('a'))pvOpen(${at},'${esc(p.s)}')">
     <div class="pv-h"><b>${esc(p.n)}</b><span class="pv-dir">${ar} ${esc(p.dir)}</span></div>
     ${p.op ? `${pvOp(p)}${p.mossa != null && p.op !== "fuori" ? `<div class="pv-goal"><b>${mkPct(p.mossa)}</b><span>obiettivo ${pvTgt(p)}<br>📅 ${esc(pvWhen(p))}</span></div>` : ""}` : ""}
     <div class="pv-bar"><i style="width:${p.prob}%"></i></div><div class="pv-meta"><span>${p.prob}% di probabilità</span><span>${esc(p.op ? "" : p.orizzonte || "1-5 giorni")}</span></div>
@@ -1871,7 +1881,7 @@ function pvWhen(p){ const d = p.entro && /^\d{4}-\d\d-\d\d$/.test(p.entro) ? new
 function pvTgt(p){ const x = MK && MK.items.find(i => i.s === p.s); return p.tgt && x ? mkFmt({ ...x, px: p.tgt }) : ""; }
 function prevPlan(r){ // il riepilogo chiaro: cosa fare, di quanto, quando
   const P = (r.P || []).filter(p => p.op && p.op !== "fuori").sort((a, b) => b.prob - a.prob); if (!P.length) return "";
-  return `<div class="pv-plan"><div class="pv-plh"><b>📋 Cosa farebbe l'agente</b><small>dal più probabile al meno probabile</small></div>${P.map(p => `<div class="pv-row ${p.op}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-rop">${p.op === "long" ? "▲ COMPRA" : "▼ SHORT"}</span><b>${esc(p.n)}</b><span class="pv-mv">${p.mossa != null ? mkPct(p.mossa) : "—"}</span><span class="pv-q">${esc(pvWhen(p))}</span><span class="pv-pr"><i style="width:${p.prob}%"></i><em>${p.prob}%</em></span></div>`).join("")}
+  return `<div class="pv-plan"><div class="pv-plh"><b>📋 Cosa farebbe l'agente</b><small>dal più probabile al meno probabile</small></div>${P.map(p => `<div class="pv-row ${p.op}" onclick="pvOpen(${r.at},'${esc(p.s)}')"><span class="pv-rop">${p.op === "long" ? "▲ COMPRA" : "▼ SHORT"}</span><b>${esc(p.n)}</b><span class="pv-mv">${p.mossa != null ? mkPct(p.mossa) : "—"}</span><span class="pv-q">${esc(pvWhen(p))}</span><span class="pv-pr"><i style="width:${p.prob}%"></i><em>${p.prob}%</em></span></div>`).join("")}
     <small class="pv-note">Nessuna previsione è davvero "quasi certa": anche quelle migliori si fermano intorno al 70-80%. Usa sempre uno stop loss.</small></div>`;
 }
 /* trova lo strumento anche se l'AI scrive il simbolo in un altro modo (BTC, EUR/USD, S&P 500, "Oro"…) */
@@ -1890,11 +1900,101 @@ function pvArr(o, keys){
 }
 const pvNorm = t => String(t || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
 function prevEvents(r){
-  return `<div class="pv-evs">${r.E.map(e => { const d = e.day ? new Date(e.day + "T12:00") : null;
+  return `<div class="pv-evs">${r.E.map((e, ei) => { const d = e.day ? new Date(e.day + "T12:00") : null;
     return `<div class="pv-ev"><div class="pv-evh">${d ? `<span class="wv-date"><span><small>${d.toLocaleDateString("it-IT", { month: "short" })}</small><b>${d.getDate()}</b></span></span>` : ""}<div><b ${e.k ? `onclick="go('globale');setTimeout(()=>gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}')),80)" style="cursor:pointer"` : ""}>${esc(e.titolo)}</b><small>${[e.time, e.where, "importanza " + "●".repeat(Math.min(5, e.imp))].filter(Boolean).map(esc).join(" · ")}</small><p>${esc(e.perche)}</p></div></div>
       ${e.sopra || e.sotto ? `<div class="pv-sc">${e.sopra ? `<div><b>⬆ Se esce meglio del previsto</b><span>${esc(e.sopra)}</span></div>` : ""}${e.sotto ? `<div><b>⬇ Se esce peggio</b><span>${esc(e.sotto)}</span></div>` : ""}</div>` : ""}
       <div class="pv-imps">${e.impatti.map(p => { const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8";
-        return `<div class="pv-imp" style="--pc:${col}" onclick="mkOpen('${esc(p.s)}')"><span class="pv-dir">${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"}</span><b>${esc(p.n)}</b><em>${p.op && p.op !== "fuori" ? (p.op === "long" ? "COMPRA " : "SHORT ") + (p.mossa != null ? mkPct(p.mossa) + " · " : "") : ""}${p.prob}%</em><small>${esc(p.perche || "")}</small>${prevCheck(p, r.at)}</div>`; }).join("")}</div></div>`; }).join("")}</div>`;
+        return `<div class="pv-imp" style="--pc:${col}" onclick="pvOpen(${r.at},'${esc(p.s)}',${ei})"><span class="pv-dir">${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"}</span><b>${esc(p.n)}</b><em>${p.op && p.op !== "fuori" ? (p.op === "long" ? "COMPRA " : "SHORT ") + (p.mossa != null ? mkPct(p.mossa) + " · " : "") : ""}${p.prob}%</em><small>${esc(p.perche || "")}</small>${prevCheck(p, r.at)}</div>`; }).join("")}</div></div>`; }).join("")}</div>`;
+}
+/* scheda di una previsione: perché aprire long/short, in quale giorno e a che ora, e come la notizia porta al movimento */
+let PVD = null; const PV_AI = {};
+function pvRec(at){ return (S.prev || []).find(r => r.at === at); }
+function pvGet(at, s, ei){ const r = pvRec(at); if (!r) return {};
+  if (r.E){ const i = ei >= 0 ? ei : r.E.findIndex(e => e.impatti.some(p => p.s === s)); const e = r.E[i]; if (e){ const p = e.impatti.find(p => p.s === s); if (p) return { r, p, e, ei: i }; } }
+  return { r, p: (r.P || []).find(p => p.s === s), e: null, ei: -1 }; }
+function pvKey(at, s, ei){ return at + "|" + s + "|" + (ei >= 0 ? ei : ""); }
+function pvNews(p, e){
+  if (!NEWS) return []; const x = MK && MK.items.find(i => i.s === p.s);
+  const w = new Set([...nwWords(p.n), ...nwWords(x && x.n), ...nwWords(p.perche), ...(p.segnali || []).flatMap(t => nwWords(t)), ...nwWords(p.quando), ...nwWords(e && e.titolo), ...nwWords(e && e.perche)]);
+  const since = Date.now() - 4 * 864e5;
+  return NEWS.items.filter(n => n.d > since).map(n => [n, [...new Set([...nwWords(n.t), ...nwWords(n.ti)])].filter(k => w.has(k)).length]).filter(q => q[1] >= 2).sort((a, b) => b[1] - a[1] || b[0].n - a[0].n).slice(0, 6).map(q => q[0]);
+}
+function pvOpen(at, s, ei = -1){
+  const g = pvGet(at, s, ei); if (!g.p) return mkOpen(s);
+  PVD = { at, s, ei: g.ei }; MDL_EN = false;
+  let el = document.getElementById("pv-modal");
+  if (!el){ el = document.createElement("div"); el.id = "pv-modal"; el.setAttribute("data-raw", ""); el.onclick = e => { if (e.target === el) pvClose(); }; document.body.appendChild(el); }
+  el.classList.add("open"); document.documentElement.classList.add("noscroll"); el.scrollTop = 0;
+  const k = pvKey(at, s, g.ei); if (!PV_AI[k] && (S.pvWhy || {})[k]) PV_AI[k] = S.pvWhy[k];
+  pvDraw(); if (!PV_AI[k] && mkKey()) pvExplain();
+}
+function pvClose(){ document.getElementById("pv-modal")?.classList.remove("open"); if (!document.querySelector("#mk-modal.open,#nw-modal.open,#gv-modal.open")) document.documentElement.classList.remove("noscroll"); PVD = null; }
+addEventListener("keydown", e => { if (e.key === "Escape" && PVD && !NWD && !MKD){ e.stopImmediatePropagation(); pvClose(); } }, true);
+function pvCtx(g){
+  const { r, p, e } = g, x = MK && MK.items.find(i => i.s === p.s), rel = pvNews(p, e);
+  const nw = new Date(), tz = "ora svizzera";
+  return [`Strumento: ${p.n} [${p.s}]${x ? ` (${x.cls})` : ""}`, x ? `Dati di adesso: ${prevStats(x)}` : "",
+    `Previsione fatta il ${new Date(r.at).toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })} (${tz})`,
+    `Operazione proposta: ${p.op === "long" ? "LONG (comprare)" : p.op === "short" ? "SHORT (vendere allo scoperto)" : "stare fuori"}; direzione ${p.dir}; probabilità ${p.prob}%`,
+    p.mossa != null ? `Movimento atteso: ${mkPct(p.mossa)}${p.px0 ? ` dal prezzo ${p.px0}` : ""}${p.tgt ? `, obiettivo circa ${(+p.tgt).toPrecision(6)}` : ""}` : "",
+    p.quando ? `Quando secondo la previsione: ${p.quando}` : "", p.entro ? `Entro: ${p.entro}` : "", p.orizzonte ? `Orizzonte: ${p.orizzonte}` : "",
+    p.perche ? `Motivo dato: ${p.perche}` : "", (p.segnali || []).length ? `Segnali: ${p.segnali.join("; ")}` : "", p.rischio ? `Rischio indicato: ${p.rischio}` : "",
+    e ? `Evento collegato: ${e.titolo}${e.day ? ` il ${e.day}` : ""}${e.time ? ` alle ${e.time} (${tz})` : ""}${e.where ? ` (${e.where})` : ""}. Perché conta: ${e.perche}${e.sopra ? `. Se esce meglio: ${e.sopra}` : ""}${e.sotto ? `. Se esce peggio: ${e.sotto}` : ""}` : "",
+    r.sintesi ? `Quadro generale: ${r.sintesi}` : "",
+    rel.length ? `NOTIZIE COLLEGATE (ultimi giorni):\n${rel.map(n => `- ${n.t} (${n.src || ""}, ${new Date(n.d).toLocaleDateString("it-IT", { day: "numeric", month: "short" })})`).join("\n")}` : "Nessuna notizia collegata trovata nel feed.",
+    `Adesso è ${nw.toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} (${tz}).`].filter(Boolean).join("\n");
+}
+async function pvExplain(){
+  if (!PVD) return; const { at, s, ei } = PVD, g = pvGet(at, s, ei), key = mkKey(), k = pvKey(at, s, g.ei); if (!g.p || !key) return;
+  PV_AI[k] = { busy: true }; pvDraw();
+  const sys = `Sei Aris, un analista di trading prudente, e spieghi a una persona non esperta, in italiano semplice, PERCHÉ aprire questa operazione e QUANDO. Se serve cerca sul web notizie e orari aggiornati; non inventare numeri, date o dichiarazioni. Usa sempre l'ora svizzera (Europa/Zurigo).
+Devi dire: in che giorno e a che ora conviene aprire (tieni conto degli orari del mercato dello strumento: es. borsa USA 15:30-22:00, borse europee 9:00-17:30, forex e futures quasi 24 ore, cripto sempre; e dell'ora dell'evento o del dato che innesca il movimento: di solito si entra dopo la prima reazione, non un secondo prima), perché proprio in quel momento, e come la notizia o l'evento si collega al prezzo con una catena causa-effetto chiara.
+Rispondi SOLO con JSON valido: {"azione":"1 frase: cosa fare","giorno":"es. mercoledì 18 novembre","ora":"es. 14:35","finestra":"es. tra le 14:35 e le 15:30","perche_ora":"perché proprio quel giorno e quell'ora, 2-3 frasi","catena":["3-5 passaggi brevi dalla notizia/evento al prezzo, es. 'L'inflazione USA esce più alta del previsto'","'La Fed può tenere i tassi alti più a lungo'","'Il dollaro si rafforza'","'L'oro, che non rende interessi, scende'"],"notizie":[{"titolo":"la notizia (dall'elenco o dal web)","legame":"come spinge questo strumento, 1-2 frasi"}],"ingresso":"come entrare, 1 frase","obiettivo":"dove prendere il profitto, 1 frase","stop":"dove mettere lo stop loss e perché, 1 frase","uscita":"quando chiudere comunque, 1 frase","smentita":"cosa smentirebbe la previsione, 1-2 frasi"}`;
+  try {
+    const txt = await groqText(key, sys, [{ role: "user", content: pvCtx(g) }], 1500);
+    let o = null; const m = txt.match(/\{[\s\S]*\}/); try { o = JSON.parse(m ? m[0] : txt); } catch {}
+    if (!o) throw new Error("risposta non leggibile, riprova");
+    const A = { azione: String(o.azione || ""), giorno: String(o.giorno || ""), ora: String(o.ora || ""), finestra: String(o.finestra || ""), perche_ora: String(o.perche_ora || o.perche || ""),
+      catena: (o.catena || []).map(String).filter(Boolean).slice(0, 6), notizie: (o.notizie || []).filter(n => n && (n.titolo || n.legame)).slice(0, 5).map(n => ({ titolo: String(n.titolo || ""), legame: String(n.legame || "") })),
+      ingresso: String(o.ingresso || ""), obiettivo: String(o.obiettivo || ""), stop: String(o.stop || ""), uscita: String(o.uscita || ""), smentita: String(o.smentita || ""), web: groqText.web, t: Date.now() };
+    PV_AI[k] = A; S.pvWhy = S.pvWhy || {}; S.pvWhy[k] = A; const ks = Object.keys(S.pvWhy); if (ks.length > 40) ks.sort((a, b) => S.pvWhy[a].t - S.pvWhy[b].t).slice(0, ks.length - 40).forEach(x => delete S.pvWhy[x]); save();
+  } catch (e){ const lim = /limite|rate limit/i.test(e.message) && !pvExplain.retry; PV_AI[k] = lim ? { busy: true, wait: true } : { err: e.message || String(e) };
+    if (lim){ pvExplain.retry = 1; setTimeout(() => { pvExplain.retry = 0; if (PVD && pvKey(PVD.at, PVD.s, PVD.ei) === k) pvExplain(); else delete PV_AI[k]; }, 30000); } }
+  if (PVD && pvKey(PVD.at, PVD.s, PVD.ei) === k) pvDraw();
+}
+function pvRedo(){ if (!PVD) return; const k = pvKey(PVD.at, PVD.s, PVD.ei); delete PV_AI[k]; if (S.pvWhy) delete S.pvWhy[k]; pvExplain(); }
+function pvDraw(){ mdlRun(pvDraw0, "pv-modal"); }
+function pvDraw0(){
+  const el = document.getElementById("pv-modal"); if (!el || !PVD) return;
+  const g = pvGet(PVD.at, PVD.s, PVD.ei), p = g.p; if (!p) return pvClose();
+  const k = pvKey(PVD.at, PVD.s, g.ei), ai = PV_AI[k], rel = pvNews(p, g.e), col = p.op === "long" ? "#22c55e" : p.op === "short" ? "#f43f5e" : "#94a3b8";
+  const stats = [["Operazione", p.op === "long" ? "▲ Compra" : p.op === "short" ? "▼ Short" : "Stai fuori", p.op === "long" ? "long" : p.op === "short" ? "vendita allo scoperto" : ""],
+    ["Probabilità", p.prob + "%", "stima dell'agente"], ["Movimento atteso", p.mossa != null ? mkPct(p.mossa) : "—", p.tgt ? "obiettivo " + pvTgt(p) : ""], ["Quando", esc(pvWhen(p)) || "—", ""]];
+  el.innerHTML = `<div class="mkd glass nwd pvd" style="--pc:${col}">
+    <div class="mkd-hd"><div class="nwd-meta">${pvOp(p)}<span class="muted">previsione del ${new Date(g.r.at).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span></div>
+      <div class="mdl-r"><button class="round" onclick="pvClose()" aria-label="Chiudi">✕</button></div></div>
+    <h2 class="nwd-t">Perché ${p.op === "long" ? "comprare" : p.op === "short" ? "vendere allo scoperto" : "stare fuori da"} ${esc(p.n)}</h2>
+    ${p.perche ? `<p class="nwd-s" style="margin:0 0 4px">${esc(p.perche)}</p>` : ""}
+    <div class="mkd-stats">${stats.map(([a, b, i]) => `<div><small>${a}</small><b>${b}</b>${i ? `<i>${i}</i>` : ""}</div>`).join("")}</div>
+    ${g.e ? `<div class="mkd-sec"><h4>📅 L'evento che lo muove</h4><p class="nwd-s" style="margin:0"><b>${esc(g.e.titolo)}</b>${g.e.day ? ` · ${esc(new Date(g.e.day + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }))}` : ""}${g.e.time ? ` alle ${esc(g.e.time)}` : ""}<br>${esc(g.e.perche)}</p></div>` : ""}
+    <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> Aris ti spiega l'operazione</h4>
+      ${!mkKey() ? `<p class="muted">Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).</p>`
+        : !ai ? `<button class="btn blue" onclick="pvExplain()">✨ Spiegami perché e quando</button>`
+        : ai.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${ai.wait ? "Aris ha raggiunto il limite gratuito di questo minuto: riprovo da solo tra 30 secondi…" : "Aris collega notizie, eventi e orari di mercato…"}</span></div>`
+        : ai.err ? `<p class="muted">Non disponibile adesso: ${esc(ai.err)}</p><button class="btn" onclick="pvExplain()">Riprova</button>`
+        : `${ai.azione ? `<p class="pvd-act">${esc(ai.azione)}</p>` : ""}
+           ${ai.giorno || ai.ora ? `<div class="pvd-when"><div><small>Giorno</small><b>${esc(ai.giorno || "—")}</b></div><div><small>Ora (Svizzera)</small><b>${esc(ai.ora || "—")}</b></div>${ai.finestra ? `<div class="w"><small>Finestra</small><b>${esc(ai.finestra)}</b></div>` : ""}</div>` : ""}
+           ${ai.perche_ora ? `<h5>Perché proprio allora</h5><p>${esc(ai.perche_ora)}</p>` : ""}
+           ${ai.catena.length ? `<h5>Come la notizia arriva al prezzo</h5><ol class="pvd-chain">${ai.catena.map(c => `<li>${esc(c)}</li>`).join("")}</ol>` : ""}
+           ${ai.notizie.length ? `<h5>Le notizie e il collegamento</h5>${ai.notizie.map(n => `<div class="pvd-nw"><b>${esc(n.titolo)}</b><span>${esc(n.legame)}</span></div>`).join("")}` : ""}
+           ${ai.ingresso || ai.obiettivo || ai.stop || ai.uscita ? `<h5>Il piano</h5><div class="pvd-plan">${[["Entrata", ai.ingresso], ["Obiettivo", ai.obiettivo], ["Stop loss", ai.stop], ["Chiudi comunque", ai.uscita]].filter(q => q[1]).map(([a, b]) => `<div><small>${a}</small><span>${esc(b)}</span></div>`).join("")}</div>` : ""}
+           ${ai.smentita ? `<h5>Cosa la smentirebbe</h5><p>${esc(ai.smentita)}</p>` : ""}
+           <div class="pvd-foot">${ai.web ? `<small class="ai-web">🌐 cercato sul web</small>` : "<span></span>"}<button class="btn" onclick="pvRedo()">↻ Rifai la spiegazione</button></div>`}
+    </div>
+    ${rel.length ? `<div class="mkd-sec"><h4>Notizie collegate</h4>${rel.map(n => `<a class="mkd-n" href="${esc(n.u)}"><b>${esc(nT(n))}</b><small>${esc(n.src || "")} · ${ago(n.d)}</small></a>`).join("")}</div>` : ""}
+    <div class="pvd-btns"><button class="btn blue" onclick="pvClose();mkOpen('${esc(p.s)}')">📈 Apri il grafico di ${esc(p.n)}</button></div>
+    <p class="muted mkd-note">Stima dell'AI su prezzi, notizie ed eventi: non è un consiglio finanziario. Usa sempre uno stop loss e rischia solo ciò che puoi permetterti di perdere.</p>
+  </div>`;
 }
 function prevView(){
   const last = (S.prev || [])[0], L = MK.items.filter(mkFresh), favs = mkFavs();
@@ -3245,7 +3345,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI"];
+const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI", "pvWhy"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -3520,7 +3620,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "91";
+const APP_V = "92";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
