@@ -262,7 +262,7 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 .mk-list{display:flex;flex-direction:column} .mk-r{display:grid;grid-template-columns:1fr auto 84px;gap:6px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)} .mk-r:first-child{border-top:0}
 .mk-star{background:none;border:0;padding:0 2px 0 0;font-size:16px;line-height:1;color:var(--faint);cursor:pointer} .mk-star:hover{color:#fcd34d} .mk-star.on{color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,.5)}
 .mk-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start} .mk-side{position:sticky;top:16px} .mk-tabs{margin-top:14px;width:max-content} .mk-mapfull .c{max-width:none} .mk-mapfull{margin-top:16px} .mk-mapfull #mk-map-card .lnk{display:none} .mk-mapfull .hm-ts{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))} .mk-mapfull .hm-t{min-height:58px}
-.nav a.sub{padding:6px 11px 6px 38px;font-size:12.5px;color:var(--muted)} .nav a.sub.on2{color:#fff;background:rgba(255,255,255,.07)} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{position:static;order:-1}}
+.nav a.sub{padding:6px 11px 6px 38px;font-size:12.5px;color:var(--muted)} .nav a.sub.on2{color:#fff;background:rgba(255,255,255,.07)} @media (max-width:1180px){.mk-wrap{grid-template-columns:1fr} .mk-side{display:none}}
 .mk-fav{padding:12px 0;border-top:1px solid var(--line)} .mk-fav:first-child{border-top:0;padding-top:4px} .mk-fav .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px} .mk-fav .px{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .mk-fav .p{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums} .mk-fav svg,.mk-fav .mk-sp{display:block !important;width:100%;height:40px;margin-top:6px} .mk-fav .w{font-size:12px;line-height:1.4;color:var(--muted);margin-top:4px}
 .dash-l{display:flex;flex-direction:column;gap:20px;align-self:start} .dash-l>.glass{margin:0}
@@ -1895,8 +1895,8 @@ function mkDashCard(){
 }
 function mkView(){
   if (!MK) return head("Mercati") + `<div class="glass c muted">${mkErr ? "Non riesco a leggere i prezzi adesso." : "Carico i prezzi…"}</div>`;
-  const classes = ["Tutti", ...new Set(MK.items.map(x => x.cls))];
-  const L = MK.items.filter(x => mkCls === "Tutti" || x.cls === mkCls);
+  const classes = ["Tutti", "★ Preferiti", ...new Set(MK.items.map(x => x.cls))];
+  const L = mkCls === "★ Preferiti" ? mkFavs().map(s => MK.items.find(x => x.s === s)).filter(Boolean) : MK.items.filter(x => mkCls === "Tutti" || x.cls === mkCls);
   const top = new Set(mkTop(8).map(x => x.s));
   const tabs = `<div class="seg mk-tabs"><button class="${mkTab === "tutti" ? "on" : ""}" onclick="mkTab='tutti';reView();renderNav()">Tutti gli strumenti</button><button class="${mkTab === "mappa" ? "on" : ""}" onclick="mkTab='mappa';reView();renderNav()">Mappa dei mercati</button><button class="${mkTab === "prev" ? "on" : ""}" onclick="mkTab='prev';reView();renderNav()">✨ Previsioni</button></div>`;
   if (mkTab === "prev" && !PV.auto && (S.prev || [])[0] && !S.prev[0].P.some(p => p.op) && mkKey()){ PV.auto = 1; setTimeout(prevRedo, 300); }
@@ -1905,7 +1905,7 @@ function mkView(){
   return head("Mercati", `${MK.items.length} strumenti, ordinati dal movimento più insolito · aggiornato alle ${hhmm(new Date(MK.updated))}`) + tabs + `
     <div class="chips" style="margin:14px 0">${classes.map(c => `<button class="chip ${c === mkCls ? "on" : ""}" onclick="mkCls='${c}';reView()">${c}</button>`).join("")}
       ${mkKey() ? `<button class="chip" onclick="mkExplain(true)">${MKAI.busy ? "L'AI ci sta pensando…" : "↻ Rifai le spiegazioni"}</button>` : ""}</div>
-    <div class="mk-wrap"><div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("")}</div></div>
+    <div class="mk-wrap"><div class="glass c"><div class="mk-list">${L.map(x => mkRow(x, mkFresh(x) && mkStrong(x))).join("") || (mkCls === "★ Preferiti" ? `<div class="muted" style="padding:14px 4px">Tocca ☆ accanto a uno strumento per salvarlo nei preferiti.</div>` : "")}</div></div>
       <div class="mk-side">${mkFavCard()}</div></div>`;
 }
 /* ---------------- PREVISIONI: agente che cerca connessioni e possibili rialzi/ribassi ----------------
@@ -3568,9 +3568,10 @@ function syncBox(){
 let homeEdit = false;
 function homeCfg(){ S.home = S.home || {}; S.home.big = S.home.big || {}; S.home.cols = S.home.cols || 4; return S.home; }
 function homeItems(){
+  /* Armadio al posto di GitHub (richiesta di Ale): niente più icone-collegamento a GitHub, l'Armadio va in fondo */
   const apps = APPS.filter(a => !a.pcOnly && !["collegamenti", "calendario"].includes(a.id)).map(a => ({ k: a.id, a }));
-  const links = S.links.filter(l => /^https?:\/\/([\w-]+\.)*github\.com/i.test(l.u)).slice(0, 2).map(l => ({ k: "link:" + l.u, l }));
-  const all = [...apps, ...links], order = homeCfg().order || [];
+  apps.push(apps.splice(apps.findIndex(x => x.k === "armadio"), 1)[0]);
+  const all = apps, order = (homeCfg().order || []).filter(k => !k.startsWith("link:"));
   const pos = k => { const i = order.indexOf(k); return i < 0 ? 1e3 + all.findIndex(x => x.k === k) : i; };
   return all.sort((a, b) => pos(a.k) - pos(b.k));
 }
@@ -3741,7 +3742,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "102";
+const APP_V = "103";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
