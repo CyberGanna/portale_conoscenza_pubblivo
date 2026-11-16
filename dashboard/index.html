@@ -636,6 +636,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-hanger" viewBox="0 0 24 24"><path d="M12 7.5a2.3 2.3 0 1 1 2.3-2.3c0 1-.6 1.6-1.4 2-.6.3-.9.7-.9 1.3v.4"/><path d="M12 9 2.8 16.2c-.8.6-.4 1.8.6 1.8h17.2c1 0 1.4-1.2.6-1.8Z"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="m10 9 5 3-5 3z"/></symbol>
   <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
   <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M4 4 2 6M20 4l2 2"/></symbol>
@@ -697,7 +698,7 @@ const I18N = {
 "Es. Il mio bot di trading": "E.g. My trading bot", "Es. chiamare il dentista": "E.g. call the dentist", "Esteri e geopolitica": "World and geopolitics", "Evento": "Event",
 "Fatto": "Done", "Fatto, l'ho creato": "Done, I created it", "Filtri": "Filters", "Fine": "Done", "Fonti:": "Sources:", "Francia": "France", "Gas naturale": "Natural gas",
 "Germania": "Germany", "Giappone": "Japan", "Giorno libero": "Free day", "Google Calendar collegato": "Google Calendar connected", "Grafo": "Graph", "Grandezza icone": "Icon size",
-"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "Video salvati": "Saved videos", "Video": "Videos", "MONDO": "WORLD", "IO": "ME", "Calendario globale": "World calendar", "Globale": "World", "Idee": "Ideas", "Ieri": "Yesterday",
+"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "Video salvati": "Saved videos", "Armadio": "Wardrobe", "Video": "Videos", "MONDO": "WORLD", "IO": "ME", "Calendario globale": "World calendar", "Globale": "World", "Idee": "Ideas", "Ieri": "Yesterday",
 "Il Cervello salva le note come file Markdown nella stessa repository privata che usa il portale per sincronizzarsi (": "The Brain saves notes as Markdown files in the same private repository the portal uses to sync (",
 "Il titolo inizia con… (es. Verifica)": "Title starts with… (e.g. Test)", "Il tuo nome": "Your name", "Il tuo secondo cervello, in stile Obsidian": "Your second brain, Obsidian style",
 "Impostazioni": "Settings", "In alto tocca il nome e chiamalo esattamente": "At the top tap the name and call it exactly", "Incolla qui il tuo Client ID di Google": "Paste your Google Client ID here",
@@ -848,18 +849,20 @@ const APPS = [
   { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#4ade80,#14b8a6)" },
   { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#60a5fa,#22d3ee)" },
   { id: "promemoria", t: "Promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#f43f5e)" },
+  { id: "armadio", t: "Armadio", i: "hanger", g: "linear-gradient(135deg,#e5e7eb,#94a3b8)" },
   { id: "video", t: "Video salvati", s: "Video", i: "play", g: "linear-gradient(135deg,#f472b6,#a855f7)" },
   { id: "sveglie", t: "Sveglie", i: "alarm", g: "linear-gradient(135deg,#818cf8,#a855f7)" },
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#2dd4bf,#818cf8)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#cbd5e1,#64748b)" },
 ];
-const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "armadio", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
 
 const AIT_URL = "https://ale-x.pages.dev/";
 function go(id, opt = {}){
+  if (id === "armadio"){ location.href = "armadio/"; return; }
   if (id === "aitrading" && !opt.noOpen) window.open(AIT_URL, "_blank", "noopener");
   if (id !== "notizie" && typeof newsCat1 !== "undefined") newsCat1 = null;
   $("#new-menu").classList.remove("open");
@@ -3664,7 +3667,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "99";
+const APP_V = "100";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
