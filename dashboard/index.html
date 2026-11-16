@@ -2621,7 +2621,8 @@ function ago(ts){ const m = Math.round((Date.now() - ts) / 6e4); if (EN) return 
 function newsList(){
   if (!NEWS) return [];
   // le novità sull'AI sono quasi sempre "mondiali": se guardi solo quella categoria, il filtro paese non le nasconde
-  const onlyLLM = newsCat1 === "llm" || (S.news.cats.length === 1 && S.news.cats[0] === "llm");
+  // anche lo spazio: SpaceX, NASA ecc. sono notizie "mondiali", il filtro paese non le nasconde
+  const onlyLLM = ["llm", "spazio"].includes(newsCat1) || (S.news.cats.length && S.news.cats.every(c => ["llm", "spazio"].includes(c)));
   const all = S.news.countries.includes("mondo") || onlyLLM;
   const day = NEWS.days ? NEWS.days[newsDay] || NEWS.days[0] : null;
   const L = NEWS.items.filter(x => (!day || x.day === day || !x.day && newsDay === 0) && (newsCat1 ? x.cats.includes(newsCat1) : x.cats.some(c => S.news.cats.includes(c))) && (all || x.cc.some(c => S.news.countries.includes(c))));
@@ -3663,7 +3664,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "95";
+const APP_V = "96";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
