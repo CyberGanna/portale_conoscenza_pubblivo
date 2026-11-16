@@ -394,7 +394,10 @@ html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.
   /* icone come i riquadri della Home: vetro scuro, bordo sottile sfumato (plasma) e alone morbido del colore dell'app */
   .app-i .sq[style*="--nb"]{color:color-mix(in srgb,var(--gl) 30%,#fff);border:1px solid rgba(255,255,255,.08);
     background:linear-gradient(180deg,rgba(32,38,52,.6),rgba(14,17,24,.8));-webkit-backdrop-filter:blur(22px) saturate(140%);backdrop-filter:blur(22px) saturate(140%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),-8px -6px 22px -12px var(--gl),8px 8px 24px -12px var(--g2,var(--gl)),0 12px 26px -10px rgba(0,0,0,.6)}
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 12px 26px -10px rgba(0,0,0,.6)}
+  .app-i .sq[style*="--nb"]{border-color:rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(40,46,62,.3),rgba(14,17,24,.42))}
+  /* niente bordo plasma sulle icone (richiesta di Ale 16/11) */
+  .app-i .sq[style*="--nb"]::after{display:none !important}
   .app-i .sq[style*="--nb"]::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;
     background:conic-gradient(from var(--pa),#f472b6,#a855f7 18%,#6366f1 30%,#22d3ee 42%,rgba(255,255,255,.08) 52%,rgba(255,255,255,.04) 62%,#fb923c 76%,#f472b6);
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
@@ -867,7 +870,7 @@ plApply();
     { c: "220,255,235", w: .018, a: .55, ph: .3 },
   ];
   function draw(now){
-    const t = (now - t0) / 1000, m = Math.max(W, H);
+    const t = (now - t0) / 1000 * .5, m = Math.max(W, H); /* metà velocità (richiesta di Ale) */
     cx.globalCompositeOperation = "source-over"; cx.clearRect(0, 0, W, H);
     cx.save(); cx.translate(W / 2 + Math.sin(t * .11) * W * .18, H / 2 + Math.cos(t * .085) * H * .2);
     cx.rotate(Math.sin(t * .06) * 1.1 + Math.sin(t * .021) * .9);
@@ -3742,7 +3745,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "103";
+const APP_V = "104";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
