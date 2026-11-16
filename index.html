@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=VT323&family=Sora:wght@200..700&display=swap">
 </head>
 <body>
+<script>if (window.parent !== window) document.documentElement.classList.add("emb");</script>
 <style>
 /* Layout: a living constellation fills the screen; glass panels float over it (archive left, note right, sheets on phone). Single dark look by choice. */
 :root{
@@ -42,6 +43,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 #mtitle{display:none}
+@media (max-width:860px){html.emb #mtitle{display:none !important}}
 body{background:var(--void);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -1466,6 +1468,7 @@ function ingest(list){
   S.notes = list; try { g3Build(); } catch (e){ console.warn("g3", e); }
   $("#count").textContent = list.length ? `${list.length} ${list.length === 1 ? "voce" : "voci"}` : "";
   $("#mcount").textContent = list.length ? `${list.length} ${list.length === 1 ? "VOCE" : "VOCI"} · ${new Set(list.map(n => norm(n.categoria))).size} CATEGORIE` : "IL TUO GRAFO DELLA CONOSCENZA";
+  if (window.parent !== window) try { window.parent.postMessage({ pcCount: $("#mcount").textContent }, location.origin); } catch {}
   const first = G.nodes.size <= 1;
   buildGraph();
   renderArchive(); renderTestHome(); renderGlossary();
