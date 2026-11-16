@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Dashboard">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=VT323&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#050608; --glass:rgba(20,24,33,.62); --glass-2:rgba(28,33,45,.7); --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
@@ -357,6 +357,56 @@ html.plasma.no-anim :where(.glass,.wel)::before{opacity:calc(.8 * var(--pl))}
   html.plasma :where(.glass,.wel)::before{box-shadow:-10px -8px 30px -14px var(--g1,#a855f7),10px 10px 32px -16px var(--g2,#22d3ee)}
 }
 @media (prefers-reduced-motion:reduce){html.plasma :where(.glass,.wel)::after,html.plasma :where(.glass,.wel)::before,html.plasma .pl-frame{animation:none}}
+
+/* ================= STILE "TASTE" (taste-skill): base neutra zinco, un solo accento smeraldo, niente neon/viola, Geist + Geist Mono.
+   È uno strato sopra lo stile classico: si spegne da Impostazioni → Stile e torna tutto com'era. ================= */
+html.taste{--bg:#0c0c0e;--glass:#141417;--glass-2:#18181b;--line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.11);--ink:#ececef;--muted:#a1a1aa;--faint:#66666e;
+  --blue:#3fb68b;--blue-2:#6fcfa9;--violet:#a1a1aa;--r:20px;--acc:#3fb68b;--acc-soft:rgba(63,182,139,.12)}
+html.taste body{font-family:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.005em;background:#0c0c0e}
+html.taste body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+html.taste :is(svg.i){stroke-width:1.5}
+html.taste :is(.orbs,.wel-aura,.pl-frame){display:none !important}
+html.taste :where(.glass,.wel)::before,html.taste :where(.glass,.wel)::after{display:none !important}
+html.taste .glass{background:#141417;border:1px solid rgba(255,255,255,.07);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 24px 48px -28px rgba(0,0,0,.7)}
+html.taste :is(h1,h2,h3){letter-spacing:-.025em}
+html.taste :is(.tag,.wv-big b,.mkd-stats b,.pv-mv,.mk-px,.mk-pct,time,.nw-n,[class*="-num"]){font-family:"Geist Mono",ui-monospace,monospace;letter-spacing:-.02em}
+/* bottoni: niente bagliori, pressione fisica */
+html.taste :is(.pill.blue,.btn.blue,.chip.on){background:#ececef;border-color:#ececef;color:#0c0c0e;box-shadow:none}
+html.taste .chip{border-color:rgba(255,255,255,.1);background:transparent}
+html.taste .btn{background:#1b1b1f;border-color:rgba(255,255,255,.09)}
+html.taste :is(button,.btn,.chip,.pill,a.r,.wel-c,.app-i){transition:transform .18s cubic-bezier(.16,1,.3,1),background-color .18s,border-color .18s,color .18s}
+html.taste :is(button,.btn,.chip,.pill,.wel-c,.app-i):active{transform:scale(.98)}
+html.taste .input{background:#0f0f12;border-color:rgba(255,255,255,.09)} html.taste .input:focus{border-color:#3fb68b}
+html.taste .soon{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);color:#d4d4d8}
+html.taste .tag{background:var(--acc-soft);color:#6fcfa9} html.taste .tag.blue{background:rgba(255,255,255,.06);color:#d4d4d8}
+/* barra laterale: niente blocco blu luminoso, solo un segno smeraldo a sinistra */
+html.taste .side{background:#111114}
+html.taste .nav a{color:#a1a1aa;position:relative}
+html.taste .nav a:hover{background:rgba(255,255,255,.035);color:#ececef}
+html.taste .nav a.on{background:rgba(255,255,255,.055);color:#fafafa;box-shadow:none}
+html.taste .nav a.on::before{content:"";position:absolute;left:-12px;top:9px;bottom:9px;width:2px;border-radius:2px;background:#3fb68b}
+html.taste .nav a .n,html.taste .nav a.on .n{background:rgba(255,255,255,.07);color:#d4d4d8;font-family:"Geist Mono",monospace}
+/* benvenuto: titolo allineato a sinistra senza aloni, griglia "bento" asimmetrica */
+html.taste .wel{background:transparent;border:0;padding:12px 4px 8px}
+html.taste .wel-orb{display:none}
+html.taste .wel-h{font-weight:500;letter-spacing:-.035em}
+html.taste .wel-q{color:#a1a1aa} html.taste .wel-rot,html.taste .wel-rot span{color:#ececef;background:none !important;-webkit-text-fill-color:#ececef !important;filter:none}
+html.taste .wel-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;grid-auto-flow:dense}
+html.taste .wel-c{background:#141417;border:1px solid rgba(255,255,255,.07);border-radius:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+html.taste .wel-c:hover{border-color:rgba(255,255,255,.14);background:#17171a}
+html.taste .wel-c:nth-child(1),html.taste .wel-c:nth-child(7){grid-column:span 2}
+html.taste .wel-k{color:#8b8b93;letter-spacing:.06em} html.taste .wel-k::before{background:#3fb68b !important;box-shadow:none !important}
+html.taste .wel-ic{background:#1d1d21 !important;color:#d4d4d8;box-shadow:none}
+@media (max-width:1180px){html.taste .wel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:767px){html.taste .wel-grid{grid-template-columns:1fr} html.taste .wel-c:nth-child(n){grid-column:auto;grid-row:auto}}
+/* telefono: icone neutre (grafite), niente plasma attorno */
+html.taste .app-i .sq[style*="--nb"]{background:#1a1a1e;border:1px solid rgba(255,255,255,.08);color:#e4e4e7;backdrop-filter:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 22px -14px rgba(0,0,0,.8)}
+html.taste .app-i .sq[style*="--nb"]::after{display:none}
+html.taste .app-i .sq[style*="--nb"] svg.i{filter:none}
+html.taste .dock{background:rgba(20,20,23,.9);border:1px solid rgba(255,255,255,.07)}
+html.taste .sheet{background:#0c0c0e}
+html.taste :is(.orb){filter:grayscale(.55) saturate(.7)}
+html.taste .ab-row,html.taste .ab-pop{background:rgba(20,20,23,.92);border-color:rgba(255,255,255,.1);box-shadow:0 18px 40px -18px rgba(0,0,0,.8)} html.taste .ab-go{background:#ececef;color:#0c0c0e}
 /* in Conoscenza niente bagliore plasma ai bordi (richiesta di Ale) */
 html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.wel)::before,html.in-portal :where(.glass,.wel)::after{display:none}
 
@@ -817,7 +867,8 @@ document.addEventListener("click", e => {
     document.body.appendChild(s); setTimeout(() => s.remove(), 650); }
 }, true);
 if (S.anim === false) document.documentElement.classList.add("no-anim");
-function plApply(){ const h = document.documentElement; h.classList.toggle("plasma", S.plasma !== false); h.style.setProperty("--pl", S.plI ?? .8); }
+function plApply(){ const h = document.documentElement; h.classList.toggle("taste", S.taste !== false); h.classList.toggle("plasma", S.plasma !== false && S.taste === false); h.style.setProperty("--pl", S.plI ?? .8);
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = S.taste !== false ? "#0c0c0e" : "#050608"; }
 plApply();
 function setLang(l){ if (S.lang === l) return; S.lang = l; save(); setTimeout(() => location.reload(), 150); }
 const LANG_SFX = EN ? " IMPORTANT: write every text value of your answer in English (keep JSON keys as they are)." : "";
@@ -1209,8 +1260,10 @@ const VIEWS = {
             <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px"><input type="checkbox" ${lsGet("pc_omni_on") ? "checked" : ""} onchange="try{this.checked?localStorage.setItem('pc_omni_on','1'):localStorage.removeItem('pc_omni_on')}catch{};reView()"> Usa OmniRoute su questo dispositivo</label>` : ""}
           <input class="input" type="password" placeholder="${esc(a.ph)}" value="${esc(lsGet(a.ls))}" onchange="try{localStorage.setItem('${a.ls}',this.value.trim())}catch{};OR_M=null;OM_M=null;GEM_M=null;delete ALT_ST['${a.id}'];reView();if(this.value.trim())altTest('${a.id}')"></div>`; }).join("")}
       <small class="muted" style="display:block;margin-top:10px;font-size:11.5px">Le chiavi restano solo su questo dispositivo. Sono gratuite: non serve la carta. OpenRouter gratis ha limiti bassi (circa 50 richieste al giorno), quindi è l'ultima riserva.</small></div>
-    <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
-      ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>
+    <div class="glass c"><div class="hd"><div><h3>Stile</h3><small>Puoi tornare allo stile di prima quando vuoi</small></div></div>
+      <div class="chips"><button class="chip ${S.taste !== false ? "on" : ""}" onclick="S.taste=true;save();plApply();reView()">Pulito (nuovo)</button><button class="chip ${S.taste === false ? "on" : ""}" onclick="S.taste=false;save();plApply();reView()">Classico (neon)</button></div></div>
+    ${S.taste === false ? `<div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Effetto plasma</b><small>Bordi e aloni luminosi sui riquadri</small></div><button class="tg ${S.plasma !== false ? "on" : ""}" onclick="S.plasma=S.plasma===false;save();plApply();reView()"></button></div>
+      ${S.plasma !== false ? `<div class="chips" style="margin-top:12px">${[[.5, "Leggero"], [.8, "Medio"], [1.15, "Forte"]].map(([v, t]) => `<button class="chip ${(S.plI ?? .8) === v ? "on" : ""}" onclick="S.plI=${v};save();plApply();reView()">${t}</button>`).join("")}</div>` : ""}</div>` : ""}
     <div class="glass c"><div class="switch" style="border:0;padding:0"><div><b>Animazioni</b><small>Effetti quando cambi sezione</small></div><button class="tg ${S.anim !== false ? "on" : ""}" onclick="S.anim=S.anim===false;save();document.documentElement.classList.toggle('no-anim',S.anim===false);reView()"></button></div></div>
     <div class="glass c"><div class="hd"><div><h3>Il tuo nome</h3><small>Per il saluto</small></div></div>
       <input class="input" value="${esc(S.name)}" onchange="S.name=this.value.trim()||'Ale';save();renderStatic();toast('Salvato')"></div>
@@ -3389,7 +3442,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI", "pvWhy"];
+const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI", "taste", "pvWhy"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -3664,7 +3717,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "96";
+const APP_V = "97";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
