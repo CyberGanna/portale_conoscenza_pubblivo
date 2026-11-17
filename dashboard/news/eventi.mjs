@@ -44,10 +44,45 @@ for (const x of raw){
   items.set(id, { id, d: d.toISOString(), allDay: /all day|tentative/i.test(x.time || "") || imp === "Holiday", t: x.title, c: x.country, imp: imp === "High" ? 3 : imp === "Medium" ? 2 : 1,
     fc: x.forecast || "", pv: x.previous || "", ac: x.actual || (items.get(id) || {}).ac || "" });
 }
+// risultati trimestrali delle grandi aziende (calendario Nasdaq, gratis): date ufficiali, non indovinate dall'AI
+const BIG = { NVDA: "Nvidia", AAPL: "Apple", MSFT: "Microsoft", GOOGL: "Alphabet (Google)", GOOG: "Alphabet (Google)", AMZN: "Amazon", META: "Meta", TSLA: "Tesla", AVGO: "Broadcom",
+  NFLX: "Netflix", AMD: "AMD", ORCL: "Oracle", CRM: "Salesforce", ADBE: "Adobe", INTC: "Intel", TSM: "TSMC", ASML: "ASML", PLTR: "Palantir", JPM: "JPMorgan", GS: "Goldman Sachs",
+  BAC: "Bank of America", WMT: "Walmart", COST: "Costco", V: "Visa", MA: "Mastercard", LLY: "Eli Lilly", NVO: "Novo Nordisk", UNH: "UnitedHealth", XOM: "ExxonMobil", MU: "Micron",
+  QCOM: "Qualcomm", ARM: "Arm", SNOW: "Snowflake", CSCO: "Cisco", IBM: "IBM", DIS: "Disney", NKE: "Nike", BRK: "Berkshire Hathaway", HD: "Home Depot", TGT: "Target", UBER: "Uber", SHOP: "Shopify" };
+const capNum = s => +String(s || "").replace(/[^0-9.]/g, "") || 0;
+// ora di New York -> ISO, tenendo conto dell'ora legale americana
+function nyISO(day, hh, mm){
+  for (const off of [4, 5]){ const d = new Date(`${day}T${String(hh + off).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00Z`);
+    const h = +new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hourCycle: "h23" }).format(d); if (h === hh) return d.toISOString(); }
+  return new Date(`${day}T${String(hh + 5).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00Z`).toISOString();
+}
+let earnN = 0;
+for (let i = 0; i < 21; i++){
+  const day = new Date(Date.now() + i * 864e5).toISOString().slice(0, 10);
+  const wd = new Date(day + "T12:00:00Z").getUTCDay(); if (wd === 0 || wd === 6) continue;
+  try {
+    const r = await fetch(`https://api.nasdaq.com/api/calendar/earnings?date=${day}`, { headers: { ...UA, origin: "https://www.nasdaq.com", referer: "https://www.nasdaq.com/" }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok){ console.log("earnings", day, "HTTP", r.status); continue; }
+    const rows = ((await r.json()).data || {}).rows || [];
+    for (const x of [...items.values()]) if (x.earn && x.id.endsWith("|" + day)) items.delete(x.id); // giorno riletto: tolgo le date vecchie (spostate)
+    for (const e of rows){
+      const sym = String(e.symbol || "").toUpperCase(), name = BIG[sym];
+      if (!name && capNum(e.marketCap) < 150e9) continue;
+      const nm = name || String(e.name || sym).replace(/,? (Inc|Corp|Corporation|Ltd|Limited|plc|N\.V\.|Holdings?|Company|Co)\.?$/i, "");
+      const tm = String(e.time || ""), pre = /pre-market/i.test(tm), after = /after-hours/i.test(tm);
+      const id = `EARN|${sym}|${day}`;
+      items.set(id, { id, earn: 1, sym, d: pre ? nyISO(day, 7, 0) : after ? nyISO(day, 16, 20) : day + "T12:00:00.000Z", allDay: !(pre || after), t: `${nm} earnings`, ti: `Risultati trimestrali ${nm}`,
+        c: "USD", imp: (name || capNum(e.marketCap) >= 500e9) ? 3 : 2, fc: e.epsForecast ? `EPS ${e.epsForecast}` : "", pv: "", ac: "", when: pre ? "prima dell'apertura di Wall Street" : after ? "dopo la chiusura di Wall Street" : "" });
+      earnN++;
+    }
+  } catch (err){ console.log("earnings", day, err.message); }
+  await new Promise(s => setTimeout(s, 400));
+}
+console.log("risultati trimestrali", earnN);
 const trm = prev.tr || {};
-const todo = [...new Set([...items.values()].map(x => x.t))].filter(t => !trm[t]).slice(0, 150);
+const todo = [...new Set([...items.values()].filter(x => !x.earn).map(x => x.t))].filter(t => !trm[t]).slice(0, 150);
 let ok = 0; for (const t of todo){ const it = await tr(t); if (it){ trm[t] = it; ok++; } await new Promise(s => setTimeout(s, 250)); }
-for (const x of items.values()) x.ti = trm[x.t] || "";
+for (const x of items.values()) if (!x.earn) x.ti = trm[x.t] || "";
 const list = [...items.values()].sort((a, b) => a.d.localeCompare(b.d));
 if (!list.length && !(prev.items || []).length){ console.log("nessun evento: non scrivo il file"); process.exit(0); }
 await writeFile(OUT, JSON.stringify({ updated: Date.now(), source: "ForexFactory", items: list, tr: trm }));
