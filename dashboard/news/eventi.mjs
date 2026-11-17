@@ -102,7 +102,7 @@ for (const mo of [0, 1]){
       const deb = x.day, pday = prevBiz(x.day);
       if (Date.parse(deb) < Date.now() - 10 * 864e5) continue;
       const base = { c: "USD", imp: val >= 5e9 ? 3 : 2, fc: x.proposedSharePrice ? `prezzo ${x.proposedSharePrice} $` : "", pv: "", ac: "", ipo: 1, sym: tk };
-      items.set(`IPO|${tk || nm}|P`, { ...base, id: `IPO|${tk || nm}|P`, d: nyISO(pday, 18, 0), allDay: true, t: `${nm} IPO pricing`, ti: `${nm}: fissato il prezzo della quotazione (IPO, ~${mld} mld $)`, when: "" });
+      items.set(`IPO|${tk || nm}|P`, { ...base, id: `IPO|${tk || nm}|P`, d: pday + "T12:00:00.000Z", allDay: true, t: `${nm} IPO pricing`, ti: `${nm}: fissato il prezzo della quotazione (IPO, ~${mld} mld $)`, when: "" });
       items.set(`IPO|${tk || nm}|D`, { ...base, id: `IPO|${tk || nm}|D`, d: nyISO(deb, 9, 30), allDay: false, t: `${nm} IPO debut`, ti: `${nm} debutta in borsa${tk ? " (" + tk + ")" : ""} · IPO da ~${mld} mld $`, imp: val >= 5e9 ? 3 : 2, when: "primi scambi dopo l'apertura di Wall Street" });
       ipoN++;
     }
