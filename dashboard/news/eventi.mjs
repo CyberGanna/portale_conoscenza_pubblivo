@@ -79,10 +79,11 @@ for (let i = 0; i < 21; i++){
   await new Promise(s => setTimeout(s, 400));
 }
 console.log("risultati trimestrali", earnN);
-// grandi quotazioni in borsa (IPO) dal calendario Nasdaq: giorno del prezzo e debutto il giorno lavorativo dopo
+// grandi quotazioni in borsa (IPO) dal calendario Nasdaq: debutto in borsa e, la sera prima, il prezzo
 const usd = s => +String(s || "").replace(/[^0-9.]/g, "") || 0;
 const mdY = s => { const m = String(s || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : ""; };
-const nextBiz = day => { let d = new Date(day + "T12:00:00Z"); do d = new Date(+d + 864e5); while ([0, 6].includes(d.getUTCDay())); return d.toISOString().slice(0, 10); };
+// nel calendario Nasdaq la data è il primo giorno di scambi; il prezzo si fissa la sera del giorno lavorativo prima
+const prevBiz = day => { let d = new Date(day + "T12:00:00Z"); do d = new Date(+d - 864e5); while ([0, 6].includes(d.getUTCDay())); return d.toISOString().slice(0, 10); };
 let ipoN = 0;
 for (const mo of [0, 1]){
   const d0 = new Date(); d0.setUTCDate(1); d0.setUTCMonth(d0.getUTCMonth() + mo);
@@ -98,10 +99,10 @@ for (const mo of [0, 1]){
       if (!x.day || val < 1e9) continue; // solo le quotazioni da almeno 1 miliardo di dollari
       const nm = String(x.companyName || "").replace(/,? (Inc|Corp|Corporation|PBC|Ltd|Limited|plc|Holdings?|Co)\.?$/gi, "").trim(), tk = x.proposedTickerSymbol || x.proposedSymbol || "";
       const mld = (val / 1e9).toFixed(val >= 1e10 ? 0 : 1);
-      const deb = nextBiz(x.day);
+      const deb = x.day, pday = prevBiz(x.day);
       if (Date.parse(deb) < Date.now() - 10 * 864e5) continue;
       const base = { c: "USD", imp: val >= 5e9 ? 3 : 2, fc: x.proposedSharePrice ? `prezzo ${x.proposedSharePrice} $` : "", pv: "", ac: "", ipo: 1, sym: tk };
-      items.set(`IPO|${tk || nm}|P`, { ...base, id: `IPO|${tk || nm}|P`, d: x.day + "T22:00:00.000Z", allDay: true, t: `${nm} IPO pricing`, ti: `${nm}: fissato il prezzo della quotazione (IPO, ~${mld} mld $)`, when: "" });
+      items.set(`IPO|${tk || nm}|P`, { ...base, id: `IPO|${tk || nm}|P`, d: nyISO(pday, 18, 0), allDay: true, t: `${nm} IPO pricing`, ti: `${nm}: fissato il prezzo della quotazione (IPO, ~${mld} mld $)`, when: "" });
       items.set(`IPO|${tk || nm}|D`, { ...base, id: `IPO|${tk || nm}|D`, d: nyISO(deb, 9, 30), allDay: false, t: `${nm} IPO debut`, ti: `${nm} debutta in borsa${tk ? " (" + tk + ")" : ""} · IPO da ~${mld} mld $`, imp: val >= 5e9 ? 3 : 2, when: "primi scambi dopo l'apertura di Wall Street" });
       ipoN++;
     }
