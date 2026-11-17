@@ -441,7 +441,7 @@ html.in-portal .pl-frame{display:none !important} html.in-portal :where(.glass,.
   .hm-bar{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 12px;border-radius:18px;margin:0 0 10px;font-size:12px} .hm-bar .seg button{font-size:11.5px;padding:6px 8px}
   .hm-tip{font-size:11.5px;color:var(--muted);text-align:center;margin:-2px 0 16px}
   .sh-edge{display:none} .sheet.portal-open .sh-edge{display:block;position:fixed;left:0;top:70px;bottom:0;width:22px;z-index:3}
-  .sh-home{position:fixed;left:50%;bottom:calc(var(--safe-b) + 6px);transform:translateX(-50%);z-index:4;width:160px;height:28px;display:grid;place-items:center} .sh-home i{display:block;width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+  .sh-home{display:none !important;position:fixed;left:50%;bottom:calc(var(--safe-b) + 6px);transform:translateX(-50%);z-index:4;width:160px;height:28px;display:grid;place-items:center} .sh-home i{display:block;width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 }
 @media (min-width:900px) and (max-width:1250px){
   .span8,.span4,.span6{grid-column:span 12}.span3{grid-column:span 6}
@@ -603,6 +603,7 @@ html.no-anim .orbs i{animation:none !important}
   .sheet .bar{background:linear-gradient(rgba(5,6,8,.6) 65%,transparent)}
   .sheet{background:rgba(5,6,8,.5);backdrop-filter:blur(34px) saturate(150%);-webkit-backdrop-filter:blur(34px) saturate(150%)}
 }
+.gvo-tag{color:#38bdf8;font-weight:600} .gvo .gvo-esito{margin:0 0 6px;font-size:15px} .gvo{border-color:rgba(56,189,248,.35)}
 </style>
 </head>
 <body>
@@ -1412,7 +1413,7 @@ function gvRows(list, empty){
   if (!list.length) return `<div class="muted" style="font-size:13px;padding:6px 0">${empty}</div>`;
   return `<div class="rows">${list.map(e => { const c = GV_CAT[e.cat] || GV_CAT.altro, col = GV_COL[e.imp];
     return `<button class="r ev-r" onclick="gvOpen(decodeURIComponent('${jq(e.k)}'))"><div class="ic ev-ic" style="background:${col}22;color:${col}">${ico(e.src === "ff" ? "chart" : "globe")}</div>
-      <div class="t"><b>${esc(e.title)}</b><small>${e.time || L2("Tutto il giorno", "All day")} · <span style="color:${col};font-weight:600">${L2(...GV_LAB[e.imp])}</span> · ${L2(c[0], I18N[c[0]] || c[0])}${e.where ? " · " + esc(e.where) : ""}${e.extra ? " · " + esc(e.extra) : ""}</small></div></button>`; }).join("")}</div>`;
+      <div class="t"><b>${esc(e.title)}</b><small>${gvPast(e) ? `<span class="gvo-tag">${(S.gvo || {})[e.k] && S.gvo[e.k].at ? "📰 " + L2("Com'è andata", "How it went") : L2("Già uscito", "Out")}</span> · ` : ""}${e.time || L2("Tutto il giorno", "All day")} · <span style="color:${col};font-weight:600">${L2(...GV_LAB[e.imp])}</span> · ${L2(c[0], I18N[c[0]] || c[0])}${e.where ? " · " + esc(e.where) : ""}${e.extra ? " · " + esc(e.extra) : ""}</small></div></button>`; }).join("")}</div>`;
 }
 function gvView(){
   if (!EVS) loadEv(); if (mkKey()) setTimeout(() => gvSearch(false), 50); if (mkKey()) setTimeout(gvBriefs, 2500);
@@ -1530,6 +1531,37 @@ async function gvExplain(){
   } catch (e){ const lim = /limite|rate limit/i.test(e.message) && !gvExplain.retry; GVD_AI[k] = lim ? { busy: true, wait: true } : { err: e.message }; if (lim){ gvExplain.retry = 1; setTimeout(() => { gvExplain.retry = 0; if (GVD && GVD.k === k) gvExplain(); else delete GVD_AI[k]; }, 30000); } }
   if (GVD && GVD.k === k) gvDraw();
 }
+/* dopo l'evento: "Com'è andata" = cosa è stato detto/annunciato e cosa ha comportato (ricerca sul web, salvato per non rifarlo) */
+function gvPast(x){ const now = new Date(); if (x.time) return now - new Date(x.day + "T" + x.time + ":00") > 20 * 60e3; return x.day < ymd(now); }
+async function gvOutcome(){
+  if (!GVD) return; const k = GVD.k, x = gvFind(k), key = mkKey(); if (!x || !key) return;
+  S.gvo = S.gvo || {}; S.gvo[k] = { busy: true }; gvDraw();
+  const sys = `Sei Aris. L'evento indicato è GIÀ AVVENUTO. Cerca sul web le notizie più recenti e racconta, in italiano semplice, com'è andata davvero: cosa è stato annunciato o deciso, i numeri principali e cosa hanno detto i protagonisti, come hanno reagito i mercati (titoli, indici, valute, materie prime coinvolti, con le variazioni se le trovi) e cosa cambia adesso. Usa solo fatti trovati sul web; se un dato non lo trovi scrivi che non è ancora noto, non inventare. Oggi è ${ymd(new Date())}. Rispondi SOLO con JSON valido: {"esito":"in una frase: com'è andata","detto":"cosa è stato annunciato o detto, 3-4 frasi con i numeri principali","reazione":"come hanno reagito i mercati, 2-3 frasi","conseguenze":"cosa comporta adesso e cosa guardare dopo, 2-3 frasi","punti":["3-4 numeri o fatti chiave"],"fonti":["nome testata"]}`;
+  try {
+    const txt = await groqText(key, sys, [{ role: "user", content: gvCtx(x) }], 1300);
+    let o = null; const m = txt.match(/\{[\s\S]*\}/); try { o = JSON.parse(m ? m[0] : txt); } catch {}
+    S.gvo[k] = o ? { at: Date.now(), esito: String(o.esito || ""), detto: String(o.detto || ""), reazione: String(o.reazione || ""), conseguenze: String(o.conseguenze || ""), punti: (o.punti || []).map(String).slice(0, 5), fonti: (o.fonti || []).map(String).slice(0, 5), web: groqText.web }
+      : { at: Date.now(), esito: "", detto: txt.replace(/[{}"]/g, "").slice(0, 1200), reazione: "", conseguenze: "", punti: [], fonti: [], web: groqText.web };
+    const ks = Object.keys(S.gvo).filter(q => S.gvo[q].at).sort((a, b) => S.gvo[b].at - S.gvo[a].at); ks.slice(40).forEach(q => delete S.gvo[q]);
+    save();
+  } catch (e){ S.gvo[k] = { err: e.message }; }
+  if (GVD && GVD.k === k) gvDraw(); else if (cur === "globale") reView();
+}
+function gvOutcomeHtml(x){
+  if (!gvPast(x)) return "";
+  const o = (S.gvo || {})[x.k];
+  const body = !mkKey() && !(o && o.at) ? `<p class="muted">${L2("Serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza).", "You need the free Groq key (portal AI settings, in Knowledge).")}</p>`
+    : !o ? `<p class="muted" style="margin:0 0 10px">${L2("L'evento è già avvenuto. Aris cerca sul web cosa è stato detto e cosa ha comportato per i mercati.", "The event has already happened. Aris searches the web for what was said and what it led to.")}</p><button class="btn blue" onclick="gvOutcome()">📰 ${L2("Com'è andata?", "How did it go?")}</button>`
+    : o.busy ? `<div class="nwd-load"><i></i><i></i><i></i><span>${L2("Aris sta leggendo le notizie dopo l'evento…", "Aris is reading the news after the event…")}</span></div>`
+    : o.err ? `<p class="muted">${L2("Non disponibile adesso", "Not available right now")}: ${esc(o.err)}</p><button class="btn" onclick="gvOutcome()">${L2("Riprova", "Retry")}</button>`
+    : `${o.esito ? `<p class="gvo-esito" data-tr="ai"><b>${esc(o.esito)}</b></p>` : ""}
+       ${o.detto ? `<h5>${L2("Cosa hanno detto", "What was said")}</h5><p data-tr="ai">${esc(o.detto)}</p>` : ""}
+       ${o.reazione ? `<h5>${L2("Come hanno reagito i mercati", "How markets reacted")}</h5><p data-tr="ai">${esc(o.reazione)}</p>` : ""}
+       ${o.conseguenze ? `<h5>${L2("Cosa comporta adesso", "What it means now")}</h5><p data-tr="ai">${esc(o.conseguenze)}</p>` : ""}
+       ${o.punti.length ? `<h5>${L2("I numeri chiave", "Key figures")}</h5><ul class="nwd-pts" data-tr="ai">${o.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+       <small class="ai-web">${o.web ? "🌐 " + L2("cercato sul web", "searched the web") : ""}${o.fonti.length ? " · " + esc(o.fonti.join(", ")) : ""} · ${ago(o.at)} · <a href="#" onclick="event.preventDefault();gvOutcome()">${L2("aggiorna", "refresh")}</a></small>`;
+  return `<div class="mkd-sec nwd-ai gvo"><h4>📰 ${L2("Com'è andata", "How it went")}</h4>${body}</div>`;
+}
 async function gvChatSend(q){
   if (!GVD) return; const k = GVD.k, x = gvFind(k), key = mkKey(); q = String(q || "").trim(); if (!q || !key || !x) return;
   const C = GVD_CHAT[k] = GVD_CHAT[k] || { msgs: [], busy: false, err: "" }; if (C.busy) return;
@@ -1558,6 +1590,7 @@ function gvDraw0(){
     <p class="muted nwd-orig">${when}${x.orig && x.orig !== x.title ? ` · ${esc(x.orig)}` : ""}</p>
     <div class="mkd-stats">${stats.map(([a, b, i]) => `<div><small>${a}</small><b>${b}</b>${i ? `<i>${i}</i>` : ""}</div>`).join("")}</div>
     ${gvBrief(x) ? `<div class="mkd-sec"><h4>${L2("In breve", "In short")}</h4><p class="nwd-s" data-tr="src" style="margin:0">${esc(gvBrief(x))}</p></div>` : ""}
+    ${gvOutcomeHtml(x)}
     <div class="mkd-sec nwd-ai"><h4><span class="orb" style="--s:26px"><i></i></span> ${L2("Aris ti spiega", "Aris explains")}</h4>
       ${!mkKey() ? `<p class="muted">${L2("Serve la chiave Groq gratuita: inseriscila una volta nelle impostazioni AI del portale (Conoscenza).", "You need the free Groq key: enter it once in the portal's AI settings (Knowledge).")}</p>`
         : !ai ? `<p class="muted" style="margin:0 0 10px">${L2("Vuoi capire meglio questo evento? Aris ti spiega cos'è, perché conta e cosa può cambiare.", "Want to understand it better? Aris explains what it is, why it matters and what it could change.")}</p><button class="btn blue" onclick="gvExplain()">✨ ${L2("Approfondisci con Aris", "Dig deeper with Aris")}</button>`
@@ -3486,7 +3519,7 @@ function remCard(){
 /* ---------------- SINCRONIZZAZIONE PC <-> TELEFONO ----------------
    Le scelte della dashboard (nome, città, notizie, collegamenti, sveglie, promemoria, Google)
    vanno nel file dashboard.json della repository privata del portale. Vince la modifica più recente. */
-const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI", "pvWhy"];
+const SYNC_KEYS = ["brsug", "vid", "gev", "gvb", "del", "name", "city", "news", "links", "alarms", "rem", "gcal", "scOk", "home", "mkFav", "lang", "newsOrig", "anim", "prev", "plasma", "plI", "pvWhy", "gvo"];
 /* promemoria e sveglie si uniscono elemento per elemento (così un dispositivo nuovo non cancella quelli degli altri);
    le cancellazioni viaggiano come "del" {id: quando} */
 const SY_LIST = ["rem", "alarms", "vid"];
@@ -3762,7 +3795,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "108";
+const APP_V = "109";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
