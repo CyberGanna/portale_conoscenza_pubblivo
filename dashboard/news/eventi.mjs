@@ -79,10 +79,39 @@ for (let i = 0; i < 21; i++){
   await new Promise(s => setTimeout(s, 400));
 }
 console.log("risultati trimestrali", earnN);
+// grandi quotazioni in borsa (IPO) dal calendario Nasdaq: giorno del prezzo e debutto il giorno lavorativo dopo
+const usd = s => +String(s || "").replace(/[^0-9.]/g, "") || 0;
+const mdY = s => { const m = String(s || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : ""; };
+const nextBiz = day => { let d = new Date(day + "T12:00:00Z"); do d = new Date(+d + 864e5); while ([0, 6].includes(d.getUTCDay())); return d.toISOString().slice(0, 10); };
+let ipoN = 0;
+for (const mo of [0, 1]){
+  const d0 = new Date(); d0.setUTCDate(1); d0.setUTCMonth(d0.getUTCMonth() + mo);
+  const ym = d0.toISOString().slice(0, 7);
+  try {
+    const r = await fetch(`https://api.nasdaq.com/api/ipo/calendar?date=${ym}`, { headers: { ...UA, origin: "https://www.nasdaq.com", referer: "https://www.nasdaq.com/" }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok){ console.log("ipo", ym, "HTTP", r.status); continue; }
+    const D = (await r.json()).data || {};
+    const up = (((D.upcoming || {}).upcomingTable || {}).rows || []).map(x => ({ ...x, day: mdY(x.expectedPriceDate), priced: false }));
+    const pr = (((D.priced || {}).rows) || []).map(x => ({ ...x, day: mdY(x.pricedDate), priced: true }));
+    for (const x of [...up, ...pr]){
+      const val = usd(x.dollarValueOfSharesOffered) || usd(x.proposedSharePrice) * usd(x.sharesOffered);
+      if (!x.day || val < 1e9) continue; // solo le quotazioni da almeno 1 miliardo di dollari
+      const nm = String(x.companyName || "").replace(/,? (Inc|Corp|Corporation|PBC|Ltd|Limited|plc|Holdings?|Co)\.?$/gi, "").trim(), tk = x.proposedTickerSymbol || x.proposedSymbol || "";
+      const mld = (val / 1e9).toFixed(val >= 1e10 ? 0 : 1);
+      const deb = nextBiz(x.day);
+      if (Date.parse(deb) < Date.now() - 10 * 864e5) continue;
+      const base = { c: "USD", imp: val >= 5e9 ? 3 : 2, fc: x.proposedSharePrice ? `prezzo ${x.proposedSharePrice} $` : "", pv: "", ac: "", ipo: 1, sym: tk };
+      items.set(`IPO|${tk || nm}|P`, { ...base, id: `IPO|${tk || nm}|P`, d: x.day + "T22:00:00.000Z", allDay: true, t: `${nm} IPO pricing`, ti: `${nm}: fissato il prezzo della quotazione (IPO, ~${mld} mld $)`, when: "" });
+      items.set(`IPO|${tk || nm}|D`, { ...base, id: `IPO|${tk || nm}|D`, d: nyISO(deb, 9, 30), allDay: false, t: `${nm} IPO debut`, ti: `${nm} debutta in borsa${tk ? " (" + tk + ")" : ""} · IPO da ~${mld} mld $`, imp: val >= 5e9 ? 3 : 2, when: "primi scambi dopo l'apertura di Wall Street" });
+      ipoN++;
+    }
+  } catch (err){ console.log("ipo", ym, err.message); }
+}
+console.log("ipo grandi", ipoN);
 const trm = prev.tr || {};
-const todo = [...new Set([...items.values()].filter(x => !x.earn).map(x => x.t))].filter(t => !trm[t]).slice(0, 150);
+const todo = [...new Set([...items.values()].filter(x => !x.earn && !x.ipo).map(x => x.t))].filter(t => !trm[t]).slice(0, 150);
 let ok = 0; for (const t of todo){ const it = await tr(t); if (it){ trm[t] = it; ok++; } await new Promise(s => setTimeout(s, 250)); }
-for (const x of items.values()) if (!x.earn) x.ti = trm[x.t] || "";
+for (const x of items.values()) if (!x.earn && !x.ipo) x.ti = trm[x.t] || "";
 const list = [...items.values()].sort((a, b) => a.d.localeCompare(b.d));
 if (!list.length && !(prev.items || []).length){ console.log("nessun evento: non scrivo il file"); process.exit(0); }
 await writeFile(OUT, JSON.stringify({ updated: Date.now(), source: "ForexFactory", items: list, tr: trm }));
