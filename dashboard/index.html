@@ -1995,7 +1995,17 @@ function pvFix(p){
   p.op = op; p.mossa = m; p.tgt = m != null && p.px0 && op !== "fuori" ? p.px0 * (1 + m / 100) : null; return p;
 }
 function pvOp(p){ return p.op === "long" ? `<span class="pv-op long">🟢 COMPRA · long</span>` : p.op === "short" ? `<span class="pv-op short">🔴 VENDI ALLO SCOPERTO · short</span>` : `<span class="pv-op out">⚪ STAI FUORI</span>`; }
-function pvWhen(p){ const d = p.entro && /^\d{4}-\d\d-\d\d$/.test(p.entro) ? new Date(p.entro + "T12:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" }) : ""; return p.quando || (d ? "entro " + d : p.orizzonte || ""); }
+/* l'AI a volte sbaglia il giorno della settimana ("martedì 18 nov" quando il 18 è mercoledì): lo ricalcolo dalla data */
+const PV_MON = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+function pvFixWd(t){
+  return String(t || "").replace(/\b(luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica|lun|mar|mer|gio|ven|sab|dom)\.?\s+(\d{1,2})\s+(gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)[a-z]*\.?/gi, (all, wd, dd, mm) => {
+    const now = new Date(), mi = PV_MON.indexOf(mm.toLowerCase().slice(0, 3)); let d = new Date(now.getFullYear(), mi, +dd, 12);
+    if (d - now > 200 * 864e5) d = new Date(now.getFullYear() - 1, mi, +dd, 12); else if (now - d > 200 * 864e5) d = new Date(now.getFullYear() + 1, mi, +dd, 12);
+    const w = d.toLocaleDateString("it-IT", { weekday: wd.length > 4 ? "long" : "short" }).replace(".", "");
+    return all.replace(wd, wd[0] === wd[0].toUpperCase() ? w[0].toUpperCase() + w.slice(1) : w);
+  });
+}
+function pvWhen(p){ const d = p.entro && /^\d{4}-\d\d-\d\d$/.test(p.entro) ? new Date(p.entro + "T12:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" }) : ""; return pvFixWd(p.quando) || (d ? "entro " + d : p.orizzonte || ""); }
 function pvTgt(p){ const x = MK && MK.items.find(i => i.s === p.s); return p.tgt && x ? mkFmt({ ...x, px: p.tgt }) : ""; }
 function prevPlan(r){ // il riepilogo chiaro: cosa fare, di quanto, quando
   const P = (r.P || []).filter(p => p.op && p.op !== "fuori").sort((a, b) => b.prob - a.prob); if (!P.length) return "";
@@ -2055,7 +2065,7 @@ function pvCtx(g){
     `Previsione fatta il ${new Date(r.at).toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })} (${tz})`,
     `Operazione proposta: ${p.op === "long" ? "LONG (comprare)" : p.op === "short" ? "SHORT (vendere allo scoperto)" : "stare fuori"}; direzione ${p.dir}; probabilità ${p.prob}%`,
     p.mossa != null ? `Movimento atteso: ${mkPct(p.mossa)}${p.px0 ? ` dal prezzo ${p.px0}` : ""}${p.tgt ? `, obiettivo circa ${(+p.tgt).toPrecision(6)}` : ""}` : "",
-    p.quando ? `Quando secondo la previsione: ${p.quando}` : "", p.entro ? `Entro: ${p.entro}` : "", p.orizzonte ? `Orizzonte: ${p.orizzonte}` : "",
+    p.quando ? `Quando secondo la previsione: ${pvFixWd(p.quando)}` : "", p.entro ? `Entro: ${p.entro}` : "", p.orizzonte ? `Orizzonte: ${p.orizzonte}` : "",
     p.perche ? `Motivo dato: ${p.perche}` : "", (p.segnali || []).length ? `Segnali: ${p.segnali.join("; ")}` : "", p.rischio ? `Rischio indicato: ${p.rischio}` : "",
     e ? `Evento collegato: ${e.titolo}${e.day ? ` il ${e.day}` : ""}${e.time ? ` alle ${e.time} (${tz})` : ""}${e.where ? ` (${e.where})` : ""}. Perché conta: ${e.perche}${e.sopra ? `. Se esce meglio: ${e.sopra}` : ""}${e.sotto ? `. Se esce peggio: ${e.sotto}` : ""}` : "",
     r.sintesi ? `Quadro generale: ${r.sintesi}` : "",
@@ -3748,7 +3758,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "105";
+const APP_V = "106";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
