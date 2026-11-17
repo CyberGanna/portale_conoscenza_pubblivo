@@ -1349,12 +1349,14 @@ const GV_CAT = { economia: ["Economia", "#22c55e"], politica: ["Politica", "#f43
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 // importanza degli appuntamenti economici: decisioni sui tassi, inflazione e lavoro USA = 5, altri "alto impatto" = 4, medio = 3 (2 per valute minori), festività = 1
 const GV_TOP = /Federal Funds Rate|FOMC Statement|Main Refinancing Rate|Monetary Policy Statement|Official Bank Rate|SNB Policy Rate|BOJ Policy Rate|Policy Rate|Cash Rate|Non-Farm Employment Change|^CPI y\/y|^CPI m\/m|Core CPI m\/m|Advance GDP q\/q|ECB Press Conference|FOMC Press Conference/i;
-function gvFFimp(x){ if (x.imp === 1) return 1; if (x.imp === 3) return GV_TOP.test(x.t) && ["USD", "EUR", "CHF", "GBP", "JPY"].includes(x.c) ? 5 : 4; return ["USD", "EUR", "CHF"].includes(x.c) ? 3 : 2; }
+function gvFFimp(x){ if (x.earn) return ["NVDA", "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "TSLA"].includes(x.sym) ? 5 : x.imp === 3 ? 4 : 3; if (x.imp === 1) return 1; if (x.imp === 3) return GV_TOP.test(x.t) && ["USD", "EUR", "CHF", "GBP", "JPY"].includes(x.c) ? 5 : 4; return ["USD", "EUR", "CHF"].includes(x.c) ? 3 : 2; }
 function gvItems(){
   const out = [];
   for (const x of (EVS && EVS.items) || []){ const d = new Date(x.d);
-    out.push({ k: "ff:" + x.id, day: ymd(d), time: x.allDay ? "" : hhmm(d), title: x.ti || x.t, orig: x.t, cat: "economia", where: GV_CC[x.c] || x.c, imp: gvFFimp(x), extra: [x.ac ? `${L2("dato", "actual")} ${x.ac}` : "", x.fc ? `${L2("previsto", "forecast")} ${x.fc}` : "", x.pv ? `${L2("precedente", "previous")} ${x.pv}` : ""].filter(Boolean).join(" · "), src: "ff" }); }
-  for (const x of (S.gev && S.gev.items) || []) out.push({ k: "ai:" + x.titolo + x.data, day: x.data, time: x.ora || "", title: x.titolo, cat: GV_CAT[x.categoria] ? x.categoria : "altro", where: x.luogo || "", imp: Math.max(1, Math.min(5, S.gev.scale === 5 ? x.importanza || 3 : (x.importanza || 2) + 1)), extra: x.perche || "", src: "ai" });
+    out.push({ k: "ff:" + x.id, day: ymd(d), time: x.allDay ? "" : hhmm(d), title: x.ti || x.t, orig: x.t, cat: "economia", where: GV_CC[x.c] || x.c, imp: gvFFimp(x), extra: [x.when ? L2(x.when, x.when === "prima dell'apertura di Wall Street" ? "before the Wall Street open" : "after the Wall Street close") : "", x.ac ? `${L2("dato", "actual")} ${x.ac}` : "", x.fc ? `${L2("previsto", "forecast")} ${x.fc}` : "", x.pv ? `${L2("precedente", "previous")} ${x.pv}` : ""].filter(Boolean).join(" · "), src: "ff" }); }
+  /* i risultati trimestrali arrivano dal calendario ufficiale (Nasdaq): quelli trovati dall'AI per le stesse aziende li scarto, spesso avevano la data sbagliata */
+  const earnNames = ((EVS && EVS.items) || []).filter(x => x.earn).map(x => x.t.replace(/ earnings$/, "").split(/[ (]/)[0].toLowerCase()).filter(n => n.length > 2);
+  for (const x of (S.gev && S.gev.items) || []){ if (/risultat|trimestral|utili|earnings|conti/i.test(x.titolo) && earnNames.some(n => x.titolo.toLowerCase().includes(n))) continue; out.push({ k: "ai:" + x.titolo + x.data, day: x.data, time: x.ora || "", title: x.titolo, cat: GV_CAT[x.categoria] ? x.categoria : "altro", where: x.luogo || "", imp: Math.max(1, Math.min(5, S.gev.scale === 5 ? x.importanza || 3 : (x.importanza || 2) + 1)), extra: x.perche || "", src: "ai" }); }
   return out.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.day)).sort((a, b) => a.day.localeCompare(b.day) || (a.time || "00:00").localeCompare(b.time || "00:00"));
 }
 async function gvSearch(force){
@@ -1363,7 +1365,7 @@ async function gvSearch(force){
   if (!force && gvSearch.errAt && Date.now() - gvSearch.errAt < 15 * 60e3) return;
   gvBusy = true; gvErr = ""; if (cur === "globale") refresh();
   const today = new Date(), end = new Date(Date.now() + 14 * 864e5);
-  const sys = `Sei Aris, un ricercatore di eventi. Usa la ricerca sul web per trovare i grandi appuntamenti del mondo dal ${ymd(today)} al ${ymd(end)}: elezioni e votazioni, vertici internazionali (G7, G20, ONU, NATO, UE, COP), riunioni delle banche centrali (Fed, BCE, BNS, BoE, BoJ), risultati trimestrali delle grandi aziende (Nvidia, Apple, Microsoft…), grandi eventi di tecnologia e AI, scadenze politiche importanti, grandi eventi sportivi e culturali, e anche cose importanti in Svizzera e in Italia. Metti solo eventi con una data certa trovata sul web, niente inventato. Rispondi SOLO con JSON valido, senza testo prima o dopo: {"eventi":[{"data":"AAAA-MM-GG","ora":"HH:MM ora svizzera oppure vuoto","titolo":"titolo breve in italiano","categoria":"politica|economia|tecnologia|clima|sport|cultura|scienza|altro","luogo":"paese o città","importanza":"da 1 (minore) a 5 (fondamentale per il mondo o i mercati)","perche":"una frase: perché conta"}]} con 15-30 eventi.`;
+  const sys = `Sei Aris, un ricercatore di eventi. Usa la ricerca sul web per trovare i grandi appuntamenti del mondo dal ${ymd(today)} al ${ymd(end)}: elezioni e votazioni, vertici internazionali (G7, G20, ONU, NATO, UE, COP), riunioni delle banche centrali (Fed, BCE, BNS, BoE, BoJ), risultati trimestrali delle grandi aziende (Nvidia, Apple, Microsoft…), grandi eventi di tecnologia e AI, scadenze politiche importanti, grandi eventi sportivi e culturali, e anche cose importanti in Svizzera e in Italia. Metti solo eventi con una data certa trovata sul web, niente inventato. La data è quella in Svizzera; non scrivere mai il giorno della settimana nei testi. Rispondi SOLO con JSON valido, senza testo prima o dopo: {"eventi":[{"data":"AAAA-MM-GG","ora":"HH:MM ora svizzera oppure vuoto","titolo":"titolo breve in italiano","categoria":"politica|economia|tecnologia|clima|sport|cultura|scienza|altro","luogo":"paese o città","importanza":"da 1 (minore) a 5 (fondamentale per il mondo o i mercati)","perche":"una frase: perché conta"}]} con 15-30 eventi.`;
   try {
     const txt = await groqText(key, sys, [{ role: "user", content: `Trova gli eventi più importanti dal ${ymd(today)} al ${ymd(end)}.` }], 2500);
     if (!groqText.web) throw new Error(L2("la ricerca sul web non è disponibile adesso, riprova più tardi", "web search isn't available right now, try later"));
@@ -1449,6 +1451,7 @@ function gvOpen(k){
 }
 /* riassunto immediato di ogni evento, senza AI: per i dati economici una spiegazione fissa del tipo di dato */
 const GV_BRIEF = [
+  [/ earnings$/i, "Risultati trimestrali: l'azienda pubblica ricavi, utili e previsioni per i prossimi mesi. Se i numeri sono sopra o sotto le attese, il titolo (e a volte tutta la borsa) può muoversi molto, soprattutto nelle ore dopo l'annuncio."],
   [/FOMC|Federal Funds Rate|Fed Chair|Powell/i, "Riunione o comunicazione della Federal Reserve, la banca centrale degli Stati Uniti: decide i tassi d'interesse del dollaro. È tra gli appuntamenti che muovono di più tutti i mercati."],
   [/ECB|Main Refinancing|Lagarde|Deposit Facility/i, "Comunicazione della Banca Centrale Europea: decide i tassi d'interesse dell'euro. Influenza mutui, euro e borse europee."],
   [/BOE|Official Bank Rate|MPC|Bailey/i, "Comunicazione della Bank of England: decide i tassi d'interesse della sterlina."],
@@ -3745,7 +3748,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "104";
+const APP_V = "105";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
