@@ -678,7 +678,7 @@ html.no-anim .orbs i{animation:none !important}
 </svg>
 
 <script>
-window.addEventListener("error", e => { const d = document.getElementById("boot-err") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "boot-err" })); d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99;padding:12px;border-radius:12px;background:#3b0d16;color:#fecdd3;font:12px/1.4 system-ui"; d.textContent = "Errore: " + (e.message || e.error) + " — mandami uno screenshot"; });
+window.addEventListener("error", e => { const d = document.getElementById("boot-err") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "boot-err" })); d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99;padding:12px;border-radius:12px;background:#3b0d16;color:#fecdd3;font:12px/1.4 system-ui"; d.textContent = "Errore: " + (e.message || e.error) + " — mandami uno screenshot"; d.onclick = () => d.remove(); clearTimeout(d._t); d._t = setTimeout(() => d.remove(), 12000); });
 </script>
 <script src="sound.js"></script>
 <script>
@@ -1394,7 +1394,7 @@ function gvBigCal(y, m){
   for (let d = 1; d <= days; d++){
     const k = ymd(new Date(y, m, d)), ev = all.filter(x => x.day === k);
     cells += `<div class="bc-d ${k === today ? "today" : ""} ${k === selK ? "sel" : ""}" onclick="gvSel='${k}';reView()"><span class="bc-n">${d}</span>
-      ${ev.slice(0, 3).map(e => `<span class="bc-e" style="--c:${GV_COL[e.imp]}" onclick="event.stopPropagation();gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}'))">${e.time ? `<b>${e.time}</b> ` : ""}${esc(e.title)}</span>`).join("")}${ev.length > 3 ? `<span class="bc-more">+${ev.length - 3} ${EN ? "more" : "altri"}</span>` : ""}</div>`;
+      ${ev.slice(0, 3).map(e => `<span class="bc-e" style="--c:${GV_COL[e.imp]}" onclick="event.stopPropagation();gvOpen(decodeURIComponent('${jq(e.k)}'))">${e.time ? `<b>${e.time}</b> ` : ""}${esc(e.title)}</span>`).join("")}${ev.length > 3 ? `<span class="bc-more">+${ev.length - 3} ${EN ? "more" : "altri"}</span>` : ""}</div>`;
   }
   const tail = (7 - (off + days) % 7) % 7; for (let i = 0; i < tail; i++) cells += `<div class="bc-d x"></div>`;
   return `<div class="bigcal">${cells}</div>`;
@@ -1411,7 +1411,7 @@ function gvMiniCal(y, m){
 function gvRows(list, empty){
   if (!list.length) return `<div class="muted" style="font-size:13px;padding:6px 0">${empty}</div>`;
   return `<div class="rows">${list.map(e => { const c = GV_CAT[e.cat] || GV_CAT.altro, col = GV_COL[e.imp];
-    return `<button class="r ev-r" onclick="gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}'))"><div class="ic ev-ic" style="background:${col}22;color:${col}">${ico(e.src === "ff" ? "chart" : "globe")}</div>
+    return `<button class="r ev-r" onclick="gvOpen(decodeURIComponent('${jq(e.k)}'))"><div class="ic ev-ic" style="background:${col}22;color:${col}">${ico(e.src === "ff" ? "chart" : "globe")}</div>
       <div class="t"><b>${esc(e.title)}</b><small>${e.time || L2("Tutto il giorno", "All day")} · <span style="color:${col};font-weight:600">${L2(...GV_LAB[e.imp])}</span> · ${L2(c[0], I18N[c[0]] || c[0])}${e.where ? " · " + esc(e.where) : ""}${e.extra ? " · " + esc(e.extra) : ""}</small></div></button>`; }).join("")}</div>`;
 }
 function gvView(){
@@ -1775,7 +1775,7 @@ function vdCard(v){
         ${a.punti.length ? `<h5>${L2("Le cose chiave", "Key points")}</h5><ul>${a.punti.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
         ${a.idee.length ? `<h5>${L2("Come potresti metterlo in pratica", "How you could use it")}</h5>${a.idee.map(i => `<div class="vd-idea"><b>💡 ${esc(i.idea)}</b><span>${esc(i.come)}</span></div>`).join("")}` : ""}
         ${a.primo ? `<div class="vd-first"><b>${L2("Primo passo", "First step")}</b> ${esc(a.primo)}</div>` : ""}
-        <p class="muted" style="font-size:12px">${v.brain ? `🧠 ${L2("Salvato nel Cervello", "Saved to your Brain")} · <a href="#cervello" onclick="event.preventDefault();BR.open='${esc(v.brain)}';go('cervello')">${L2("apri la nota", "open the note")}</a>` : v.berr ? `🧠 ${L2("Non salvato nel Cervello", "Not saved to the Brain")}: ${esc(v.berr)}` : ""}</p>`
+        <p class="muted" style="font-size:12px">${v.brain ? `🧠 ${L2("Salvato nel Cervello", "Saved to your Brain")} · <a href="#cervello" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(v.brain)}');go('cervello')">${L2("apri la nota", "open the note")}</a>` : v.berr ? `🧠 ${L2("Non salvato nel Cervello", "Not saved to the Brain")}: ${esc(v.berr)}` : ""}</p>`
         : v.aerr ? `<p class="muted">${L2("Aris non ha risposto", "Aris didn't answer")}: ${esc(v.aerr)}</p>` : ""}
       ${v.st === "nowf" ? `<div class="soon">⚙️ <span>${L2("Per ascoltare i video la dashboard deve aggiungere una piccola automazione gratuita nella tua repository privata, ma la chiave GitHub non ha il permesso <b>Workflows</b>. Aggiungilo alla chiave (Read and write) e premi Riprova.", "To listen to videos the dashboard adds a small free automation to your private repository, but the GitHub key lacks the <b>Workflows</b> permission. Add it (Read and write) and press Retry.")}${VD_SETUP ? ` <small class="muted">(${esc(VD_SETUP)})</small>` : ""}</span></div>` : ""}
       ${v.derr && !v.tr ? `<p class="muted" style="font-size:12px">${L2("Non sono riuscito a scaricare l'audio (Instagram a volte lo blocca). Uso la didascalia; se vuoi, aggiungi tu due righe.", "Couldn't download the audio (Instagram sometimes blocks it). Using the caption; add a short note if you like.")}</p>` : ""}
@@ -2033,7 +2033,7 @@ function pvArr(o, keys){
 const pvNorm = t => String(t || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
 function prevEvents(r){
   return `<div class="pv-evs">${r.E.map((e, ei) => { const d = e.day ? new Date(e.day + "T12:00") : null;
-    return `<div class="pv-ev"><div class="pv-evh">${d ? `<span class="wv-date"><span><small>${d.toLocaleDateString("it-IT", { month: "short" })}</small><b>${d.getDate()}</b></span></span>` : ""}<div><b ${e.k ? `onclick="go('globale');setTimeout(()=>gvOpen(decodeURIComponent('${encodeURIComponent(e.k)}')),80)" style="cursor:pointer"` : ""}>${esc(e.titolo)}</b><small>${[e.time, e.where, "importanza " + "●".repeat(Math.min(5, e.imp))].filter(Boolean).map(esc).join(" · ")}</small><p>${esc(e.perche)}</p></div></div>
+    return `<div class="pv-ev"><div class="pv-evh">${d ? `<span class="wv-date"><span><small>${d.toLocaleDateString("it-IT", { month: "short" })}</small><b>${d.getDate()}</b></span></span>` : ""}<div><b ${e.k ? `onclick="go('globale');setTimeout(()=>gvOpen(decodeURIComponent('${jq(e.k)}')),80)" style="cursor:pointer"` : ""}>${esc(e.titolo)}</b><small>${[e.time, e.where, "importanza " + "●".repeat(Math.min(5, e.imp))].filter(Boolean).map(esc).join(" · ")}</small><p>${esc(e.perche)}</p></div></div>
       ${e.sopra || e.sotto ? `<div class="pv-sc">${e.sopra ? `<div><b>⬆ Se esce meglio del previsto</b><span>${esc(e.sopra)}</span></div>` : ""}${e.sotto ? `<div><b>⬇ Se esce peggio</b><span>${esc(e.sotto)}</span></div>` : ""}</div>` : ""}
       <div class="pv-imps">${e.impatti.map(p => { const col = p.dir === "rialzo" ? "#22c55e" : p.dir === "ribasso" ? "#f43f5e" : "#94a3b8";
         return `<div class="pv-imp" style="--pc:${col}" onclick="pvOpen(${r.at},'${esc(p.s)}',${ei})"><span class="pv-dir">${p.dir === "rialzo" ? "▲" : p.dir === "ribasso" ? "▼" : "◆"}</span><b>${esc(p.n)}</b><em>${p.op && p.op !== "fuori" ? (p.op === "long" ? "COMPRA " : "SHORT ") + (p.mossa != null ? mkPct(p.mossa) + " · " : "") : ""}${p.prob}%</em><small>${esc(p.perche || "")}</small>${prevCheck(p, r.at)}</div>`; }).join("")}</div></div>`; }).join("")}</div>`;
@@ -3070,9 +3070,9 @@ function brSugPanel(){
     ${!mkKey() ? `<p class="muted" style="font-size:12.5px">Serve una chiave AI (Groq o di riserva in Impostazioni).</p>` : ""}
     ${BR_SUG_BUSY && !sg ? `<div class="br-sug-load"><i class="pv-spin"></i> Cerco temi in comune, idee utili ai progetti e passi successivi…</div>` : ""}
     ${sg && sg.azioni.length ? `<div class="br-act"><b>Come agire</b><ol>${sg.azioni.map(a => `<li>${esc(a)}</li>`).join("")}</ol></div>` : ""}
-    ${L.length ? `<div class="br-sl">${L.map((x, i) => `<div class="br-si ${BR.hl === x.a + "|" + x.b ? "on" : ""}" onmouseenter="BR.hl='${esc(x.a + "|" + x.b)}';brGraph()" onclick="BR.hl='${esc(x.a + "|" + x.b)}';brGraph();document.querySelectorAll('.br-si').forEach(e=>e.classList.remove('on'));this.classList.add('on')">
+    ${L.length ? `<div class="br-sl">${L.map((x, i) => `<div class="br-si ${BR.hl === x.a + "|" + x.b ? "on" : ""}" onmouseenter="BR.hl=decodeURIComponent('${jq(x.a + "|" + x.b)}');brGraph()" onclick="BR.hl=decodeURIComponent('${jq(x.a + "|" + x.b)}');brGraph();document.querySelectorAll('.br-si').forEach(e=>e.classList.remove('on'));this.classList.add('on')">
         <div class="br-sp"><span>${T(x.a)}</span><em>↔</em><span>${T(x.b)}</span></div>${x.perche ? `<p>${esc(x.perche)}</p>` : ""}${x.azione ? `<small>👉 ${esc(x.azione)}</small>` : ""}
-        <div class="br-sb"><button class="btn blue" onclick="event.stopPropagation();brConnect(${i})">Collega</button><button class="btn" onclick="event.stopPropagation();BR.open=decodeURIComponent('${encodeURIComponent(x.a)}');BR.tab='elenco';reView()">Apri</button></div></div>`).join("")}</div>`
+        <div class="br-sb"><button class="btn blue" onclick="event.stopPropagation();brConnect(${i})">Collega</button><button class="btn" onclick="event.stopPropagation();BR.open=decodeURIComponent('${jq(x.a)}');BR.tab='elenco';reView()">Apri</button></div></div>`).join("")}</div>`
       : sg && !BR_SUG_BUSY ? `<p class="muted" style="font-size:12.5px">Per ora è tutto collegato. Premi ↻ per cercare ancora.</p>` : ""}
     <small class="muted" style="display:block;margin-top:8px;font-size:11px">Le linee tratteggiate viola nel grafo sono i collegamenti suggeriti. "Collega" aggiunge il link [[…]] nella nota.</small></div>`;
 }
@@ -3172,7 +3172,7 @@ function brView(){
   const note = open ? `<div class="glass c br-note"><div class="hd"><div><h3>${esc(brTitle(open))}</h3><small><span class="br-dot" style="background:${BR_COL[brType(open.path)]}"></span>${esc(open.path.slice(BR_DIR.length))}</small></div>
         <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" title="Elimina la nota" onclick="brDel(this)">${ico("trash")}</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
       ${BR.edit ? `<textarea id="br-ta" class="input br-ta">${esc(open.text)}</textarea><small class="muted">Scrivi [[nome]] per collegare un'altra nota. Markdown: # titolo, **grassetto**, - elenco, - [ ] da fare.</small>`
-        : `${brType(open.path) === "idee" ? brSumBox(open) + `<div class="br-redo ${brThin(open) ? "thin" : ""}">${brThin(open) ? "<span>Questa idea è spiegata poco (forse il video non si è sentito bene).</span>" : ""}<button class="btn" ${BR_REDO[open.path] ? "disabled" : ""} onclick="brRedo(decodeURIComponent('${encodeURIComponent(open.path)}'))">${BR_REDO[open.path] ? "Aris la sta riscrivendo…" : "✨ Rifalla più dettagliata"}</button></div>` : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
+        : `${brType(open.path) === "idee" ? brSumBox(open) + `<div class="br-redo ${brThin(open) ? "thin" : ""}">${brThin(open) ? "<span>Questa idea è spiegata poco (forse il video non si è sentito bene).</span>" : ""}<button class="btn" ${BR_REDO[open.path] ? "disabled" : ""} onclick="brRedo(decodeURIComponent('${jq(open.path)}'))">${BR_REDO[open.path] ? "Aris la sta riscrivendo…" : "✨ Rifalla più dettagliata"}</button></div>` : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
   const list = BR_TYPES.map(([k, t, col]) => { const L = shown.filter(f => brType(f.path) === k); if (!L.length) return "";
     return `<div class="br-grp"><div class="br-h"><span class="br-dot" style="background:${col}"></span>${t} <span class="muted">${L.length}</span></div>${L.slice().reverse().map(f => `<button class="br-it ${open && open.path === f.path ? "on" : ""}" onclick="BR.open=decodeURIComponent('${jq(f.path)}');BR.edit=false;reView()"><b>${esc(brTitle(f))}</b><small>${esc(f.text.replace(/^#.*$/m, "").replace(/[#*\[\]>`-]/g, "").trim().slice(0, 90))}</small></button>`).join("")}</div>`; }).join("");
   return head("Cervello", BR.busy ? "Sincronizzo con GitHub…" : `${files.length} note · ${esc(c.repo)}/cervello`) + ai + `
@@ -3762,7 +3762,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "107";
+const APP_V = "108";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
