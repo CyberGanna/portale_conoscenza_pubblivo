@@ -604,6 +604,7 @@ html.no-anim .orbs i{animation:none !important}
   .sheet{background:rgba(5,6,8,.5);backdrop-filter:blur(34px) saturate(150%);-webkit-backdrop-filter:blur(34px) saturate(150%)}
 }
 .gvo-tag{color:#38bdf8;font-weight:600} .gvo .gvo-esito{margin:0 0 6px;font-size:15px} .gvo{border-color:rgba(56,189,248,.35)}
+.rm-repw{display:flex;flex-direction:column;gap:8px} #rm-rep{display:flex;flex-direction:column;gap:10px} .rm-wd .chip{min-width:38px;justify-content:center} .rm-n{display:flex;align-items:center;gap:10px;font-size:14px} .rm-n b{min-width:22px;text-align:center;font-size:17px} .rm-rep{color:#a78bfa}
 </style>
 </head>
 <body>
@@ -3421,6 +3422,43 @@ const remAt = r => new Date(r.at);
 const remFmt = r => { const d = remAt(r), t = new Date(), tm = new Date(); tm.setDate(t.getDate() + 1);
   const day = dayKey(d) === dayKey(t) ? "Oggi" : dayKey(d) === dayKey(tm) ? "Domani" : cap(GIORNI[d.getDay()]) + " " + d.getDate() + " " + MESI[d.getMonth()];
   return day + " alle " + hhmm(d); };
+/* promemoria che si ripetono: r.rep = {k:"day"} ogni giorno · {k:"wd", d:[1,3,5]} giorni scelti (0=dom) · {k:"n", n:3} ogni N giorni */
+const RM_WD = ["D", "L", "M", "M", "G", "V", "S"], RM_WDN = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"], RM_ORD = [1, 2, 3, 4, 5, 6, 0];
+let RMF = { k: "", d: [], n: 2 };
+function remStep(r, d){
+  const x = new Date(d), rp = r.rep;
+  if (rp.k === "n") { x.setDate(x.getDate() + Math.max(1, rp.n | 0)); return x; }
+  x.setDate(x.getDate() + 1);
+  if (rp.k === "wd" && rp.d && rp.d.length) for (let i = 0; i < 7 && !rp.d.includes(x.getDay()); i++) x.setDate(x.getDate() + 1);
+  return x;
+}
+const remIso = d => `${dayKey(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:00`;
+/* porta il promemoria alla prossima volta dopo "dopo" */
+function remAdvance(r, dopo){ let d = remAt(r), g = 0; do { d = remStep(r, d); } while (d <= dopo && ++g < 4000); r.at = remIso(d); r.told = false; }
+function remRepTxt(rp){
+  if (!rp) return "";
+  if (rp.k === "day") return "ogni giorno";
+  if (rp.k === "n") return `ogni ${rp.n} giorni`;
+  const d = [...(rp.d || [])].sort((a, b) => RM_ORD.indexOf(a) - RM_ORD.indexOf(b));
+  if (d.length === 5 && !d.includes(0) && !d.includes(6)) return "dal lunedì al venerdì";
+  if (d.length === 2 && d.includes(0) && d.includes(6)) return "nel weekend";
+  return "ogni " + d.map(i => RM_WDN[i]).join(", ");
+}
+function remRule(rp){
+  const B = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+  if (!rp) return null;
+  if (rp.k === "day") return ["RRULE:FREQ=DAILY"];
+  if (rp.k === "n") return ["RRULE:FREQ=DAILY;INTERVAL=" + rp.n];
+  return ["RRULE:FREQ=WEEKLY;BYDAY=" + rp.d.map(i => B[i]).join(",")];
+}
+function remRepHtml(){
+  const k = RMF.k, opt = (v, t) => `<button type="button" class="chip ${k === v ? "on" : ""}" onclick="RMF.k='${v}';remRepDraw()">${t}</button>`;
+  return `<div class="chips">${opt("", "Una volta")}${opt("day", "Ogni giorno")}${opt("wd", "Giorni scelti")}${opt("n", "Ogni tot giorni")}</div>
+    ${k === "wd" ? `<div class="chips rm-wd">${RM_ORD.map(i => `<button type="button" class="chip ${RMF.d.includes(i) ? "on" : ""}" onclick="remWd(${i})">${RM_WD[i]}</button>`).join("")}</div>` : ""}
+    ${k === "n" ? `<div class="rm-n"><span>Ogni</span><button type="button" class="round" onclick="RMF.n=Math.max(2,RMF.n-1);remRepDraw()">−</button><b>${RMF.n}</b><button type="button" class="round" onclick="RMF.n=Math.min(60,RMF.n+1);remRepDraw()">+</button><span>giorni</span></div>` : ""}`;
+}
+function remRepDraw(){ const el = $("#rm-rep"); if (el) el.innerHTML = remRepHtml(); }
+function remWd(i){ RMF.d = RMF.d.includes(i) ? RMF.d.filter(x => x !== i) : [...RMF.d, i]; remRepDraw(); }
 function alarmGo(i){
   const a = S.alarms[i]; if (!a) return;
   if (!isPhone() || !/iPhone|iPad/.test(navigator.userAgent)) return toast("Le sveglie si creano dall'iPhone: apri la dashboard sul telefono");
@@ -3455,7 +3493,7 @@ async function remGoogle(r){
   if (!gcOk()) return null;
   const s = remAt(r), e = new Date(s.getTime() + 15 * 6e4), tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const f = d => `${dayKey(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:00`;
-  const j = await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify({ summary: "🔔 " + r.t, description: "Promemoria dalla Mia Dashboard", start: { dateTime: f(s), timeZone: tz }, end: { dateTime: f(e), timeZone: tz }, reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 0 }] }, colorId: "6" }) });
+  const j = await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify({ summary: "🔔 " + r.t, description: "Promemoria dalla Mia Dashboard", start: { dateTime: f(s), timeZone: tz }, end: { dateTime: f(e), timeZone: tz }, reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 0 }] }, colorId: "6", ...(r.rep ? { recurrence: remRule(r.rep) } : {}) }) });
   return j && j.id;
 }
 // promemoria salvati quando Google non era collegato: appena torna il permesso li mando su Google Calendar
@@ -3469,7 +3507,12 @@ async function remPushPending(){
 async function remAdd(){
   const t = $("#rm-t").value.trim(), d = $("#rm-d").value, h = $("#rm-h").value;
   if (!t || !d || !h) return toast("Scrivi cosa, il giorno e l'ora");
+  if (RMF.k === "wd" && !RMF.d.length) return toast("Scegli almeno un giorno");
   const r = { id: Date.now().toString(36), t, at: `${d}T${h}:00`, done: false };
+  if (RMF.k) r.rep = RMF.k === "wd" ? { k: "wd", d: [...RMF.d] } : RMF.k === "n" ? { k: "n", n: RMF.n } : { k: "day" };
+  /* giorni scelti: parte dal primo giorno giusto a partire da quello indicato */
+  if (r.rep && r.rep.k === "wd" && !r.rep.d.includes(remAt(r).getDay())){ const x = remAt(r); while (!r.rep.d.includes(x.getDay())) x.setDate(x.getDate() + 1); r.at = remIso(x); }
+  RMF = { k: "", d: [], n: 2 };
   S.rem.push(r); S.rem.sort((a, b) => remAt(a) - remAt(b)); save();
   try { r.gid = await remGoogle(r); save(); toast(r.gid ? "Promemoria salvato: ti avvisa anche Google Calendar" : "Promemoria salvato"); if (r.gid) gcLoad(true); }
   catch (e){ toast(e.message === "scaduto" ? "Salvato qui; ricollega Google per la notifica sul telefono" : "Salvato qui; Google non ha risposto"); }
@@ -3480,11 +3523,14 @@ async function remDel(id){
   const r = S.rem.find(x => x.id === id); S.del = S.del || {}; S.del[id] = Date.now(); S.rem = S.rem.filter(x => x.id !== id); save(); reView();
   if (r && r.gid && gcOk()) try { await gcApi("calendars/primary/events/" + encodeURIComponent(r.gid), { method: "DELETE" }); gcLoad(true); } catch {}
 }
-function remDone(id){ const r = S.rem.find(x => x.id === id); if (r){ r.done = !r.done; save(); reView(); } }
+function remDone(id){ const r = S.rem.find(x => x.id === id); if (!r) return;
+  if (r.rep && !r.done){ remAdvance(r, new Date(Math.max(Date.now(), remAt(r).getTime()))); toast("Fatto ✓ Prossima volta: " + remFmt(r)); }
+  else r.done = !r.done;
+  save(); reView(); }
 function remRows(list){
   return `<div class="rows">${list.map(r => { const late = !r.done && remAt(r) < new Date();
     return `<div class="r ${r.done ? "rm-done" : ""}"><button class="rm-chk ${r.done ? "on" : ""}" onclick="remDone('${r.id}')" title="Fatto">${r.done ? "✓" : ""}</button>
-      <div class="t"><b>${esc(r.t)}</b><small style="${late ? "color:var(--red)" : ""}">${remFmt(r)}${r.gid ? " · in Google Calendar" : r.done ? "" : " · <span style=\"color:var(--orange)\">solo qui: ricollega Google</span>"}</small></div>
+      <div class="t"><b>${esc(r.t)}</b><small style="${late ? "color:var(--red)" : ""}">${remFmt(r)}${r.rep ? ` · <span class="rm-rep">🔁 ${remRepTxt(r.rep)}</span>` : ""}${r.gid ? " · in Google Calendar" : r.done ? "" : " · <span style=\"color:var(--orange)\">solo qui: ricollega Google</span>"}</small></div>
       <button class="round" onclick="remDel('${r.id}')" title="Elimina">${ico("trash")}</button></div>`; }).join("")}</div>`;
 }
 function remView(){
@@ -3494,6 +3540,7 @@ function remView(){
     <div class="glass c"><div class="hd"><div><h3>Nuovo promemoria</h3><small>Cosa, quando</small></div></div>
       <div class="gc-f"><input class="input" id="rm-t" placeholder="Es. chiamare il dentista" onkeydown="if(event.key==='Enter')remAdd()">
         <div class="gc-row"><input class="input" id="rm-d" type="date" value="${dayKey(t)}"><input class="input" id="rm-h" type="time" value="${String(t.getHours()).padStart(2, "0")}:00"></div>
+        <div class="rm-repw"><small class="muted">Ripeti</small><div id="rm-rep">${remRepHtml()}</div></div>
         <button class="btn blue" onclick="remAdd()">${ico("bell")} Salva promemoria</button></div></div>
     ${!gcOk() ? `<div class="soon">${ico("cal")}<span>Senza Google Calendar il promemoria ti avvisa solo se la dashboard è aperta. ${gcId() ? `<a href="#" onclick="event.preventDefault();gcLogin(false)" style="color:var(--blue-2)">Collega Google</a> e arriva come notifica sull'iPhone.` : `Inserisci il Client ID in <a href="#" onclick="event.preventDefault();go('impostazioni')" style="color:var(--blue-2)">Impostazioni</a>.`}</span></div>` : ""}
     <div class="glass c"><div class="hd"><div><h3>Da fare</h3><small>${open.length ? open.length + " promemoria" : "Niente in sospeso"}</small></div></div>${open.length ? remRows(open) : `<div class="muted" style="font-size:13px">Tutto fatto.</div>`}</div>
@@ -3502,6 +3549,7 @@ function remView(){
 /* avviso mentre la dashboard è aperta */
 function remTick(){
   const now = Date.now(); let ch = false;
+  for (const r of S.rem) if (r.rep && !r.done && remAt(r) <= now && (now - remAt(r) >= (r.told ? 36e5 : 6 * 36e5))){ remAdvance(r, new Date(now)); ch = true; }
   for (const r of S.rem) if (!r.done && !r.told && remAt(r) <= now && now - remAt(r) < 6 * 36e5){
     r.told = true; ch = true; toast("🔔 " + r.t);
     try { if ("Notification" in window && Notification.permission === "granted") navigator.serviceWorker?.ready.then(reg => reg.showNotification("Promemoria", { body: r.t, icon: "icons/icon-192.png", tag: r.id })).catch(() => new Notification("Promemoria", { body: r.t })); } catch {}
@@ -3795,7 +3843,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "109";
+const APP_V = "110";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
