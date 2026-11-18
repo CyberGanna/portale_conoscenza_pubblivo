@@ -275,7 +275,7 @@ button.ev-r{width:100%;text-align:left;background:none;border:0;border-top:1px s
 @media (max-width:560px){.hm-g{grid-template-columns:1fr} .hm-g>span{padding-top:0}}
 .mk-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mk-r,.mk-fav{cursor:pointer} .mk-r:hover .mk-n b,.mk-fav:hover b{color:var(--blue-2)}
-html.noscroll,html.noscroll body{overflow:hidden} html.in-portal #sheet-body{overflow:hidden !important}
+html.noscroll,html.noscroll body{overflow:hidden} html.in-portal #sheet-body{overflow:hidden !important} @media (pointer:coarse){html.in-portal,html.in-portal body{overflow:hidden;overscroll-behavior:none}}
 #mk-modal{position:fixed;inset:0;z-index:60;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
 #mk-modal.open,#nw-modal.open,#gv-modal.open,#pv-modal.open{display:flex} #pv-modal{z-index:60 !important}  #gv-modal{z-index:61 !important}
 #nw-modal,#gv-modal,#pv-modal{position:fixed;inset:0;z-index:62;background:rgba(3,6,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
@@ -2849,8 +2849,10 @@ function portalSync(){
     else if (host.style.display === "none" && id === "conoscenza") portalVer(true);
     /* sul telefono, quando si apre la tastiera iOS fa scorrere la pagina per mostrare il campo: il portale scappava in alto e restava il nero.
        Tengo la pagina ferma e faccio stare il portale solo nella parte visibile sopra la tastiera. */
-    if (isPhone()){ const sb = document.getElementById("sheet-body"); if (sb && sb.scrollTop) sb.scrollTop = 0; if (scrollX || scrollY) scrollTo(0, 0); }
-    const r = slot.getBoundingClientRect(), vv = isPhone() && window.visualViewport;
+    /* stesso problema sull'iPad (tastiera a schermo): vale per tutti i dispositivi touch */
+    const touch = isPhone() || navigator.maxTouchPoints > 1;
+    if (touch){ const sb = document.getElementById("sheet-body"); if (sb && sb.scrollTop) sb.scrollTop = 0; const pb = document.getElementById("pc-body"); if (pb && pb.scrollTop && !isPhone()) pb.scrollTop = 0; if (scrollX || scrollY) scrollTo(0, 0); }
+    const r = slot.getBoundingClientRect(), vv = touch && window.visualViewport;
     let top = r.top, h = r.height;
     if (vv){ const vt = vv.offsetTop, vb = vv.offsetTop + vv.height; top = Math.max(r.top, vt); h = Math.max(120, Math.min(r.bottom, vb) - top); }
     Object.assign(host.style, { display: "block", left: r.left + "px", top: top + "px", width: r.width + "px", height: h + "px", borderRadius: getComputedStyle(slot).borderRadius });
@@ -3843,7 +3845,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "110";
+const APP_V = "111";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
