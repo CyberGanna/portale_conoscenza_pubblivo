@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const OUT = fileURLToPath(new URL("./news.json", import.meta.url));
 const RAW = fileURLToPath(new URL("./raw.json", import.meta.url));
+const PAROLE = fileURLToPath(new URL("./parole.json", import.meta.url)); // quante testate usano ogni nome, giorno per giorno (per capire cosa "esplode" oggi)
 const DAYS = 3;          // memoria: oggi, ieri, l'altro ieri. Il resto viene cancellato
 const PER_DAY = 350;     // notizie tenute per ogni giorno
 const TZ = "Europe/Zurich";
@@ -225,7 +226,59 @@ function similar(a, b){
   return n >= 3 && sh / Math.min(wa, wb) >= 0.55;
 }
 
-export function cluster(items){
+/* ---------- storie che esplodono (es. "GTA" il giorno dell'uscita) ----------
+   Lo stesso fatto raccontato con titoli molto diversi ("GTA 6 launches…", "Grand Theft Auto VI released…")
+   finiva in tanti gruppetti piccoli e spariva dalla classifica. Qui trovo i NOMI PROPRI che oggi usano
+   molte più testate del solito e unisco i gruppi che parlano di quel nome. */
+const alias = t => t.replace(/grand theft auto/gi, "GTA");
+const atok = w => norm(w).replace(/[^a-z0-9]/g, "");
+const AN_STOP = new Set(("the and for with from new how why what who live update updates video watch breaking exclusive analysis opinion " +
+  "gov governor president presidente premier minister ministro senate senator congress house state states city north south east west san santa saint earth world " +
+  "democratic democrat democrats republican republicans party partito government governo court police army day week year today monday tuesday wednesday thursday friday saturday sunday " +
+  "january february march april may june july august september october november december gennaio febbraio marzo aprile maggio giugno luglio agosto settembre ottobre novembre dicembre").split(" "));
+export function nameCounts(items){
+  const src = new Map(), cap = new Map();
+  for (const it of items){
+    const words = alias(it.t).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const long = words.slice(1).filter(w => w.length >= 4), sentence = long.length >= 3 && long.filter(w => /^\p{Ll}/u.test(w)).length / long.length >= 0.3;
+    const seen = new Set();
+    words.forEach((w, i) => {
+      const k = atok(w); if (k.length < 3 || /^\d+$/.test(k) || STOP.has(k) || AN_STOP.has(k)) return;
+      if (!seen.has(k)){ seen.add(k); if (!src.has(k)) src.set(k, new Set()); src.get(k).add(norm(it.src)); }
+      if (sentence && i > 0){ const c = cap.get(k) || [0, 0]; c[1]++; if (/^\p{Lu}/u.test(w)) c[0]++; cap.set(k, c); }
+    });
+  }
+  const out = {};
+  for (const [k, s] of src){ const c = cap.get(k) || [0, 0]; if (s.size >= 3) out[k] = [s.size, c[0], c[1]]; }
+  return out;
+}
+/* nome "esploso" oggi: almeno 10 testate, quasi sempre scritto maiuscolo (quindi un nome, non "launches"),
+   e molte più testate del solito; se ieri era già esploso basta che ne parlino ancora in tante */
+export function anchorsFor(day, counts, past, yAnchors){
+  const out = new Set(), days = Object.keys(past).filter(d => d < day).sort().slice(-14);
+  if (!days.length) return out;
+  for (const [k, [n, cU, cT]] of Object.entries(counts)){
+    if (n < 10 || cT < 4 || cU / cT < 0.8) continue;
+    // nomi di paesi e capi di stato no: "Syria" o "Trump" unirebbero fatti diversi
+    const K = k[0].toUpperCase() + k.slice(1); if (Object.values(CC_RX).some(r => r.test(K) || r.test(k.toUpperCase()))) continue;
+    const hist = days.map(d => (past[d][k] || [0])[0]).sort((a, b) => a - b), med = hist[Math.floor(hist.length / 2)];
+    if (n >= 2.5 * med + 2 || (yAnchors && yAnchors.includes(k))) out.add(k);
+  }
+  return out;
+}
+function mergeAnchors(groups, anchors){
+  if (!anchors || !anchors.size) return groups;
+  const has = (g, a) => g.items.filter(it => alias(it.t).split(/[^\p{L}\p{N}]+/u).some(w => atok(w) === a)).length >= Math.max(1, g.items.length * 0.5);
+  for (const a of anchors){
+    const gs = groups.filter(g => has(g, a)); if (gs.length < 2) continue;
+    gs.sort((x, y) => y.items.length - x.items.length);
+    const main = gs[0]; for (const g of gs.slice(1)){ main.items.push(...g.items); g.items = []; }
+    main.anchor = a;
+  }
+  return groups.filter(g => g.items.length);
+}
+
+export function cluster(items, anchors){
   items.sort((a, b) => b.d - a.d);
   for (const it of items) it.k = tokens(it.t);
   const df = new Map(); for (const it of items) for (const w of it.k) df.set(w, (df.get(w) || 0) + 1);
@@ -236,11 +289,13 @@ export function cluster(items){
     if (!g){ g = { items: [], k: it.k }; groups.push(g); }
     g.items.push(it);
   }
-  return groups.map(g => {
+  return mergeAnchors(groups, anchors).map(g => {
     const srcs = []; const seen = new Set();
     for (const it of g.items) if (!seen.has(norm(it.src))){ seen.add(norm(it.src)); srcs.push([it.src, it.u]); }
     // titolo: la versione con descrizione più ricca, preferendo una testata diretta a Google News
-    const lead = [...g.items].sort((a, b) => (b.s.length > 40) - (a.s.length > 40) || (a.feed.n === "Google News") - (b.feed.n === "Google News") || a.d - b.d)[0];
+    // gruppo unito per nome: il titolo lo prende dal sottogruppo più ampio (il primo elemento), non dal più dettagliato a caso
+    const pool = g.anchor ? g.items.filter(it => alias(it.t).split(/[^\p{L}\p{N}]+/u).some(w => atok(w) === g.anchor)) : g.items;
+    const lead = [...(pool.length ? pool : g.items)].sort((a, b) => (b.s.length > 40) - (a.s.length > 40) || (a.feed.n === "Google News") - (b.feed.n === "Google News") || a.d - b.d)[0];
     // categoria e paese "a maggioranza", così un titolo fuori tema non sporca tutto il gruppo
     const vc = {}, vp = {};
     for (const it of g.items){ const c = classify(it.t + " " + it.s, it.feed); c.cats.forEach(x => vc[x] = (vc[x] || 0) + 1); c.cc.forEach(x => vp[x] = (vp[x] || 0) + 1); }
@@ -287,13 +342,22 @@ async function main(){
   const byUrl = new Map();
   for (const it of [...raw, ...got]) if (keep.has(dayOf(it.d))) byUrl.set(it.u, it);
   const items = [...byUrl.values()];
+  // conteggio dei nomi per giorno, tenuto 21 giorni: serve a capire cosa oggi "esplode" rispetto al solito
+  let P = { days: {}, anchors: {} }; try { P = JSON.parse(await readFile(PAROLE, "utf8")); } catch {}
+  for (const day of keep) P.days[day] = nameCounts(items.filter(i => dayOf(i.d) === day));
+  const ord = [...keep].sort();
+  for (const day of ord){ const y = dayOf(Date.parse(day + "T12:00:00Z") - 864e5); P.anchors[day] = [...anchorsFor(day, P.days[day], P.days, P.anchors[y])]; }
+  const old = dayOf(now - 21 * 864e5);
+  for (const d of Object.keys(P.days)) if (d < old){ delete P.days[d]; delete P.anchors[d]; }
+  console.log("Nomi del giorno:", ord.map(d => d + " " + P.anchors[d].join(",")).join(" | "));
   // ogni giorno ha la sua classifica
   const out = [];
   for (const day of keep){
-    const g = cluster(items.filter(i => dayOf(i.d) === day));
+    const g = cluster(items.filter(i => dayOf(i.d) === day), new Set(P.anchors[day]));
     g.sort((a, b) => b.n - a.n || b.d - a.d);
     for (const x of g.slice(0, PER_DAY)) out.push({ ...x, day });
   }
+  await writeFile(PAROLE, JSON.stringify(P));
   await writeFile(RAW, JSON.stringify(items.map(({ t, u, d, s, src, srcUrl, feed }) => ({ t, u, d, s, src, srcUrl, f: feed.u }))));
   const data = { updated: new Date(now).toISOString(), days: [...keep], feeds: FEEDS.length, ok: report.filter(r => r.startsWith("ok")).length, items: out };
   await writeFile(OUT, JSON.stringify(data));

@@ -1370,7 +1370,7 @@ async function gvSearch(force){
   if (!force && gvSearch.errAt && Date.now() - gvSearch.errAt < 15 * 60e3) return;
   gvBusy = true; gvErr = ""; if (cur === "globale") refresh();
   const today = new Date(), end = new Date(Date.now() + 14 * 864e5);
-  const sys = `Sei Aris, un ricercatore di eventi. Usa la ricerca sul web per trovare i grandi appuntamenti del mondo dal ${ymd(today)} al ${ymd(end)}: elezioni e votazioni, vertici internazionali (G7, G20, ONU, NATO, UE, COP), riunioni delle banche centrali (Fed, BCE, BNS, BoE, BoJ), risultati trimestrali delle grandi aziende (Nvidia, Apple, Microsoft…), grandi quotazioni in borsa (IPO), grandi eventi di tecnologia e AI, scadenze politiche importanti, grandi eventi sportivi e culturali, e anche cose importanti in Svizzera e in Italia. Metti solo eventi con una data certa trovata sul web, niente inventato. La data è quella in Svizzera; non scrivere mai il giorno della settimana nei testi. Rispondi SOLO con JSON valido, senza testo prima o dopo: {"eventi":[{"data":"AAAA-MM-GG","ora":"HH:MM ora svizzera oppure vuoto","titolo":"titolo breve in italiano","categoria":"politica|economia|tecnologia|clima|sport|cultura|scienza|altro","luogo":"paese o città","importanza":"da 1 (minore) a 5 (fondamentale per il mondo o i mercati)","perche":"una frase: perché conta"}]} con 15-30 eventi.`;
+  const sys = `Sei Aris, un ricercatore di eventi. Usa la ricerca sul web per trovare i grandi appuntamenti del mondo dal ${ymd(today)} al ${ymd(end)}: elezioni e votazioni, vertici internazionali (G7, G20, ONU, NATO, UE, COP), riunioni delle banche centrali (Fed, BCE, BNS, BoE, BoJ), risultati trimestrali delle grandi aziende (Nvidia, Apple, Microsoft…), grandi quotazioni in borsa (IPO), grandi eventi di tecnologia e AI, grandi uscite attese in tutto il mondo (videogiochi come GTA, film, serie, nuovi iPhone o console), scadenze politiche importanti, grandi eventi sportivi e culturali, e anche cose importanti in Svizzera e in Italia. Metti solo eventi con una data certa trovata sul web, niente inventato. La data è quella in Svizzera; non scrivere mai il giorno della settimana nei testi. Rispondi SOLO con JSON valido, senza testo prima o dopo: {"eventi":[{"data":"AAAA-MM-GG","ora":"HH:MM ora svizzera oppure vuoto","titolo":"titolo breve in italiano","categoria":"politica|economia|tecnologia|clima|sport|cultura|scienza|altro","luogo":"paese o città","importanza":"da 1 (minore) a 5 (fondamentale per il mondo o i mercati)","perche":"una frase: perché conta"}]} con 15-30 eventi.`;
   try {
     const txt = await groqText(key, sys, [{ role: "user", content: `Trova gli eventi più importanti dal ${ymd(today)} al ${ymd(end)}.` }], 2500);
     if (!groqText.web) throw new Error(L2("la ricerca sul web non è disponibile adesso, riprova più tardi", "web search isn't available right now, try later"));
@@ -3845,7 +3845,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "111";
+const APP_V = "112";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
