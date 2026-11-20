@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: split asimmetrico su PC (manichino grande a sinistra, colonna di lavoro a destra); telefono a colonna unica con barra in basso.
+/* Layout: split asimmetrico su PC (tavola outfit grande a sinistra, colonna di lavoro a destra); telefono a colonna unica con barra in basso.
    Regole taste-skill: niente Inter, niente nero puro, un solo accento poco saturo, ombre a diffusione tinte, etichette sotto le schede, movimento a molla. */
 :root{
   --bg:#f9fafb; --card:#ffffff; --tile:#f3f4f6; --fg:#18181b; --fg2:#3f3f46; --muted:#71717a; --line:#e7e9ee;
@@ -51,7 +51,15 @@ main{grid-area:main;overflow:auto;background:var(--bg)}
 .hint{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55;max-width:65ch}
 
 .stage{grid-area:stage;position:relative;min-width:0;min-height:0;margin:14px 0 14px 14px;border-radius:36px;overflow:hidden;
-  background:radial-gradient(80% 60% at 38% 35%,#ffffff 0%,#f1f2f5 62%,#e8e9ee 100%);border:1px solid var(--line)}
+  background:#f5f4f1;border:1px solid var(--line)}
+#scene.dragging{cursor:grabbing}
+.boardempty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px;color:var(--muted);font-size:14px;line-height:1.5;pointer-events:none}
+.boardempty b{color:var(--fg);font-size:17px;font-weight:600;letter-spacing:-.01em}
+.tidy{position:absolute;right:18px;top:18px;font:500 12px var(--f-ui);color:var(--fg);background:rgba(255,255,255,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);padding:7px 13px;border-radius:999px;cursor:pointer}
+.sizecard{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.sizecard .k{font-size:12px;color:var(--muted)}
+.sizecard .v{font-size:28px;font-weight:650;letter-spacing:-.02em;font-family:var(--f-mono)}
+.sizecard .h{font-size:13px;color:var(--fg2)}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .hud{position:absolute;left:22px;top:22px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .hud .size{font-size:12px;font-weight:600;color:var(--fg);background:rgba(255,255,255,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);padding:6px 12px;border-radius:999px;align-self:flex-start;font-family:var(--f-mono);letter-spacing:-.01em}
@@ -229,9 +237,10 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
   </nav>
 
   <div class="stage">
-    <canvas id="scene" aria-label="Il tuo manichino con i capi che hai scelto"></canvas>
-    <div class="hud"><span class="size" id="hudSize">–</span><span class="meas" id="hudMeas"></span></div>
-    <div class="stagehint">Tocca un capo per provarlo addosso</div>
+    <canvas id="scene" aria-label="Il tuo outfit, con i capi che hai scelto"></canvas>
+    <div class="boardempty" id="boardEmpty" hidden><b>Componi il tuo outfit</b>Tocca i capi nell'armadio e li vedi qui, uno accanto all'altro.</div>
+    <div class="stagehint">Trascina i capi per sistemarli</div>
+    <button class="tidy" id="btnTidy" type="button">Riordina</button>
   </div>
 
   <main>
@@ -264,8 +273,9 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
     </section>
 
     <section class="pane" id="pane-profilo" hidden>
+      <div class="sizecard"><span class="k">La tua taglia stimata</span><span class="v" id="profSize">–</span><span class="h">Utile quando compri online. Calcolata dalle misure qui sotto.</span></div>
       <h2>Le tue misure</h2>
-      <p class="hint">Il manichino prende le tue proporzioni da qui. Misura petto e fianchi nel punto più largo, la vita nel punto più stretto. Se lasci vuoto, stimo io da altezza e peso.</p>
+      <p class="hint">Misura petto e fianchi nel punto più largo, la vita nel punto più stretto. Se lasci vuoto, stimo io da altezza e peso.</p>
       <div class="seg" id="sexSeg">
         <button type="button" data-v="uomo" aria-pressed="true">Uomo</button>
         <button type="button" data-v="donna" aria-pressed="false">Donna</button>
@@ -277,35 +287,6 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
         <div class="field"><label for="m-vita">Vita (cm)</label><input id="m-vita" type="number" min="50" max="160" inputmode="numeric" placeholder="auto"></div>
         <div class="field"><label for="m-fianchi">Fianchi (cm)</label><input id="m-fianchi" type="number" min="60" max="170" inputmode="numeric" placeholder="auto"></div>
         <div class="field"><label for="m-spalle">Spalle (cm)</label><input id="m-spalle" type="number" min="30" max="65" inputmode="numeric" placeholder="auto"></div>
-      </div>
-      <div class="sep" style="height:1px;background:var(--line)"></div>
-      <h2>Il tuo aspetto</h2>
-      <p class="hint">Fai una foto del tuo corpo intero e i vestiti verranno provati su di te invece che sul manichino. Oppure aggiungi solo il viso sulla testa del manichino.</p>
-      <div class="seg" id="modeSeg">
-        <button type="button" data-v="manichino" aria-pressed="true">Manichino</button>
-        <button type="button" data-v="foto" aria-pressed="false">La mia foto</button>
-      </div>
-      <div class="look">
-        <div class="lookcard">
-          <div class="ph" id="bodyPh">Nessuna foto del corpo</div>
-          <span class="t">Foto del corpo</span>
-          <div class="btns"><button class="btn" type="button" id="bodyCam">Scatta</button><button class="btn ghost" type="button" id="bodyGal">Galleria</button></div>
-        </div>
-        <div class="lookcard">
-          <div class="ph face" id="facePh">Nessun selfie</div>
-          <span class="t">Foto del viso</span>
-          <div class="btns"><button class="btn" type="button" id="faceCam">Selfie</button><button class="btn ghost" type="button" id="faceGal">Galleria</button></div>
-          <div class="sliders" id="faceSl" hidden>
-            <label for="faceZoom">Grandezza</label><input class="range" id="faceZoom" type="range" min="80" max="220" value="120">
-            <label for="faceDy">Su e giù</label><input class="range" id="faceDy" type="range" min="-40" max="40" value="0">
-          </div>
-        </div>
-      </div>
-      <div class="note">Per la foto del corpo: in piedi, di fronte, braccia un po' staccate dai fianchi, davanti a un muro liscio, dalla testa ai piedi. Fatti aiutare da qualcuno o usa il timer. La foto resta solo su questo dispositivo.</div>
-      <h2>Sfondo</h2>
-      <div class="seg" id="bgSeg">
-        <button type="button" data-v="muro" aria-pressed="true">Muro grigio</button>
-        <button type="button" data-v="studio" aria-pressed="false">Studio bianco</button>
       </div>
     </section>
   </main>
@@ -319,10 +300,6 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
 
 <input id="fileInput" type="file" accept="image/*" hidden>
 <input id="camInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="bodyCamIn" type="file" accept="image/*" capture="environment" hidden>
-<input id="bodyGalIn" type="file" accept="image/*" hidden>
-<input id="faceCamIn" type="file" accept="image/*" capture="user" hidden>
-<input id="faceGalIn" type="file" accept="image/*" hidden>
 
 <div class="sheetwrap" id="addSheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
@@ -358,14 +335,19 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
     <div class="grab"></div>
     <h2 id="edTitle">Nuovo capo <button type="button" id="edX" aria-label="Chiudi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
     <canvas id="editCanvas"></canvas>
-    <div class="busy" id="edBusy" hidden aria-label="Tolgo lo sfondo"></div>
-    <p class="hint">Se resta un pezzo di sfondo (per esempio tra le gambe dei pantaloni), toccalo sull'immagine.</p>
-    <label class="lab2" for="edTol">Quanto sfondo togliere</label>
-    <input class="range" id="edTol" type="range" min="8" max="140" value="48">
-    <div class="row">
-      <button class="btn ghost" id="edReset" type="button">Ricomincia</button>
-      <button class="btn ghost" id="edKeep" type="button" aria-pressed="false">Tieni lo sfondo</button>
+    <div class="busy" id="edBusy" hidden></div>
+    <p class="hint" id="edStatus" role="status"></p>
+    <span class="lab2">Come togliere lo sfondo</span>
+    <div class="seg" id="edBgSeg">
+      <button type="button" data-v="ai" aria-pressed="false">AI</button>
+      <button type="button" data-v="classico" aria-pressed="true">Classico</button>
+      <button type="button" data-v="nessuno" aria-pressed="false">Tieni lo sfondo</button>
     </div>
+    <div id="edTolWrap" style="display:flex;flex-direction:column;gap:8px">
+      <label class="lab2" for="edTol">Quanto sfondo togliere</label>
+      <input class="range" id="edTol" type="range" min="8" max="140" value="48">
+    </div>
+    <div class="row"><button class="btn ghost" id="edReset" type="button">Annulla i tocchi</button></div>
     <div id="edItem" style="display:flex;flex-direction:column;gap:14px">
     <label class="lab2" for="edName">Nome del capo</label>
     <input class="input" id="edName" placeholder="Es. Maglia nera">
@@ -416,7 +398,7 @@ async function dbDel(s,id){ mem[s].delete(id); const d=await openDB(); if(!d) re
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 const state={ body:{sesso:'uomo',altezza:178,peso:74,petto:null,vita:null,fianchi:null,spalle:null},
-  items:[], outfits:[], wearing:{maglia:null,strato:null,sotto:null,scarpe:null}, filter:'tutti', query:'', outfitFilter:'tutti', view:'armadio' };
+  items:[], outfits:[], pos:{}, wearing:{maglia:null,strato:null,sotto:null,scarpe:null}, filter:'tutti', query:'', outfitFilter:'tutti', view:'armadio' };
 
 /* ---------- Colori ---------- */
 const PALETTE=[['nero',[20,20,22]],['antracite',[55,58,64]],['grigio',[128,130,136]],['grigio chiaro',[190,192,196]],['bianco',[240,240,236]],
@@ -439,101 +421,54 @@ function sizeLabel(d){ const it=Math.round(d.m?d.petto/2:d.petto/2-3), e=it%2?it
   const L=d.m?{44:'XS',46:'S',48:'M',50:'L',52:'XL',54:'XXL',56:'3XL'}:{38:'XS',40:'S',42:'M',44:'L',46:'XL',48:'XXL'};
   return `Taglia stimata IT ${e}${L[e]?' · '+L[e]:''}`; }
 
-/* ---------- Manichino 2D: sagoma frontale costruita dalle misure, capi sovrapposti ---------- */
-function keysFn(keys){ const n=keys.length;
-  return y=>{ if(y<=keys[0][0]) return keys[0][1]; if(y>=keys[n-1][0]) return keys[n-1][1];
-    let i=0; while(i<n-2&&keys[i+1][0]<y) i++;
-    const p0=keys[Math.max(0,i-1)],p1=keys[i],p2=keys[i+1],p3=keys[Math.min(n-1,i+2)], h=p2[0]-p1[0], t=(y-p1[0])/h, t2=t*t, t3=t2*t;
-    const m1=(p2[1]-p0[1])/((p2[0]-p0[0])||1)*h, m2=(p3[1]-p1[1])/((p3[0]-p1[0])||1)*h;
-    return (2*t3-3*t2+1)*p1[1]+(t3-2*t2+t)*m1+(-2*t3+3*t2)*p2[1]+(t3-t2)*m2; }; }
+/* ---------- Composizione outfit: solo i capi, disposti come una foto dall'alto (niente persona) ---------- */
+function updateSize(){ const d=bodyDims(state.body); document.getElementById('profSize').textContent=sizeLabel(d).replace('Taglia stimata ',''); }
 const canvas=document.getElementById('scene'); const ctx=canvas.getContext('2d');
-let dims=null,P=null;
-function buildAvatar(){
-  const d=dims=bodyDims(state.body), H=d.H, m=d.m;
-  const rh=halfW(d.fianchi,0.62), rw=halfW(d.vita,0.62), rc=halfW(d.petto,0.6), rs=Math.max(rc*1.05,(d.spalle/100)/2*0.9), fit=Math.sqrt(d.bmi/22.5);
-  const torso=keysFn([[0.425*H,rh*0.5],[0.455*H,rh*0.8],[0.49*H,rh*0.97],[0.52*H,rh],[0.555*H,rh*0.96],[0.60*H,rw],[0.655*H,(rw+rc)/2],[0.71*H,rc],[0.755*H,rc*1.02],[0.79*H,rs*0.97],[0.812*H,rs*0.86],[0.832*H,rs*0.52],[0.85*H,0.046*H],[0.875*H,0.036*H]]);
-  const t=rh*0.55;
-  const leg=keysFn([[0.02*H,t*0.3],[0.06*H,t*0.3],[0.11*H,t*0.42],[0.18*H,t*0.54],[0.23*H,t*0.5],[0.275*H,t*0.46],[0.31*H,t*0.56],[0.39*H,t*0.8],[0.46*H,t*0.98],[0.51*H,t*0.95]]);
-  const ra=0.021*H*fit*(m?1:0.88);
-  const arm=keysFn([[0,ra*1.1],[0.05*H,ra*1.12],[0.12*H,ra*0.98],[0.18*H,ra*0.84],[0.22*H,ra*0.95],[0.30*H,ra*0.64],[0.335*H,ra*0.56]]);
-  P={torso,leg,arm,rh,rc,rs,t,ra,H};
-  document.getElementById('hudSize').textContent=sizeLabel(d);
-  document.getElementById('hudMeas').textContent=`${state.body.altezza} cm · ${state.body.peso} kg`;
-  draw();
-}
 const imgCache=new Map();
 function loadImg(src){ if(imgCache.has(src)) return imgCache.get(src); const p=new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; }); imgCache.set(src,p); return p; }
 function resize(){ const r=canvas.getBoundingClientRect(); if(!r.width||!r.height) return; const dpr=Math.min(2,window.devicePixelRatio||1);
   const w=Math.round(r.width*dpr), h=Math.round(r.height*dpr); if(canvas.width!==w||canvas.height!==h){ canvas.width=w; canvas.height=h; draw(); } }
 new ResizeObserver(resize).observe(canvas);
 const dressAll=()=>draw();
-let drawTok=0;
-async function draw(){ if(!P||!canvas.width) return; const tok=++drawTok;
-  const imgs={}; for(const s of SLOTS){ const it=state.items.find(i=>i.id===state.wearing[s]); if(it){ try{ imgs[s]=[it,await loadImg(it.img)]; }catch(e){} } }
-  if(look.mode==='foto'&&look.body){ try{ imgs._body=await loadImg(look.body.img); }catch(e){} }
-  if(look.face){ try{ imgs._face=await loadImg(look.face.img); }catch(e){} }
-  if(tok!==drawTok) return; paint(ctx,canvas.width,canvas.height,imgs); }
-/* sfondo: muro grigio intonacato con zoccolino e pavimento, oppure studio bianco */
-let noiseTex=null;
-function getNoise(){ if(noiseTex) return noiseTex; const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); const id=g.createImageData(256,256);
-  for(let i=0;i<id.data.length;i+=4){ const v=128+(Math.random()-.5)*70; id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=26; } g.putImageData(id,0,0);
-  for(let k=0;k<40;k++){ const x=Math.random()*256,y=Math.random()*256,r=10+Math.random()*50, gr=g.createRadialGradient(x,y,0,x,y,r); const dark=Math.random()<.5;
-    gr.addColorStop(0,dark?'rgba(60,60,58,.05)':'rgba(255,255,255,.06)'); gr.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=gr; g.fillRect(0,0,256,256); }
-  return noiseTex=c; }
-function drawBg(g,W,Hc,floorY,cx){
-  if(look.bg==='studio'){ const gr=g.createRadialGradient(cx,Hc*.4,10,cx,Hc*.45,Math.max(W,Hc)*.8); gr.addColorStop(0,'#ffffff'); gr.addColorStop(.65,'#f0f1f4'); gr.addColorStop(1,'#e3e4e9'); g.fillStyle=gr; g.fillRect(0,0,W,Hc); return; }
-  const wall=g.createLinearGradient(0,0,0,floorY); wall.addColorStop(0,'#a3a29e'); wall.addColorStop(.55,'#b6b5b1'); wall.addColorStop(1,'#aeada9');
-  g.fillStyle=wall; g.fillRect(0,0,W,floorY);
-  const pat=g.createPattern(getNoise(),'repeat'); g.fillStyle=pat; g.fillRect(0,0,W,floorY);
-  const bb=Math.max(4,Hc*0.014); g.fillStyle='#c9c7c2'; g.fillRect(0,floorY-bb,W,bb); g.fillStyle='rgba(24,24,27,.12)'; g.fillRect(0,floorY,W,Math.max(1,bb*.25));
-  const fl=g.createLinearGradient(0,floorY,0,Hc); fl.addColorStop(0,'#8f8d88'); fl.addColorStop(1,'#a19f9a'); g.fillStyle=fl; g.fillRect(0,floorY,W,Hc-floorY);
-  g.globalAlpha=.6; g.fillStyle=pat; g.fillRect(0,floorY,W,Hc-floorY); g.globalAlpha=1;
-  const light=g.createRadialGradient(cx,Hc*.38,10,cx,Hc*.42,Math.max(W,Hc)*.55); light.addColorStop(0,'rgba(255,253,248,.38)'); light.addColorStop(1,'rgba(255,253,248,0)'); g.fillStyle=light; g.fillRect(0,0,W,Hc);
-  const vig=g.createRadialGradient(cx,Hc*.5,Math.min(W,Hc)*.35,cx,Hc*.5,Math.max(W,Hc)*.85); vig.addColorStop(0,'rgba(24,24,27,0)'); vig.addColorStop(1,'rgba(24,24,27,.28)'); g.fillStyle=vig; g.fillRect(0,0,W,Hc);
+let drawTok=0, lastImgs={}, hits=[];
+async function loadWorn(){ const imgs={}; for(const s of SLOTS){ const it=state.items.find(i=>i.id===state.wearing[s]); if(it){ try{ imgs[s]=[it,await loadImg(it.img)]; }catch(e){} } } return imgs; }
+async function draw(){ if(!canvas.width) return; const tok=++drawTok; const imgs=await loadWorn(); if(tok!==drawTok) return; lastImgs=imgs; hits=paint(ctx,canvas.width,canvas.height,imgs);
+  document.getElementById('boardEmpty').hidden=SLOTS.some(s=>imgs[s]); }
+/* riquadri in una tavola 1 x 1.25, come le composizioni delle app di armadio */
+const UH=1.25;
+function boardLayout(has){
+  const n=SLOTS.filter(s=>has[s]).length;
+  if(n===1){ const s=SLOTS.find(s=>has[s]); return {[s]:s==='scarpe'?[0.12,0.38,0.76,0.5]:[0.1,0.1,0.8,1.05]}; }
+  if(has.strato&&has.maglia) return { strato:[0.02,0.03,0.54,0.6], maglia:[0.44,0.06,0.5,0.44], sotto:[0.5,0.47,0.46,0.74], scarpe:[0.04,0.84,0.44,0.34] };
+  const top=has.strato?'strato':'maglia';
+  if(has.sotto) return { [top]:[0.03,0.04,0.58,0.6], sotto:[0.5,0.38,0.46,0.82], scarpe:[0.05,0.84,0.42,0.34] };
+  return { [top]:[0.1,0.04,0.8,0.74], scarpe:[0.22,0.84,0.56,0.34] };
 }
 function paint(g,W,Hc,imgs){
-  const H=P.H, figH=H*1.0, s=(Hc*0.86)/figH, cx=W/2, base=Hc*0.94;
-  const X=x=>cx+x*s, Y=y=>base-y*s;
-  g.clearRect(0,0,W,Hc); drawBg(g,W,Hc,Y(0.12*H),cx);
-  // ombra a terra
-  const sg=g.createRadialGradient(cx,base,2,cx,base,P.rh*2.6*s); sg.addColorStop(0,'rgba(24,24,27,.16)'); sg.addColorStop(1,'rgba(24,24,27,0)');
-  g.save(); g.translate(cx,base); g.scale(1,0.18); g.translate(-cx,-base); g.fillStyle=sg; g.beginPath(); g.arc(cx,base,P.rh*2.6*s,0,7); g.fill(); g.restore();
-  if(imgs._body){ const im=imgs._body, h=H*s, w=im.width*h/im.height;
-    g.save(); g.shadowColor='rgba(24,24,27,.22)'; g.shadowBlur=22*(W/600); g.shadowOffsetX=6*(W/600); g.drawImage(im,X(0)-look.body.cx*w,Y(H),w,h); g.restore(); }
-  else {
-  // sagoma
-  const parts=[]; const body={addPath:p=>parts.push(p)};
-  const side=(fn,y0,y1,ox=0,steps=60)=>{ const pts=[]; for(let i=0;i<=steps;i++){ const y=y0+(y1-y0)*i/steps; pts.push([y,fn(y)]); } return pts; };
-  const poly=(pts,ox)=>{ const p=new Path2D(); pts.forEach(([y,w],i)=>{ const x=X(ox+w), yy=Y(y); i?p.lineTo(x,yy):p.moveTo(x,yy); }); [...pts].reverse().forEach(([y,w])=>p.lineTo(X(ox-w),Y(y))); p.closePath(); return p; };
-  body.addPath(poly(side(P.torso,0.425*H,0.875*H),0));
-  for(const sd of [-1,1]) body.addPath(poly(side(P.leg,0.02*H,0.51*H),sd*P.rh*0.46));
-  for(const sd of [-1,1]){ // braccia leggermente aperte
-    const sx=sd*P.rs*0.86, sy=0.795*H, a=0.12, dx=Math.sin(a)*sd, dy=-Math.cos(a), px=Math.cos(a), py=Math.sin(a)*sd; const p=new Path2D(); const N=40, L=[],R=[];
-    for(let i=0;i<=N;i++){ const tt=0.335*H*i/N, w=P.arm(tt); const cxm=sx+dx*tt, cym=sy+dy*tt; L.push([cxm-px*w,cym-py*w]); R.push([cxm+px*w,cym+py*w]); }
-    L.forEach(([x,y],i)=>i?p.lineTo(X(x),Y(y)):p.moveTo(X(x),Y(y))); [...R].reverse().forEach(([x,y])=>p.lineTo(X(x),Y(y))); p.closePath(); body.addPath(p);
-    const hx=sx+dx*0.37*H, hy=sy+dy*0.37*H; const hand=new Path2D(); hand.ellipse(X(hx),Y(hy),0.016*H*s,0.04*H*s,-a*sd,0,7); body.addPath(hand);
-    const sh=new Path2D(); sh.arc(X(sx),Y(sy-0.01*H),P.ra*1.2*s,0,7); body.addPath(sh); }
-  const neck=new Path2D(); neck.rect(X(-0.036*H),Y(0.915*H),0.072*H*s,0.06*H*s); body.addPath(neck);
-  const head=new Path2D(); head.ellipse(X(0),Y(0.94*H),0.047*H*s,0.06*H*s,0,0,7); body.addPath(head);
-  for(const sd of [-1,1]){ const f=new Path2D(); f.ellipse(X(sd*P.rh*0.5),Y(0.018*H),P.t*0.42*s,0.02*H*s,0,0,7); body.addPath(f); }
-  const grad=g.createLinearGradient(X(-P.rs*1.4),0,X(P.rs*1.4),0); grad.addColorStop(0,'#dedcd7'); grad.addColorStop(0.45,'#f4f2ee'); grad.addColorStop(1,'#d8d6d1');
-  g.save(); g.shadowColor='rgba(24,24,27,.12)'; g.shadowBlur=24*(W/600); g.shadowOffsetY=6*(W/600); g.restore();
-  { const oc=document.createElement('canvas'); oc.width=W; oc.height=Hc; const og=oc.getContext('2d'); og.fillStyle=grad; for(const pp of parts) og.fill(pp);
-    g.save(); g.shadowColor='rgba(24,24,27,.14)'; g.shadowBlur=24*(W/600); g.shadowOffsetY=6*(W/600); g.drawImage(oc,0,0); g.restore(); }
-  if(imgs._face){ const hx=X(0), hy=Y(0.94*H), rx=0.047*H*s, ry=0.06*H*s, D=2*ry*look.face.zoom;
-    g.save(); g.beginPath(); g.ellipse(hx,hy,rx,ry,0,0,7); g.clip(); g.drawImage(imgs._face,hx-D/2,hy-D/2+look.face.dy*ry,D,D);
-    const v=g.createRadialGradient(hx,hy,ry*0.55,hx,hy,ry*1.02); v.addColorStop(0,'rgba(24,24,27,0)'); v.addColorStop(1,'rgba(24,24,27,.22)'); g.fillStyle=v; g.fillRect(hx-rx,hy-ry,rx*2,ry*2); g.restore(); }
-  }
-  // capi: rettangolo di destinazione in metri
-  const put=(img,xMid,yTop,yBot,maxW,minW)=>{ const h=(yTop-yBot); let w=h*img.width/img.height; w=Math.max(minW,Math.min(maxW,w));
-    g.save(); g.shadowColor='rgba(24,24,27,.18)'; g.shadowBlur=14*(W/600); g.shadowOffsetY=5*(W/600); g.drawImage(img,X(xMid-w/2),Y(yTop),w*s,h*s); g.restore(); };
-  const R2=P.rh*2, S2=P.rs*2;
-  if(imgs.sotto){ const [it,img]=imgs.sotto; const shorts=it.cat==='pantaloncini'; put(img,0,0.575*H,(shorts?0.30:0.03)*H,R2*1.35,R2*1.0); }
-  if(imgs.scarpe){ const [,img]=imgs.scarpe; const w=P.rh*0.95, h=Math.min(w*img.height/img.width,0.08*H);
-    for(const sd of [-1,1]){ const fx=sd*P.rh*0.5; g.save(); g.shadowColor='rgba(24,24,27,.18)'; g.shadowBlur=8*(W/600); g.translate(X(fx),Y(h)); if(sd<0) g.scale(-1,1); g.drawImage(img,-w*0.35*s,0,w*s,h*s); g.restore(); } }
-  if(imgs.maglia){ const [it,img]=imgs.maglia; const long=CATS[it.cat].sleeve>0.2; put(img,0,0.862*H,0.47*H,S2*(long?2.0:1.7),S2*1.05); }
-  if(imgs.strato){ const [it,img]=imgs.strato; put(img,0,0.868*H,(CATS[it.cat].long?0.40:0.45)*H,S2*2.1,S2*1.15); }
+  g.clearRect(0,0,W,Hc);
+  const bg=g.createRadialGradient(W*.42,Hc*.38,10,W*.5,Hc*.5,Math.max(W,Hc)*.8); bg.addColorStop(0,'#fbfaf8'); bg.addColorStop(1,'#efeeea'); g.fillStyle=bg; g.fillRect(0,0,W,Hc);
+  const has={}; for(const s of SLOTS) has[s]=!!imgs[s]; const L=boardLayout(has);
+  const pad=Math.min(W,Hc)*0.07, u=Math.min((W-pad*2)/1,(Hc-pad*2)/UH), ox=(W-u)/2, oy=(Hc-u*UH)/2;
+  const out=[]; const k=W/600;
+  for(const s of ['sotto','scarpe','maglia','strato']){ if(!imgs[s]||!L[s]) continue; const [it,img]=imgs[s]; const [rx,ry,rw,rh]=L[s];
+    const off=state.pos[s]||{dx:0,dy:0};
+    const sc=Math.min(rw*u/img.width,rh*u/img.height), w=img.width*sc, h=img.height*sc;
+    const x=ox+(rx+rw/2+off.dx)*u-w/2, y=oy+(ry+rh/2+off.dy)*u-h/2;
+    g.save(); g.shadowColor='rgba(40,36,30,.16)'; g.shadowBlur=26*k; g.shadowOffsetY=10*k; g.drawImage(img,x,y,w,h); g.restore();
+    g.save(); g.shadowColor='rgba(40,36,30,.12)'; g.shadowBlur=3*k; g.shadowOffsetY=1.5*k; g.drawImage(img,x,y,w,h); g.restore();
+    out.push({s,x,y,w,h,u}); }
+  return out;
 }
+/* trascina i capi per sistemarli a mano */
+let drag=null;
+canvas.addEventListener('pointerdown',e=>{ const r=canvas.getBoundingClientRect(), f=canvas.width/r.width, px=(e.clientX-r.left)*f, py=(e.clientY-r.top)*f;
+  for(let i=hits.length-1;i>=0;i--){ const h=hits[i]; if(px>=h.x&&px<=h.x+h.w&&py>=h.y&&py<=h.y+h.h){ const o=state.pos[h.s]||{dx:0,dy:0};
+    drag={s:h.s,px,py,dx:o.dx,dy:o.dy,u:h.u,f}; canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging'); return; } } });
+canvas.addEventListener('pointermove',e=>{ if(!drag) return; const r=canvas.getBoundingClientRect(), px=(e.clientX-r.left)*drag.f, py=(e.clientY-r.top)*drag.f;
+  state.pos[drag.s]={dx:drag.dx+(px-drag.px)/drag.u, dy:drag.dy+(py-drag.py)/drag.u}; hits=paint(ctx,canvas.width,canvas.height,lastImgs); });
+const endDrag=()=>{ if(drag){ drag=null; canvas.classList.remove('dragging'); } };
+canvas.addEventListener('pointerup',endDrag); canvas.addEventListener('pointercancel',endDrag);
+document.getElementById('btnTidy').onclick=()=>{ state.pos={}; draw(); };
 
 /* ---------- Fogli ---------- */
 function openSheet(id){ document.getElementById(id).hidden=false; }
@@ -560,9 +495,20 @@ pz.addEventListener('input',()=>{ const im=pz.querySelector('img'); if(im&&im.sr
 pz.addEventListener('dragover',e=>e.preventDefault());
 pz.addEventListener('drop',e=>{ e.preventDefault(); const f=[...(e.dataTransfer?.files||[])].find(f=>f.type.startsWith('image/')); if(!takeImage(f)) pz.innerHTML='Trascina il file dell\'immagine (salvalo prima sul PC) oppure usa Copia e Incolla.'; });
 
-/* ---------- Rimozione sfondo, tutto nel browser ---------- */
+/* ---------- Rimozione sfondo: AI nel browser (gratis, la foto non esce dal dispositivo), con metodo classico di riserva ---------- */
+const AI_URL='https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm';
+let aiMod=null;
+function aiLoad(){ if(!aiMod) aiMod=import(AI_URL).catch(e=>{ aiMod=null; throw e; }); return aiMod; }
+async function aiCut(src,onProg){
+  const m=await aiLoad();
+  const blob=await new Promise((res,rej)=>src.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',0.93));
+  const out=await m.removeBackground(blob,{model:isPhone()?'small':'medium',output:{format:'image/png',quality:1},progress:(k,c,t)=>onProg&&onProg(k,c,t)});
+  const url=URL.createObjectURL(out); const img=await loadImg(url); imgCache.delete(url); URL.revokeObjectURL(url);
+  const c=document.createElement('canvas'); c.width=src.width; c.height=src.height; const g=c.getContext('2d'); g.drawImage(img,0,0,c.width,c.height);
+  return g.getImageData(0,0,c.width,c.height).data;
+}
 let ed=null;
-function prepSource(img){ const max=900,s=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext('2d').drawImage(img,0,0,c.width,c.height); return c; }
+function prepSource(img){ const max=1100,s=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext('2d').drawImage(img,0,0,c.width,c.height); return c; }
 function bgRefs(d,w,h){ const b=new Map(); const push=(x,y)=>{ const i=(y*w+x)*4; if(d[i+3]<20) return; const k=(d[i]>>4)<<8|(d[i+1]>>4)<<4|(d[i+2]>>4); const v=b.get(k)||[0,0,0,0]; v[0]+=d[i];v[1]+=d[i+1];v[2]+=d[i+2];v[3]++; b.set(k,v); };
   for(let x=0;x<w;x+=2){push(x,0);push(x,h-1);} for(let y=0;y<h;y+=2){push(0,y);push(w-1,y);}
   const a=[...b.values()].sort((p,q)=>q[3]-p[3]); return a.length? a.slice(0,5).filter(v=>v[3]>a[0][3]*0.08).map(v=>[v[0]/v[3],v[1]/v[3],v[2]/v[3]]) : []; }
@@ -571,52 +517,64 @@ function flood(w,h,mask,seeds,test){ const st=new Int32Array(w*h); let sp=0;
   while(sp){ const p=st[--sp],x=p%w,y=(p/w)|0;
     if(x>0){const q=p-1; if(!mask[q]&&test(q)){mask[q]=1;st[sp++]=q;}} if(x<w-1){const q=p+1; if(!mask[q]&&test(q)){mask[q]=1;st[sp++]=q;}}
     if(y>0){const q=p-w; if(!mask[q]&&test(q)){mask[q]=1;st[sp++]=q;}} if(y<h-1){const q=p+w; if(!mask[q]&&test(q)){mask[q]=1;st[sp++]=q;}} } }
-function autoMask(){ const {w,h,d}=ed, mask=new Uint8Array(w*h);
-  for(let p=0;p<w*h;p++) if(d[p*4+3]<20) mask[p]=1;
-  if(!ed.keep){ const refs=bgRefs(d,w,h), t2=ed.tol*ed.tol;
-    const test=p=>{ const i=p*4; if(d[i+3]<20) return true; for(const r of refs){ const a=d[i]-r[0],b=d[i+1]-r[1],c=d[i+2]-r[2]; if(a*a*.9+b*b*1.2+c*c*.9<t2) return true; } return false; };
-    const seeds=[]; for(let x=0;x<w;x++) seeds.push(x,(h-1)*w+x); for(let y=0;y<h;y++) seeds.push(y*w,y*w+w-1);
-    const m2=new Uint8Array(w*h); flood(w,h,m2,seeds,test); for(let p=0;p<w*h;p++) if(m2[p]) mask[p]=1;
+function autoMask(){ const {w,h}=ed; const d=ed.d=(ed.bg==='ai'&&ed.ai)?ed.ai:ed.orig; const mask=new Uint8Array(w*h);
+  if(ed.bg!=='nessuno'){
+    for(let p=0;p<w*h;p++) if(d[p*4+3]<20) mask[p]=1;
+    if(ed.bg==='classico'){ const refs=bgRefs(d,w,h), t2=ed.tol*ed.tol;
+      const test=p=>{ const i=p*4; if(d[i+3]<20) return true; for(const r of refs){ const a=d[i]-r[0],b=d[i+1]-r[1],c=d[i+2]-r[2]; if(a*a*.9+b*b*1.2+c*c*.9<t2) return true; } return false; };
+      const seeds=[]; for(let x=0;x<w;x++) seeds.push(x,(h-1)*w+x); for(let y=0;y<h;y++) seeds.push(y*w,y*w+w-1);
+      const m2=new Uint8Array(w*h); flood(w,h,m2,seeds,test); for(let p=0;p<w*h;p++) if(m2[p]) mask[p]=1; }
     for(const p of ed.clicks) clickRemove(mask,p); }
   ed.mask=mask; }
 function clickRemove(mask,p){ const {w,h,d}=ed,i0=p*4,r=[d[i0],d[i0+1],d[i0+2]],t2=(ed.tol*0.9)**2;
-  const m2=new Uint8Array(w*h); flood(w,h,m2,[p],q=>{ const i=q*4,a=d[i]-r[0],b=d[i+1]-r[1],c=d[i+2]-r[2]; return a*a+b*b+c*c<t2; }); for(let q=0;q<w*h;q++) if(m2[q]) mask[q]=1; }
-function renderEdit(){ const {w,h,d,mask}=ed, out=new ImageData(w,h), o=out.data;
+  const m2=new Uint8Array(w*h); flood(w,h,m2,[p],q=>{ const i=q*4; if(d[i+3]<20) return false; const a=d[i]-r[0],b=d[i+1]-r[1],c=d[i+2]-r[2]; return a*a+b*b+c*c<t2; }); for(let q=0;q<w*h;q++) if(m2[q]) mask[q]=1; }
+function renderEdit(){ const {w,h,d,mask}=ed, out=new ImageData(w,h), o=out.data; const soft=ed.bg==='ai'&&ed.ai;
   for(let p=0;p<w*h;p++){ const i=p*4; o[i]=d[i];o[i+1]=d[i+1];o[i+2]=d[i+2];
-    if(mask[p]) o[i+3]=0; else { const x=p%w,y=(p/w)|0; const edge=(x>0&&mask[p-1])||(x<w-1&&mask[p+1])||(y>0&&mask[p-w])||(y<h-1&&mask[p+w]); o[i+3]=edge?150:d[i+3]; } }
-  let x0=w,y0=h,x1=-1,y1=-1; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(o[(y*w+x)*4+3]){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    if(mask[p]) o[i+3]=0; else if(soft) o[i+3]=d[i+3]; else { const x=p%w,y=(p/w)|0; const edge=(x>0&&mask[p-1])||(x<w-1&&mask[p+1])||(y>0&&mask[p-w])||(y<h-1&&mask[p+w]); o[i+3]=edge?Math.min(150,d[i+3]):d[i+3]; } }
+  let x0=w,y0=h,x1=-1,y1=-1; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(o[(y*w+x)*4+3]>8){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
   if(x1<0){x0=0;y0=0;x1=w-1;y1=h-1;}
   const full=document.createElement('canvas'); full.width=w; full.height=h; full.getContext('2d').putImageData(out,0,0);
   const cw=x1-x0+1,ch=y1-y0+1, cut=document.createElement('canvas'); cut.width=cw; cut.height=ch; cut.getContext('2d').drawImage(full,x0,y0,cw,ch,0,0,cw,ch); ed.cut=cut;
   const ec=document.getElementById('editCanvas'); ec.width=w; ec.height=h; const g=ec.getContext('2d'); g.clearRect(0,0,w,h); g.drawImage(full,0,0);
   ed.rgb=dominant(cut); document.getElementById('edDot').style.background=hex(ed.rgb); document.getElementById('edColor').textContent='Colore principale: '+colorName(ed.rgb);
   autoName(); }
-function autoName(){ if(ed&&ed.mode==='capo'&&!ed.nameTouched) document.getElementById('edName').value=`${CATS[ed.cat].one} ${colorName(ed.rgb)}`; }
+function autoName(){ if(ed&&ed.kind==='capo'&&!ed.nameTouched) document.getElementById('edName').value=`${CATS[ed.cat].one} ${colorName(ed.rgb)}`; }
 function guessCat(c){ const r=c.width/c.height; if(r>1.35) return 'scarpe'; if(r<0.62) return 'pantaloni'; return 'maglietta'; }
 function renderEdCats(){ const box=document.getElementById('edCats'); box.innerHTML='';
   for(const [k,v] of Object.entries(CATS)){ const b=document.createElement('button'); b.type='button'; b.textContent=v.label; b.setAttribute('aria-pressed',ed&&ed.cat===k);
     b.onclick=()=>{ ed.cat=k; renderEdCats(); autoName(); }; box.appendChild(b); } }
-async function openEditor(file,mode='capo'){
+function setStatus(t,busy){ document.getElementById('edStatus').textContent=t||''; document.getElementById('edBusy').hidden=!busy; }
+function renderBgSeg(){ document.querySelectorAll('#edBgSeg button').forEach(b=>b.setAttribute('aria-pressed',ed&&b.dataset.v===ed.bg)); document.getElementById('edTolWrap').hidden=!ed||ed.bg!=='classico'; }
+async function openEditor(file,kind='capo'){
   const url=URL.createObjectURL(file); let img; try{ img=await loadImg(url); }catch(e){ imgCache.delete(url); showToast('Non riesco ad aprire questa immagine. Prova con una JPG o PNG.'); return; }
   const src=prepSource(img); URL.revokeObjectURL(url); imgCache.delete(url);
-  ed={mode,w:src.width,h:src.height,d:src.getContext('2d').getImageData(0,0,src.width,src.height).data,tol:+document.getElementById('edTol').value,keep:false,clicks:[],nameTouched:false,cat:'maglietta'};
-  const body=mode==='corpo'; document.getElementById('edItem').hidden=body;
+  const orig=src.getContext('2d').getImageData(0,0,src.width,src.height).data;
+  const hasAlpha=(()=>{ for(let i=3;i<orig.length;i+=4*97) if(orig[i]<20) return true; return false; })();
+  const my=ed={kind,w:src.width,h:src.height,orig,d:orig,ai:null,bg:'classico',userPicked:false,tol:+document.getElementById('edTol').value,clicks:[],nameTouched:false,cat:'maglietta'};
+  const body=kind==='corpo'; document.getElementById('edItem').hidden=body;
   document.getElementById('edTitle').firstChild.textContent=body?'La tua foto ':'Nuovo capo ';
   document.getElementById('edSave').textContent=body?'Usa questa foto':'Aggiungi all\'armadio';
-  const k=document.getElementById('edKeep'); k.setAttribute('aria-pressed','false'); k.textContent='Tieni lo sfondo';
-  document.getElementById('edName').value=''; openSheet('editor'); document.getElementById('edBusy').hidden=false;
-  await new Promise(r=>setTimeout(r,30)); autoMask(); renderEdit(); ed.cat=guessCat(ed.cut); renderEdCats(); autoName(); document.getElementById('edBusy').hidden=true; }
+  document.getElementById('edName').value=''; openSheet('editor'); renderBgSeg();
+  await new Promise(r=>setTimeout(r,30)); autoMask(); renderEdit(); ed.cat=guessCat(ed.cut); renderEdCats(); autoName();
+  if(hasAlpha){ setStatus('L\'immagine ha già lo sfondo trasparente.',false); return; }
+  setStatus('L\'AI sta togliendo lo sfondo…',true);
+  try{
+    const ai=await aiCut(src,(k,c,t)=>{ if(ed!==my) return; if(String(k).startsWith('fetch')&&t) setStatus(`Scarico l'AI, solo la prima volta: ${Math.round(c/t*100)}%`,true); else if(String(k).startsWith('compute')) setStatus('L\'AI sta togliendo lo sfondo…',true); });
+    if(ed!==my) return; ed.ai=ai; if(!ed.userPicked){ ed.bg='ai'; ed.clicks=[]; autoMask(); renderEdit(); renderBgSeg(); }
+    setStatus('Sfondo tolto con l\'AI. Se resta qualcosa, toccalo.',false);
+  }catch(e){ if(ed!==my) return; console.warn('AI sfondo',e); setStatus('L\'AI non è disponibile qui (serve la dashboard o la connessione). Uso il metodo classico.',false);
+    document.querySelector('#edBgSeg [data-v="ai"]').disabled=true; }
+}
 function closeEditor(){ closeSheet('editor'); ed=null; }
 document.getElementById('edX').onclick=closeEditor;
 document.getElementById('edName').oninput=()=>{ if(ed) ed.nameTouched=true; };
 let tolT=null; document.getElementById('edTol').oninput=e=>{ if(!ed) return; ed.tol=+e.target.value; clearTimeout(tolT); tolT=setTimeout(()=>{ autoMask(); renderEdit(); },90); };
 document.getElementById('edReset').onclick=()=>{ if(!ed) return; ed.clicks=[]; autoMask(); renderEdit(); };
-document.getElementById('edKeep').onclick=e=>{ if(!ed) return; ed.keep=!ed.keep; e.currentTarget.setAttribute('aria-pressed',ed.keep); e.currentTarget.textContent=ed.keep?'Togli lo sfondo':'Tieni lo sfondo'; autoMask(); renderEdit(); };
-document.getElementById('editCanvas').addEventListener('click',e=>{ if(!ed||ed.keep) return; const r=e.currentTarget.getBoundingClientRect();
+document.querySelectorAll('#edBgSeg button').forEach(b=>b.onclick=()=>{ if(!ed) return; if(b.dataset.v==='ai'&&!ed.ai){ showToast('L\'AI sta ancora lavorando'); return; } ed.bg=b.dataset.v; ed.userPicked=true; ed.clicks=[]; autoMask(); renderEdit(); renderBgSeg(); });
+document.getElementById('editCanvas').addEventListener('click',e=>{ if(!ed||ed.bg==='nessuno') return; const r=e.currentTarget.getBoundingClientRect();
   const s=Math.min(r.width/ed.w,r.height/ed.h), ox=(r.width-ed.w*s)/2, oy=(r.height-ed.h*s)/2; const x=Math.floor((e.clientX-r.left-ox)/s), y=Math.floor((e.clientY-r.top-oy)/s);
   if(x<0||y<0||x>=ed.w||y>=ed.h) return; const p=y*ed.w+x; ed.clicks.push(p); clickRemove(ed.mask,p); renderEdit(); });
 document.getElementById('edSave').onclick=async()=>{ if(!ed) return;
-  if(ed.mode==='corpo'){ await saveBodyPhoto(ed.cut); closeEditor(); return; }
   const c=ed.cut, s=Math.min(1,720/Math.max(c.width,c.height)); const o=document.createElement('canvas'); o.width=Math.round(c.width*s); o.height=Math.round(c.height*s); o.getContext('2d').drawImage(c,0,0,o.width,o.height);
   const item={id:uid(),cat:ed.cat,name:document.getElementById('edName').value.trim()||CATS[ed.cat].one,rgb:ed.rgb,colore:colorName(ed.rgb),img:o.toDataURL('image/png'),createdAt:Date.now()};
   state.items.unshift(item); await dbPut('capi',item); closeEditor(); state.wearing[CATS[item.cat].slot]=item.id; dressAll(); renderAll(); showToast('Aggiunto all\'armadio'); };
@@ -642,7 +600,7 @@ document.getElementById('searchInput').oninput=e=>{ state.query=e.target.value.t
 
 /* ---------- Armadio ---------- */
 const isPhone=()=>window.matchMedia('(max-width:900px)').matches;
-function wear(id){ const it=state.items.find(i=>i.id===id); if(!it) return; const s=CATS[it.cat].slot; state.wearing[s]=state.wearing[s]===id?null:id; dressAll(); renderAll(); }
+function wear(id){ const it=state.items.find(i=>i.id===id); if(!it) return; const s=CATS[it.cat].slot; state.wearing[s]=state.wearing[s]===id?null:id; delete state.pos[s]; dressAll(); renderAll(); }
 function renderCats(){ const f=document.getElementById('cats'); f.innerHTML=''; const cnt={}; state.items.forEach(i=>cnt[i.cat]=(cnt[i.cat]||0)+1);
   const opts=[['tutti','Tutto'],...Object.entries(CATS).filter(([k])=>cnt[k]).map(([k,v])=>[k,v.label])];
   if(!opts.some(o=>o[0]===state.filter)) state.filter='tutti';
@@ -652,11 +610,11 @@ function renderGrid(){ renderCats(); const g=document.getElementById('grid'); g.
   if(!list.length){ g.innerHTML=state.items.length?'<div class="empty"><b>Nessun capo trovato</b>Prova un altro nome o un colore, per esempio “nero”.</div>':'<div class="empty"><b>Il tuo armadio è vuoto</b>Fotografa il primo capo steso sul letto, oppure cercalo su Google.<button class="btn" type="button" id="emptyAdd">'+ICON.plus+'Aggiungi un capo</button></div>'; const ea=document.getElementById('emptyAdd'); if(ea) ea.onclick=()=>openSheet('addSheet'); }
   const worn=new Set(Object.values(state.wearing).filter(Boolean));
   list.forEach((it,idx)=>{ const on=worn.has(it.id);
-    const el=document.createElement('div'); el.className='item'+(on?' on':''); el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label',`${it.name}, ${on?'indossato, tocca per toglierlo':'tocca per provarlo'}`);
+    const el=document.createElement('div'); el.className='item'+(on?' on':''); el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label',`${it.name}, ${on?'nell\'outfit, tocca per toglierlo':'tocca per aggiungerlo all\'outfit'}`);
     el.style.setProperty('--i',Math.min(idx,12));
-    el.innerHTML=`<div class="ph"><img alt="">${on?'<span class="worn">Addosso</span>':it.esempio?'<span class="badge">Esempio</span>':''}<button class="del" type="button" aria-label="Elimina">${ICON.x}</button></div><div class="tx"><span class="t"></span><span class="c"><span class="sw"></span><span class="cl"></span></span></div>`;
+    el.innerHTML=`<div class="ph"><img alt="">${on?'<span class="worn">Nell\'outfit</span>':it.esempio?'<span class="badge">Esempio</span>':''}<button class="del" type="button" aria-label="Elimina">${ICON.x}</button></div><div class="tx"><span class="t"></span><span class="c"><span class="sw"></span><span class="cl"></span></span></div>`;
     el.querySelector('img').src=it.img; el.querySelector('.t').textContent=it.name; el.querySelector('.cl').textContent=`${CATS[it.cat].one} · ${it.colore}`; el.querySelector('.sw').style.background=hex(it.rgb||[128,128,128]);
-    el.onclick=()=>{ wear(it.id); if(isPhone()&&state.wearing[CATS[it.cat].slot]===it.id) showToast('Messo addosso. Guardalo in Outfit'); };
+    el.onclick=()=>{ wear(it.id); if(isPhone()&&state.wearing[CATS[it.cat].slot]===it.id) showToast('Aggiunto all\'outfit'); };
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); wear(it.id); } };
     const del=el.querySelector('.del'); del.onclick=e=>{ e.stopPropagation(); armDelete(del,()=>removeItem(it.id)); };
     g.appendChild(el); });
@@ -671,14 +629,12 @@ function renderSlots(){ const box=document.getElementById('slots'); box.innerHTM
     row.innerHTML=`<span class="lab">${SLOT_LABEL[s]}</span><div class="cur${cur?'':' none'}">${cur?'<img alt="">':''}<span></span></div><div class="arrows"><button type="button" aria-label="${SLOT_LABEL[s]}: capo precedente">${ICON.left}</button><button type="button" aria-label="${SLOT_LABEL[s]}: capo successivo">${ICON.right}</button></div>`;
     if(cur) row.querySelector('img').src=cur.img; row.querySelector('.cur span').textContent=cur?cur.name:(list.length?'Niente':'Nessun capo');
     const [prev,next]=row.querySelectorAll('button'); prev.disabled=next.disabled=!list.length;
-    const step=dir=>{ const opts=[null,...list.map(i=>i.id)]; let k=opts.indexOf(state.wearing[s]); k=(k+dir+opts.length)%opts.length; state.wearing[s]=opts[k]; dressAll(); renderAll(); };
+    const step=dir=>{ const opts=[null,...list.map(i=>i.id)]; let k=opts.indexOf(state.wearing[s]); k=(k+dir+opts.length)%opts.length; state.wearing[s]=opts[k]; delete state.pos[s]; dressAll(); renderAll(); };
     prev.onclick=()=>step(-1); next.onclick=()=>step(1); box.appendChild(row); } }
-function snapshot(){ const w=320,h=400; const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
-  
-  const sc=Math.max(w/canvas.width,h/canvas.height), dw=canvas.width*sc, dh=canvas.height*sc; g.drawImage(canvas,(w-dw)/2,(h-dh)/2,dw,dh); return c.toDataURL('image/jpeg',0.85); }
-document.getElementById('btnSaveOutfit').onclick=async()=>{ if(!SLOTS.some(s=>state.wearing[s])){ showToast('Prima metti addosso almeno un capo'); return; }
+function snapshot(){ const w=320,h=400; const c=document.createElement('canvas'); c.width=w; c.height=h; paint(c.getContext('2d'),w,h,lastImgs); return c.toDataURL('image/jpeg',0.86); }
+document.getElementById('btnSaveOutfit').onclick=async()=>{ if(!SLOTS.some(s=>state.wearing[s])){ showToast('Prima scegli almeno un capo'); return; }
   await draw();
-  const ne=document.getElementById('outfitName'); const o={id:uid(),name:ne.value.trim()||`Outfit ${state.outfits.length+1}`,wearing:{...state.wearing},thumb:snapshot(),fav:false,createdAt:Date.now()};
+  const ne=document.getElementById('outfitName'); const o={id:uid(),name:ne.value.trim()||`Outfit ${state.outfits.length+1}`,wearing:{...state.wearing},pos:JSON.parse(JSON.stringify(state.pos)),thumb:snapshot(),fav:false,createdAt:Date.now()};
   ne.value=''; state.outfits.unshift(o); await dbPut('outfit',o); renderOutfits(); renderSub(); showToast('Outfit salvato'); };
 const HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-9.2-9.4C1.7 7.3 4 4 7.3 4c2 0 3.6 1.1 4.7 2.7C13.1 5.1 14.7 4 16.7 4 20 4 22.3 7.3 21.2 10.6 19.5 15.4 12 20 12 20Z"/></svg>';
 function renderOutfits(){ const box=document.getElementById('outfits'); box.innerHTML='';
@@ -688,7 +644,7 @@ function renderOutfits(){ const box=document.getElementById('outfits'); box.inne
     const n=SLOTS.filter(s=>o.wearing[s]).length, dt=new Date(o.createdAt);
     el.innerHTML=`<div class="ph"><img alt=""><button class="heart" type="button" aria-label="Preferito" aria-pressed="${!!o.fav}">${HEART}</button><button class="x" type="button" aria-label="Elimina">${ICON.x}</button></div><div class="t"></div><div class="d"></div>`;
     el.querySelector('img').src=o.thumb; el.querySelector('.t').textContent=o.name; el.querySelector('.d').textContent=`${n} capi · ${dt.getDate()}/${dt.getMonth()+1}`;
-    const go=()=>{ state.wearing={maglia:null,strato:null,sotto:null,scarpe:null}; for(const s of SLOTS){ const id=o.wearing[s]; if(id&&state.items.some(i=>i.id===id)) state.wearing[s]=id; } dressAll(); renderAll(); showToast('Indossi: '+o.name); };
+    const go=()=>{ state.wearing={maglia:null,strato:null,sotto:null,scarpe:null}; state.pos=o.pos?JSON.parse(JSON.stringify(o.pos)):{}; for(const s of SLOTS){ const id=o.wearing[s]; if(id&&state.items.some(i=>i.id===id)) state.wearing[s]=id; } dressAll(); renderAll(); showToast('Outfit: '+o.name); };
     el.onclick=go; el.onkeydown=e=>{ if(e.key==='Enter') go(); };
     el.querySelector('.heart').onclick=async e=>{ e.stopPropagation(); o.fav=!o.fav; await dbPut('outfit',o); renderOutfits(); };
     const x=el.querySelector('.x'); x.onclick=e=>{ e.stopPropagation(); armDelete(x,async()=>{ state.outfits=state.outfits.filter(z=>z.id!==o.id); await dbDel('outfit',o.id); renderOutfits(); renderSub(); }); };
@@ -697,7 +653,7 @@ document.querySelectorAll('#outfitFilter button').forEach(b=>b.onclick=()=>{ sta
 document.getElementById('btnUndress').onclick=()=>{ state.wearing={maglia:null,strato:null,sotto:null,scarpe:null}; dressAll(); renderAll(); };
 document.getElementById('btnRandom').onclick=()=>{ const pick=s=>{ const l=state.items.filter(i=>CATS[i.cat].slot===s); return l.length?l[Math.floor(Math.random()*l.length)].id:null; };
   const w={maglia:pick('maglia'),strato:Math.random()<0.5?pick('strato'):null,sotto:pick('sotto'),scarpe:pick('scarpe')};
-  if(!Object.values(w).some(Boolean)){ showToast('Aggiungi qualche capo all\'armadio'); return; } state.wearing=w; dressAll(); renderAll(); };
+  if(!Object.values(w).some(Boolean)){ showToast('Aggiungi qualche capo all\'armadio'); return; } state.wearing=w; state.pos={}; dressAll(); renderAll(); };
 function renderSub(){ const el=document.getElementById('headSub'); const n=state.items.length, o=state.outfits.length;
   el.textContent= state.view==='profilo' ? `${state.body.altezza} cm · ${state.body.peso} kg` : `${n} ${n===1?'capo':'capi'} · ${o} ${o===1?'outfit':'outfit'}`; }
 function renderAll(){ renderGrid(); renderSlots(); renderSub(); }
@@ -707,7 +663,7 @@ const fields={altezza:'m-alt',peso:'m-peso',petto:'m-petto',vita:'m-vita',fianch
 function fillPlaceholders(){ const d=bodyDims(state.body); for(const k of ['petto','vita','fianchi','spalle']) document.getElementById(fields[k]).placeholder=`auto ≈ ${Math.round(d[k])}`; }
 function fillBodyForm(){ for(const [k,id] of Object.entries(fields)){ const v=state.body[k]; document.getElementById(id).value=v==null?'':v; }
   document.querySelectorAll('#sexSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===state.body.sesso)); fillPlaceholders(); }
-let bodyT=null; function saveBody(){ clearTimeout(bodyT); bodyT=setTimeout(()=>{ buildAvatar(); fillPlaceholders(); dbPut('prefs',{id:'corpo',v:state.body}); },200); }
+let bodyT=null; function saveBody(){ clearTimeout(bodyT); bodyT=setTimeout(()=>{ updateSize(); fillPlaceholders(); dbPut('prefs',{id:'corpo',v:state.body}); },200); }
 const LIM={altezza:[130,220],peso:[35,200],petto:[60,160],vita:[50,160],fianchi:[60,170],spalle:[30,65]};
 for(const [k,id] of Object.entries(fields)) document.getElementById(id).addEventListener('input',e=>{ const raw=e.target.value.trim(), v=raw===''?null:+raw;
   if(v!=null&&(isNaN(v)||v<LIM[k][0]||v>LIM[k][1])) return; if(v==null&&(k==='altezza'||k==='peso')) return; state.body[k]=v; saveBody(); });
@@ -741,40 +697,6 @@ const EX_IDS=['esempio-tshirt','esempio-camicia','esempio-felpa','esempio-giacca
 async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],['camicia','camicia','Camicia bianca'],['felpa','felpa','Felpa grigia'],['giacca','giacca','Giacca di jeans'],['nero','pantaloni','Pantaloni eleganti neri'],['jeans','pantaloni','Jeans chiari'],['sneakers','scarpe','Sneakers bianche']];
   let t=Date.now(); for(const [k,cat,name] of defs){ const c=drawSample(k), rgb=dominant(c); const it={id:'esempio-'+k,cat,name,rgb,colore:colorName(rgb),img:c.toDataURL('image/png'),esempio:true,createdAt:t--}; state.items.push(it); await dbPut('capi',it); } }
 
-/* ---------- Il tuo aspetto: foto del corpo, viso, sfondo ---------- */
-const look={mode:'manichino',bg:'muro',body:null,face:null};
-async function saveLook(){ await dbPut('prefs',{id:'aspetto',v:{mode:look.mode,bg:look.bg,body:look.body,face:look.face}}); }
-async function saveBodyPhoto(cut){
-  const s=Math.min(1,1100/cut.height); const o=document.createElement('canvas'); o.width=Math.round(cut.width*s); o.height=Math.round(cut.height*s); const g=o.getContext('2d'); g.drawImage(cut,0,0,o.width,o.height);
-  // centro del busto: media delle colonne piene tra il 15% e il 55% dell'altezza
-  const d=g.getImageData(0,0,o.width,o.height).data; let sx=0,n=0; for(let y=Math.round(o.height*.15);y<o.height*.55;y+=2) for(let x=0;x<o.width;x+=2){ if(d[(y*o.width+x)*4+3]>128){ sx+=x; n++; } }
-  look.body={img:o.toDataURL('image/png'),cx:n?sx/n/o.width:0.5}; look.mode='foto'; await saveLook(); renderLook(); draw(); showToast('Foto del corpo salvata');
-}
-async function saveFacePhoto(file){
-  const url=URL.createObjectURL(file); let img; try{ img=await loadImg(url); }catch(e){ showToast('Non riesco ad aprire questa foto.'); return; } finally{ imgCache.delete(url); }
-  const side=Math.min(img.width,img.height), size=Math.min(480,side); const c=document.createElement('canvas'); c.width=c.height=size;
-  c.getContext('2d').drawImage(img,(img.width-side)/2,(img.height-side)/2*0.7,side,side,0,0,size,size); URL.revokeObjectURL(url);
-  look.face={img:c.toDataURL('image/jpeg',0.88),zoom:1.2,dy:0}; if(look.mode==='foto'&&!look.body) look.mode='manichino'; await saveLook(); renderLook(); draw(); showToast('Viso aggiunto al manichino');
-}
-function renderLook(){
-  document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===look.mode));
-  document.querySelectorAll('#bgSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===look.bg));
-  const bp=document.getElementById('bodyPh'); bp.innerHTML=look.body?'<img alt="La tua foto del corpo">':'Nessuna foto del corpo'; if(look.body) bp.querySelector('img').src=look.body.img;
-  const fp=document.getElementById('facePh'); fp.innerHTML=look.face?'<img alt="Il tuo viso">':'Nessun selfie'; if(look.face) fp.querySelector('img').src=look.face.img;
-  document.getElementById('faceSl').hidden=!look.face;
-  if(look.face){ document.getElementById('faceZoom').value=Math.round(look.face.zoom*100); document.getElementById('faceDy').value=Math.round(look.face.dy*100); }
-  document.getElementById('bodyCam').textContent=look.body?'Rifai':'Scatta'; document.getElementById('faceCam').textContent=look.face?'Rifai':'Selfie';
-}
-document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=async()=>{ if(b.dataset.v==='foto'&&!look.body){ showToast('Prima fai la foto del corpo'); document.getElementById('bodyCamIn').click(); return; } look.mode=b.dataset.v; await saveLook(); renderLook(); draw(); });
-document.querySelectorAll('#bgSeg button').forEach(b=>b.onclick=async()=>{ look.bg=b.dataset.v; await saveLook(); renderLook(); draw(); });
-document.getElementById('bodyCam').onclick=()=>document.getElementById('bodyCamIn').click();
-document.getElementById('bodyGal').onclick=()=>document.getElementById('bodyGalIn').click();
-document.getElementById('faceCam').onclick=()=>document.getElementById('faceCamIn').click();
-document.getElementById('faceGal').onclick=()=>document.getElementById('faceGalIn').click();
-for(const id of ['bodyCamIn','bodyGalIn']) document.getElementById(id).onchange=e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) openEditor(f,'corpo'); };
-for(const id of ['faceCamIn','faceGalIn']) document.getElementById(id).onchange=e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) saveFacePhoto(f); };
-let faceT=null; for(const id of ['faceZoom','faceDy']) document.getElementById(id).oninput=()=>{ if(!look.face) return; look.face.zoom=+document.getElementById('faceZoom').value/100; look.face.dy=+document.getElementById('faceDy').value/100; draw(); clearTimeout(faceT); faceT=setTimeout(saveLook,300); };
-
 /* ---------- Avvio ---------- */
 (async function init(){
   const prefs=await dbAll('prefs'); const corpo=prefs.find(p=>p.id==='corpo'); if(corpo) state.body={...state.body,...corpo.v};
@@ -786,8 +708,7 @@ let faceT=null; for(const id of ['faceZoom','faceDy']) document.getElementById(i
   state.outfits=(await dbAll('outfit')).sort((a,b)=>b.createdAt-a.createdAt);
   const has=id=>state.items.some(i=>i.id===id);
   if(has('esempio-tshirt')) state.wearing={maglia:'esempio-tshirt',strato:null,sotto:has('esempio-nero')?'esempio-nero':null,scarpe:has('esempio-sneakers')?'esempio-sneakers':null};
-  const asp=prefs.find(p=>p.id==='aspetto'); if(asp) Object.assign(look,asp.v);
-  renderLook(); fillBodyForm(); buildAvatar(); resize(); renderAll(); renderOutfits();
+  fillBodyForm(); updateSize(); resize(); draw(); renderAll(); renderOutfits();
 })();
 </script>
 
