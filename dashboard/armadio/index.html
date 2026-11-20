@@ -527,13 +527,16 @@ pz.addEventListener('dragover',e=>e.preventDefault());
 pz.addEventListener('drop',e=>{ e.preventDefault(); const f=[...(e.dataTransfer?.files||[])].find(f=>f.type.startsWith('image/')); if(!takeImage(f)) pz.innerHTML='Trascina il file dell\'immagine (salvalo prima sul PC) oppure usa Copia e Incolla.'; });
 
 /* ---------- Rimozione sfondo: AI nel browser (gratis, la foto non esce dal dispositivo), con metodo classico di riserva ---------- */
-const AI_URL='https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm';
-let aiMod=null;
-function aiLoad(){ if(!aiMod) aiMod=import(AI_URL).catch(e=>{ aiMod=null; throw e; }); return aiMod; }
+/* prima la copia nella dashboard (cartella ai/ accanto alla pagina), poi la versione pubblica su jsdelivr/staticimgly */
+const AI_SRCS=[{mod:new URL('./ai/imgly.mjs',location.href).href,data:new URL('./ai/data/',location.href).href,model:'small'},
+  {mod:'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',data:null,model:null}];
+let aiMod=null, aiErr='';
+function aiLoad(){ if(!aiMod) aiMod=(async()=>{ const errs=[]; for(const s of AI_SRCS){ try{ const m=await import(s.mod); if(m&&m.removeBackground) return {m,s}; }catch(e){ errs.push(String(e&&e.message||e)); } } throw new Error(errs.join(' | ')); })().catch(e=>{ aiMod=null; throw e; }); return aiMod; }
 async function aiCut(src,onProg){
-  const m=await aiLoad();
+  const {m,s}=await aiLoad();
   const blob=await new Promise((res,rej)=>src.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',0.93));
-  const out=await m.removeBackground(blob,{model:isPhone()?'small':'medium',output:{format:'image/png',quality:1},progress:(k,c,t)=>onProg&&onProg(k,c,t)});
+  const cfg={model:s.model||(isPhone()?'small':'medium'),output:{format:'image/png',quality:1},progress:(k,c,t)=>onProg&&onProg(k,c,t)}; if(s.data) cfg.publicPath=s.data;
+  let out; try{ out=await m.removeBackground(blob,cfg); }catch(e){ if(!s.data) throw e; delete cfg.publicPath; cfg.model=isPhone()?'small':'medium'; out=await m.removeBackground(blob,cfg); }
   const url=URL.createObjectURL(out); const img=await loadImg(url); imgCache.delete(url); URL.revokeObjectURL(url);
   const c=document.createElement('canvas'); c.width=src.width; c.height=src.height; const g=c.getContext('2d'); g.drawImage(img,0,0,c.width,c.height);
   return g.getImageData(0,0,c.width,c.height).data;
@@ -587,21 +590,26 @@ async function openEditor(file,kind='capo'){
   document.getElementById('edSave').textContent=body?'Usa questa foto':'Aggiungi all\'armadio';
   document.getElementById('edName').value=''; openSheet('editor'); renderBgSeg();
   await new Promise(r=>setTimeout(r,30)); autoMask(); renderEdit(); ed.cat=guessCat(ed.cut); renderEdCats(); autoName();
+  my.src=src;
   if(hasAlpha){ setStatus('L\'immagine ha già lo sfondo trasparente.',false); return; }
-  setStatus('L\'AI sta togliendo lo sfondo…',true);
+  ed.src=src; aiRun(my);
+}
+async function aiRun(my){
+  setStatus('L\'AI sta togliendo lo sfondo…',true); my.aiBusy=true; renderBgSeg();
   try{
-    const ai=await aiCut(src,(k,c,t)=>{ if(ed!==my) return; if(String(k).startsWith('fetch')&&t) setStatus(`Scarico l'AI, solo la prima volta: ${Math.round(c/t*100)}%`,true); else if(String(k).startsWith('compute')) setStatus('L\'AI sta togliendo lo sfondo…',true); });
-    if(ed!==my) return; ed.ai=ai; if(!ed.userPicked){ ed.bg='ai'; ed.clicks=[]; autoMask(); renderEdit(); renderBgSeg(); }
+    const ai=await aiCut(my.src,(k,c,t)=>{ if(ed!==my) return; if(String(k).startsWith('fetch')&&t) setStatus(`Scarico l'AI, solo la prima volta: ${Math.round(c/t*100)}%`,true); else if(String(k).startsWith('compute')) setStatus('L\'AI sta togliendo lo sfondo…',true); });
+    my.aiBusy=false; if(ed!==my) return; ed.ai=ai; if(!ed.userPicked||ed.bg==='ai'){ ed.bg='ai'; ed.clicks=[]; autoMask(); renderEdit(); } renderBgSeg();
     setStatus('Sfondo tolto con l\'AI. Se resta qualcosa, toccalo.',false);
-  }catch(e){ if(ed!==my) return; console.warn('AI sfondo',e); setStatus('L\'AI non è disponibile qui (serve la dashboard o la connessione). Uso il metodo classico.',false);
-    document.querySelector('#edBgSeg [data-v="ai"]').disabled=true; }
+  }catch(e){ my.aiBusy=false; if(ed!==my) return; console.warn('AI sfondo',e); aiErr=String(e&&e.message||e).slice(0,160); renderBgSeg();
+    const inClaude=/claude|anthropic/.test(location.hostname);
+    setStatus(inClaude?'Qui dentro Claude l\'AI è bloccata: aprilo dalla dashboard. Intanto uso il metodo classico. Tocca AI per riprovare.':'L\'AI non si è caricata, forse per la connessione. Intanto uso il metodo classico. Tocca AI per riprovare.',false); }
 }
 function closeEditor(){ closeSheet('editor'); ed=null; }
 document.getElementById('edX').onclick=closeEditor;
 document.getElementById('edName').oninput=()=>{ if(ed) ed.nameTouched=true; };
 let tolT=null; document.getElementById('edTol').oninput=e=>{ if(!ed) return; ed.tol=+e.target.value; clearTimeout(tolT); tolT=setTimeout(()=>{ autoMask(); renderEdit(); },90); };
 document.getElementById('edReset').onclick=()=>{ if(!ed) return; ed.clicks=[]; autoMask(); renderEdit(); };
-document.querySelectorAll('#edBgSeg button').forEach(b=>b.onclick=()=>{ if(!ed) return; if(b.dataset.v==='ai'&&!ed.ai){ showToast('L\'AI sta ancora lavorando'); return; } ed.bg=b.dataset.v; ed.userPicked=true; ed.clicks=[]; autoMask(); renderEdit(); renderBgSeg(); });
+document.querySelectorAll('#edBgSeg button').forEach(b=>b.onclick=()=>{ if(!ed) return; if(b.dataset.v==='ai'&&!ed.ai){ if(ed.aiBusy) showToast('L\'AI sta ancora lavorando, un attimo'); else if(ed.src){ ed.userPicked=false; aiRun(ed); } return; } ed.bg=b.dataset.v; ed.userPicked=true; ed.clicks=[]; autoMask(); renderEdit(); renderBgSeg(); });
 document.getElementById('editCanvas').addEventListener('click',e=>{ if(!ed||ed.bg==='nessuno') return; const r=e.currentTarget.getBoundingClientRect();
   const s=Math.min(r.width/ed.w,r.height/ed.h), ox=(r.width-ed.w*s)/2, oy=(r.height-ed.h*s)/2; const x=Math.floor((e.clientX-r.left-ox)/s), y=Math.floor((e.clientY-r.top-oy)/s);
   if(x<0||y<0||x>=ed.w||y>=ed.h) return; const p=y*ed.w+x; ed.clicks.push(p); clickRemove(ed.mask,p); renderEdit(); });
