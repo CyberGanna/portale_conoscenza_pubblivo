@@ -458,7 +458,7 @@ function paint(g,W,Hc,imgs){
     g.save(); g.shadowColor='rgba(40,36,30,.12)'; g.shadowBlur=3*k; g.shadowOffsetY=1.5*k; g.drawImage(img,x,y,w,h); g.restore();
     out.push({s,x,y,w,h,u}); }
   if(g===ctx&&typeof sel!=='undefined'&&sel){ const h=out.find(o=>o.s===sel); if(h){ const r=Math.max(14,W*0.022);
-    g.save(); g.strokeStyle='rgba(39,39,42,.45)'; g.lineWidth=Math.max(1.5,W/700); g.setLineDash([8*k,6*k]); g.strokeRect(h.x-4*k,h.y-4*k,h.w+8*k,h.h+8*k); g.setLineDash([]);
+    g.save();
     g.shadowColor='rgba(24,24,27,.25)'; g.shadowBlur=8*k; g.fillStyle='#fff'; g.beginPath(); g.arc(h.x+h.w,h.y+h.h,r,0,7); g.fill(); g.shadowColor='transparent';
     g.strokeStyle='#27272a'; g.lineWidth=Math.max(1.5,W/600); g.beginPath(); g.moveTo(h.x+h.w-r*.4,h.y+h.h+r*.4); g.lineTo(h.x+h.w+r*.4,h.y+h.h-r*.4);
     g.moveTo(h.x+h.w+r*.05,h.y+h.h-r*.4); g.lineTo(h.x+h.w+r*.4,h.y+h.h-r*.4); g.lineTo(h.x+h.w+r*.4,h.y+h.h-r*.05);
