@@ -239,7 +239,7 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
   <div class="stage">
     <canvas id="scene" aria-label="Il tuo outfit, con i capi che hai scelto"></canvas>
     <div class="boardempty" id="boardEmpty" hidden><b>Componi il tuo outfit</b>Tocca i capi nell'armadio e li vedi qui, uno accanto all'altro.</div>
-    <div class="stagehint">Trascina i capi per sistemarli</div>
+    <div class="stagehint">Trascina per spostare · due dita, rotellina o angolo per la grandezza</div>
     <button class="tidy" id="btnTidy" type="button">Riordina</button>
   </div>
 
@@ -451,24 +451,43 @@ function paint(g,W,Hc,imgs){
   const pad=Math.min(W,Hc)*0.07, u=Math.min((W-pad*2)/1,(Hc-pad*2)/UH), ox=(W-u)/2, oy=(Hc-u*UH)/2;
   const out=[]; const k=W/600;
   for(const s of ['sotto','scarpe','maglia','strato']){ if(!imgs[s]||!L[s]) continue; const [it,img]=imgs[s]; const [rx,ry,rw,rh]=L[s];
-    const off=state.pos[s]||{dx:0,dy:0};
-    const sc=Math.min(rw*u/img.width,rh*u/img.height), w=img.width*sc, h=img.height*sc;
+    const off=state.pos[s]||{dx:0,dy:0,k:1};
+    const sc=Math.min(rw*u/img.width,rh*u/img.height)*(off.k||1), w=img.width*sc, h=img.height*sc;
     const x=ox+(rx+rw/2+off.dx)*u-w/2, y=oy+(ry+rh/2+off.dy)*u-h/2;
     g.save(); g.shadowColor='rgba(40,36,30,.16)'; g.shadowBlur=26*k; g.shadowOffsetY=10*k; g.drawImage(img,x,y,w,h); g.restore();
     g.save(); g.shadowColor='rgba(40,36,30,.12)'; g.shadowBlur=3*k; g.shadowOffsetY=1.5*k; g.drawImage(img,x,y,w,h); g.restore();
     out.push({s,x,y,w,h,u}); }
+  if(g===ctx&&typeof sel!=='undefined'&&sel){ const h=out.find(o=>o.s===sel); if(h){ const r=Math.max(14,W*0.022);
+    g.save(); g.strokeStyle='rgba(39,39,42,.45)'; g.lineWidth=Math.max(1.5,W/700); g.setLineDash([8*k,6*k]); g.strokeRect(h.x-4*k,h.y-4*k,h.w+8*k,h.h+8*k); g.setLineDash([]);
+    g.shadowColor='rgba(24,24,27,.25)'; g.shadowBlur=8*k; g.fillStyle='#fff'; g.beginPath(); g.arc(h.x+h.w,h.y+h.h,r,0,7); g.fill(); g.shadowColor='transparent';
+    g.strokeStyle='#27272a'; g.lineWidth=Math.max(1.5,W/600); g.beginPath(); g.moveTo(h.x+h.w-r*.4,h.y+h.h+r*.4); g.lineTo(h.x+h.w+r*.4,h.y+h.h-r*.4);
+    g.moveTo(h.x+h.w+r*.05,h.y+h.h-r*.4); g.lineTo(h.x+h.w+r*.4,h.y+h.h-r*.4); g.lineTo(h.x+h.w+r*.4,h.y+h.h-r*.05);
+    g.moveTo(h.x+h.w-r*.05,h.y+h.h+r*.4); g.lineTo(h.x+h.w-r*.4,h.y+h.h+r*.4); g.lineTo(h.x+h.w-r*.4,h.y+h.h+r*.05); g.stroke(); g.restore(); } }
   return out;
 }
-/* trascina i capi per sistemarli a mano */
-let drag=null;
-canvas.addEventListener('pointerdown',e=>{ const r=canvas.getBoundingClientRect(), f=canvas.width/r.width, px=(e.clientX-r.left)*f, py=(e.clientY-r.top)*f;
-  for(let i=hits.length-1;i>=0;i--){ const h=hits[i]; if(px>=h.x&&px<=h.x+h.w&&py>=h.y&&py<=h.y+h.h){ const o=state.pos[h.s]||{dx:0,dy:0};
-    drag={s:h.s,px,py,dx:o.dx,dy:o.dy,u:h.u,f}; canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging'); return; } } });
-canvas.addEventListener('pointermove',e=>{ if(!drag) return; const r=canvas.getBoundingClientRect(), px=(e.clientX-r.left)*drag.f, py=(e.clientY-r.top)*drag.f;
-  state.pos[drag.s]={dx:drag.dx+(px-drag.px)/drag.u, dy:drag.dy+(py-drag.py)/drag.u}; hits=paint(ctx,canvas.width,canvas.height,lastImgs); });
-const endDrag=()=>{ if(drag){ drag=null; canvas.classList.remove('dragging'); } };
-canvas.addEventListener('pointerup',endDrag); canvas.addEventListener('pointercancel',endDrag);
-document.getElementById('btnTidy').onclick=()=>{ state.pos={}; draw(); };
+/* trascina i capi per spostarli; ingrandisci o rimpicciolisci con due dita, con la rotellina o con la maniglia nell'angolo */
+let sel=null, drag=null; const ptrs=new Map();
+const toPx=e=>{ const r=canvas.getBoundingClientRect(), f=canvas.width/r.width; return [(e.clientX-r.left)*f,(e.clientY-r.top)*f]; };
+const getPos=s=>state.pos[s]||(state.pos[s]={dx:0,dy:0,k:1});
+const clampK=k=>Math.max(0.4,Math.min(2.5,k));
+function hitAt(px,py){ for(let i=hits.length-1;i>=0;i--){ const h=hits[i]; if(px>=h.x&&px<=h.x+h.w&&py>=h.y&&py<=h.y+h.h) return h; } return null; }
+function handleOf(h){ const r=Math.max(14,canvas.width*0.022); return {x:h.x+h.w,y:h.y+h.h,r}; }
+function repaint(){ hits=paint(ctx,canvas.width,canvas.height,lastImgs); }
+canvas.addEventListener('pointerdown',e=>{ const [px,py]=toPx(e); ptrs.set(e.pointerId,[px,py]); canvas.setPointerCapture(e.pointerId);
+  if(ptrs.size===2&&sel){ const [a,b]=[...ptrs.values()]; const o=getPos(sel); drag={mode:'pinch',s:sel,d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,k0:o.k||1}; return; }
+  const sh=sel&&hits.find(h=>h.s===sel);
+  if(sh){ const hd=handleOf(sh); if(Math.hypot(px-hd.x,py-hd.y)<hd.r*1.6){ const cx=sh.x+sh.w/2, cy=sh.y+sh.h/2, o=getPos(sel); drag={mode:'scale',s:sel,cx,cy,d0:Math.hypot(px-cx,py-cy)||1,k0:o.k||1}; return; } }
+  const h=hitAt(px,py); sel=h?h.s:null; if(h){ const o=getPos(h.s); drag={mode:'move',s:h.s,px,py,dx:o.dx,dy:o.dy,u:h.u}; canvas.classList.add('dragging'); } repaint(); });
+canvas.addEventListener('pointermove',e=>{ if(!ptrs.has(e.pointerId)) return; const [px,py]=toPx(e); ptrs.set(e.pointerId,[px,py]); if(!drag) return; const o=getPos(drag.s);
+  if(drag.mode==='pinch'&&ptrs.size>=2){ const [a,b]=[...ptrs.values()]; o.k=clampK(drag.k0*Math.hypot(a[0]-b[0],a[1]-b[1])/drag.d0); }
+  else if(drag.mode==='scale'){ o.k=clampK(drag.k0*Math.hypot(px-drag.cx,py-drag.cy)/drag.d0); }
+  else if(drag.mode==='move'){ o.dx=drag.dx+(px-drag.px)/drag.u; o.dy=drag.dy+(py-drag.py)/drag.u; }
+  repaint(); });
+const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size===0){ drag=null; canvas.classList.remove('dragging'); } else if(drag&&drag.mode==='pinch') drag=null; };
+canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
+canvas.addEventListener('wheel',e=>{ const [px,py]=toPx(e); const h=hitAt(px,py)||(sel&&hits.find(x=>x.s===sel)); if(!h) return; e.preventDefault(); sel=h.s; const o=getPos(h.s); o.k=clampK((o.k||1)*Math.exp(-e.deltaY*0.0015)); repaint(); },{passive:false});
+document.getElementById('btnTidy').onclick=()=>{ state.pos={}; sel=null; draw(); };
+window.__arm={get hits(){ return hits; },state};
 
 /* ---------- Fogli ---------- */
 function openSheet(id){ document.getElementById(id).hidden=false; }
