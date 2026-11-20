@@ -604,7 +604,7 @@ html.no-anim .orbs i{animation:none !important}
   .sheet{background:rgba(5,6,8,.5);backdrop-filter:blur(34px) saturate(150%);-webkit-backdrop-filter:blur(34px) saturate(150%)}
 }
 .gvo-tag{color:#38bdf8;font-weight:600} .gvo .gvo-esito{margin:0 0 6px;font-size:15px} .gvo{border-color:rgba(56,189,248,.35)}
-.rm-repw{display:flex;flex-direction:column;gap:8px} #rm-rep{display:flex;flex-direction:column;gap:10px} .rm-wd .chip{min-width:38px;justify-content:center} .rm-n{display:flex;align-items:center;gap:10px;font-size:14px} .rm-n b{min-width:22px;text-align:center;font-size:17px} .rm-rep{color:#a78bfa}
+.rm-repw{display:flex;flex-direction:column;gap:8px} #rm-rep,#rme-rep{display:flex;flex-direction:column;gap:10px} .rm-editrow{border:1px solid rgba(167,139,250,.55);border-radius:14px;padding:12px !important} .rm-edhd{display:flex;align-items:center;justify-content:space-between} .rm-editrow .gc-row .input{min-width:0;width:100%} .rm-wd .chip{min-width:38px;justify-content:center} .rm-n{display:flex;align-items:center;gap:10px;font-size:14px} .rm-n b{min-width:22px;text-align:center;font-size:17px} .rm-rep{color:#a78bfa}
 .rm-ed{font-size:15px} .rm-editing{border-color:rgba(167,139,250,.55)}
 </style>
 </head>
@@ -3478,14 +3478,16 @@ function remRule(rp){
   if (rp.k === "n") return ["RRULE:FREQ=DAILY;INTERVAL=" + rp.n];
   return ["RRULE:FREQ=WEEKLY;BYDAY=" + rp.d.map(i => B[i]).join(",")];
 }
-function remRepHtml(){
-  const k = RMF.k, opt = (v, t) => `<button type="button" class="chip ${k === v ? "on" : ""}" onclick="RMF.k='${v}';remRepDraw()">${t}</button>`;
+let RMFE = { k: "", d: [], n: 2 };
+const rmSt = p => p === "rme" ? RMFE : RMF;
+function remRepHtml(p = "rm"){
+  const st = rmSt(p), k = st.k, opt = (v, t) => `<button type="button" class="chip ${k === v ? "on" : ""}" onclick="rmSt('${p}').k='${v}';remRepDraw('${p}')">${t}</button>`;
   return `<div class="chips">${opt("", "Una volta")}${opt("day", "Ogni giorno")}${opt("wd", "Giorni scelti")}${opt("n", "Ogni tot giorni")}</div>
-    ${k === "wd" ? `<div class="chips rm-wd">${RM_ORD.map(i => `<button type="button" class="chip ${RMF.d.includes(i) ? "on" : ""}" onclick="remWd(${i})">${RM_WD[i]}</button>`).join("")}</div>` : ""}
-    ${k === "n" ? `<div class="rm-n"><span>Ogni</span><button type="button" class="round" onclick="RMF.n=Math.max(2,RMF.n-1);remRepDraw()">−</button><b>${RMF.n}</b><button type="button" class="round" onclick="RMF.n=Math.min(60,RMF.n+1);remRepDraw()">+</button><span>giorni</span></div>` : ""}`;
+    ${k === "wd" ? `<div class="chips rm-wd">${RM_ORD.map(i => `<button type="button" class="chip ${st.d.includes(i) ? "on" : ""}" onclick="remWd('${p}',${i})">${RM_WD[i]}</button>`).join("")}</div>` : ""}
+    ${k === "n" ? `<div class="rm-n"><span>Ogni</span><button type="button" class="round" onclick="rmSt('${p}').n=Math.max(2,rmSt('${p}').n-1);remRepDraw('${p}')">−</button><b>${st.n}</b><button type="button" class="round" onclick="rmSt('${p}').n=Math.min(60,rmSt('${p}').n+1);remRepDraw('${p}')">+</button><span>giorni</span></div>` : ""}`;
 }
-function remRepDraw(){ const el = $("#rm-rep"); if (el) el.innerHTML = remRepHtml(); }
-function remWd(i){ RMF.d = RMF.d.includes(i) ? RMF.d.filter(x => x !== i) : [...RMF.d, i]; remRepDraw(); }
+function remRepDraw(p = "rm"){ const el = document.getElementById(p + "-rep"); if (el) el.innerHTML = remRepHtml(p); }
+function remWd(p, i){ const st = rmSt(p); st.d = st.d.includes(i) ? st.d.filter(x => x !== i) : [...st.d, i]; remRepDraw(p); }
 function alarmGo(i){
   const a = S.alarms[i]; if (!a) return;
   if (!isPhone() || !/iPhone|iPad/.test(navigator.userAgent)) return toast("Le sveglie si creano dall'iPhone: apri la dashboard sul telefono");
@@ -3534,22 +3536,22 @@ async function remPushPending(){
 let RM_EDIT = null;
 function remEdit(id){
   const r = S.rem.find(x => x.id === id); if (!r) return;
-  RM_EDIT = id; RMF = r.rep ? { k: r.rep.k, d: [...(r.rep.d || [])], n: r.rep.n || 2 } : { k: "", d: [], n: 2 };
-  if (cur !== "promemoria") go("promemoria"); else reView();
-  setTimeout(() => { const sb = document.getElementById("sheet-body"); if (sb) sb.scrollTo({ top: 0, behavior: "smooth" }); scrollTo({ top: 0, behavior: "smooth" }); }, 80);
+  RM_EDIT = id; RMFE = r.rep ? { k: r.rep.k, d: [...(r.rep.d || [])], n: r.rep.n || 2 } : { k: "", d: [], n: 2 };
+  /* la modifica si apre al posto della riga, così la pagina resta dove sei */
+  if (cur !== "promemoria"){ go("promemoria"); setTimeout(() => document.getElementById("rme-t")?.scrollIntoView({ block: "center" }), 120); } else reView();
 }
-function remEditStop(){ RM_EDIT = null; RMF = { k: "", d: [], n: 2 }; reView(); }
-async function remAdd(){
-  const t = $("#rm-t").value.trim(), d = $("#rm-d").value, h = $("#rm-h").value;
+function remEditStop(){ RM_EDIT = null; reView(); }
+async function remAdd(p = "rm"){
+  const t = $(`#${p}-t`).value.trim(), d = $(`#${p}-d`).value, h = $(`#${p}-h`).value, F = rmSt(p);
   if (!t || !d || !h) return toast("Scrivi cosa, il giorno e l'ora");
-  if (RMF.k === "wd" && !RMF.d.length) return toast("Scegli almeno un giorno");
-  const ed = RM_EDIT && S.rem.find(x => x.id === RM_EDIT), oldGid = ed && ed.gid;
+  if (F.k === "wd" && !F.d.length) return toast("Scegli almeno un giorno");
+  const ed = p === "rme" && RM_EDIT && S.rem.find(x => x.id === RM_EDIT), oldGid = ed && ed.gid;
   const r = ed || { id: Date.now().toString(36) };
   Object.assign(r, { t, at: `${d}T${h}:00`, done: false, told: false }); delete r.rep; delete r.gid;
-  if (RMF.k) r.rep = RMF.k === "wd" ? { k: "wd", d: [...RMF.d] } : RMF.k === "n" ? { k: "n", n: RMF.n } : { k: "day" };
+  if (F.k) r.rep = F.k === "wd" ? { k: "wd", d: [...F.d] } : F.k === "n" ? { k: "n", n: F.n } : { k: "day" };
   /* giorni scelti: parte dal primo giorno giusto a partire da quello indicato */
   if (r.rep && r.rep.k === "wd" && !r.rep.d.includes(remAt(r).getDay())){ const x = remAt(r); while (!r.rep.d.includes(x.getDay())) x.setDate(x.getDate() + 1); r.at = remIso(x); }
-  RMF = { k: "", d: [], n: 2 }; RM_EDIT = null;
+  if (ed) RM_EDIT = null; else RMF = { k: "", d: [], n: 2 };
   if (!ed) S.rem.push(r); S.rem.sort((a, b) => remAt(a) - remAt(b)); save();
   /* modificato: tolgo il vecchio evento da Google Calendar e ne creo uno nuovo con data e ripetizione aggiornate */
   if (oldGid && gcOk()) try { await gcApi("calendars/primary/events/" + encodeURIComponent(oldGid), { method: "DELETE" }); } catch {}
@@ -3568,21 +3570,27 @@ function remDone(id){ const r = S.rem.find(x => x.id === id); if (!r) return;
   save(); reView(); }
 function remRows(list){
   return `<div class="rows">${list.map(r => { const late = !r.done && remAt(r) < new Date();
+    if (r.id === RM_EDIT && cur === "promemoria") return `<div class="r rm-editrow"><div class="gc-f" style="flex:1;min-width:0">
+        <div class="rm-edhd"><b>Modifica promemoria</b><button class="lnk" onclick="remEditStop()">Annulla</button></div>
+        <input class="input" id="rme-t" value="${esc(r.t)}" onkeydown="if(event.key==='Enter')remAdd('rme')">
+        <div class="gc-row"><input class="input" id="rme-d" type="date" value="${r.at.slice(0, 10)}"><input class="input" id="rme-h" type="time" value="${r.at.slice(11, 16)}"></div>
+        <div class="rm-repw"><small class="muted">Ripeti</small><div id="rme-rep" class="rm-repc">${remRepHtml("rme")}</div></div>
+        <button class="btn blue" onclick="remAdd('rme')">${ico("bell")} Salva modifiche</button></div></div>`;
     return `<div class="r ${r.done ? "rm-done" : ""}"><button class="rm-chk ${r.done ? "on" : ""}" onclick="remDone('${r.id}')" title="Fatto">${r.done ? "✓" : ""}</button>
       <div class="t"><b>${esc(r.t)}</b><small style="${late ? "color:var(--red)" : ""}">${remFmt(r)}${r.rep ? ` · <span class="rm-rep">🔁 ${remRepTxt(r.rep)}</span>` : ""}${r.gid ? " · in Google Calendar" : r.done ? "" : " · <span style=\"color:var(--orange)\">solo qui: ricollega Google</span>"}</small></div>
       <button class="round rm-ed" onclick="remEdit('${r.id}')" title="Modifica">✏️</button><button class="round" onclick="remDel('${r.id}')" title="Elimina">${ico("trash")}</button></div>`; }).join("")}</div>`;
 }
 function remView(){
   const now = new Date(), t = new Date(now.getTime() + 36e5);
-  const ed = RM_EDIT && S.rem.find(x => x.id === RM_EDIT); if (!ed) RM_EDIT = null;
-  const fD = ed ? ed.at.slice(0, 10) : dayKey(t), fH = ed ? ed.at.slice(11, 16) : String(t.getHours()).padStart(2, "0") + ":00";
+  if (RM_EDIT && !S.rem.some(x => x.id === RM_EDIT)) RM_EDIT = null;
+  const fD = dayKey(t), fH = String(t.getHours()).padStart(2, "0") + ":00";
   const open = S.rem.filter(r => !r.done), done = S.rem.filter(r => r.done).slice(-10).reverse();
   return head("Promemoria", gcOk() ? "Ti avvisa anche Google Calendar, sul telefono e sul PC" : "Collega Google Calendar per ricevere l'avviso anche con la dashboard chiusa") + `
-    <div class="glass c ${ed ? "rm-editing" : ""}"><div class="hd"><div><h3>${ed ? "Modifica promemoria" : "Nuovo promemoria"}</h3><small>${ed ? "Cambia cosa, quando o la ripetizione" : "Cosa, quando"}</small></div>${ed ? `<button class="lnk" onclick="remEditStop()">Annulla</button>` : ""}</div>
-      <div class="gc-f"><input class="input" id="rm-t" placeholder="Es. chiamare il dentista" value="${ed ? esc(ed.t) : ""}" onkeydown="if(event.key==='Enter')remAdd()">
+    <div class="glass c"><div class="hd"><div><h3>Nuovo promemoria</h3><small>Cosa, quando</small></div></div>
+      <div class="gc-f"><input class="input" id="rm-t" placeholder="Es. chiamare il dentista" onkeydown="if(event.key==='Enter')remAdd()">
         <div class="gc-row"><input class="input" id="rm-d" type="date" value="${fD}"><input class="input" id="rm-h" type="time" value="${fH}"></div>
         <div class="rm-repw"><small class="muted">Ripeti</small><div id="rm-rep">${remRepHtml()}</div></div>
-        <button class="btn blue" onclick="remAdd()">${ico("bell")} ${ed ? "Salva modifiche" : "Salva promemoria"}</button></div></div>
+        <button class="btn blue" onclick="remAdd()">${ico("bell")} Salva promemoria</button></div></div>
     ${!gcOk() ? `<div class="soon">${ico("cal")}<span>Senza Google Calendar il promemoria ti avvisa solo se la dashboard è aperta. ${gcId() ? `<a href="#" onclick="event.preventDefault();gcLogin(false)" style="color:var(--blue-2)">Collega Google</a> e arriva come notifica sull'iPhone.` : `Inserisci il Client ID in <a href="#" onclick="event.preventDefault();go('impostazioni')" style="color:var(--blue-2)">Impostazioni</a>.`}</span></div>` : ""}
     <div class="glass c"><div class="hd"><div><h3>Da fare</h3><small>${open.length ? open.length + " promemoria" : "Niente in sospeso"}</small></div></div>${open.length ? remRows(open) : `<div class="muted" style="font-size:13px">Tutto fatto.</div>`}</div>
     ${done.length ? `<div class="glass c"><div class="hd"><div><h3>Fatti</h3></div><button class="lnk" onclick="S.rem=S.rem.filter(r=>!r.done);save();reView()">Svuota</button></div>${remRows(done)}</div>` : ""}`;
@@ -3884,7 +3892,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "116";
+const APP_V = "117";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
