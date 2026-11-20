@@ -946,13 +946,15 @@ function go(id, opt = {}){
   const changed = go.prev !== id; go.prev = id;
   cur = id; renderStatic();
   const anim = changed && S.anim !== false;
+  /* se ridisegno la stessa sezione (dopo un tocco, un "salva", un filtro…) resto dove ero: si torna in cima solo cambiando sezione */
+  const keepY = changed ? 0 : isPhone() ? $("#sheet").scrollTop : scrollY, keepB = changed ? 0 : ($("#sheet-body")?.scrollTop || 0);
   if (isPhone()){
     if (id === "oggi") return closeSheet();
     $("#sheet-t").textContent = appById(id).t;
     $("#sheet-body").innerHTML = VIEWS[id](opt);
     if (anim){ const sb = $("#sheet-body"); sb.classList.remove("anim-in"); void sb.offsetWidth; sb.classList.add("anim-in"); clearTimeout(go.t2); go.t2 = setTimeout(() => sb.classList.remove("anim-in"), 1000); }
     $("#sheet").classList.toggle("portal-open", !!EMBEDS[id]);
-    $("#sheet").classList.add("open"); $("#sheet").scrollTop = 0;
+    $("#sheet").classList.add("open"); $("#sheet").scrollTop = keepY; if (!changed) $("#sheet-body").scrollTop = keepB;
     history.replaceState(null, "", "#" + id);
     after(id, $("#sheet-body"), opt);
   } else {
@@ -962,7 +964,7 @@ function go(id, opt = {}){
     if (anim){ body.classList.remove("anim-in"); void body.offsetWidth; body.classList.add("anim-in"); document.body.classList.add("anim-nav"); clearTimeout(go.t1); go.t1 = setTimeout(() => { body.classList.remove("anim-in"); document.body.classList.remove("anim-nav"); }, 1000); }
     history.replaceState(null, "", id === "oggi" ? location.pathname : "#" + id);
     after(id, body, opt);
-    window.scrollTo(0, 0);
+    window.scrollTo(0, keepY);
   }
 }
 function closeSheet(){ $("#sheet").classList.remove("open"); go.prev = "oggi"; cur = "oggi"; history.replaceState(null, "", location.pathname); renderPhone(); portalSync(); }
@@ -3882,7 +3884,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "115";
+const APP_V = "116";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
