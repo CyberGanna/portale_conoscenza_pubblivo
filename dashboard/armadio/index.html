@@ -55,12 +55,23 @@ main{grid-area:main;overflow:auto;background:var(--bg)}
 #scene.dragging{cursor:grabbing}
 .boardempty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px;color:var(--muted);font-size:14px;line-height:1.5;pointer-events:none}
 .boardempty b{color:var(--fg);font-size:17px;font-weight:600;letter-spacing:-.01em}
-.tidy{position:absolute;right:18px;top:18px;font:500 12px var(--f-ui);color:var(--fg);background:rgba(255,255,255,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);padding:7px 13px;border-radius:999px;cursor:pointer}
+.tidy-old{font:500 12px var(--f-ui);color:var(--fg);background:rgba(255,255,255,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);padding:7px 13px;border-radius:999px;cursor:pointer}
 .syncinfo{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
 .syncinfo .dot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex:none;background:#a1a1aa}
 .syncinfo[data-st="ok"] .dot{background:#3f9f6b} .syncinfo[data-st="busy"] .dot{background:#5b7fbf} .syncinfo[data-st="err"] .dot{background:#c2553f}
 .syncinfo .k{display:block;font-size:13px;color:var(--fg)} .syncinfo .k b{font-weight:600}
 .syncinfo .h{display:block;font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:2px}
+.boardbar{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(255,255,255,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);z-index:2}
+.boardbar button{width:42px;height:42px;border-radius:50%;border:0;background:transparent;color:var(--fg);display:grid;place-items:center;cursor:pointer}
+.boardbar button svg{width:20px;height:20px}
+.boardbar button:active{transform:scale(.94)}
+.boardbar button.main{background:var(--fg);color:#fff}
+#outfitSheet .outfits{margin-top:14px}
+@media (max-width:900px){
+  .app[data-view="outfit"] .head,.app[data-view="outfit"] main{display:none}
+  .app[data-view="outfit"] .stage{height:calc(100dvh - 104px - env(safe-area-inset-bottom,0px));min-height:360px;margin-top:max(10px,env(safe-area-inset-top,0px))}
+  .boardbar{bottom:14px}
+}
 .sizecard{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
 .sizecard .k{font-size:12px;color:var(--muted)}
 .sizecard .v{font-size:28px;font-weight:650;letter-spacing:-.02em;font-family:var(--f-mono)}
@@ -244,8 +255,13 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
   <div class="stage">
     <canvas id="scene" aria-label="Il tuo outfit, con i capi che hai scelto"></canvas>
     <div class="boardempty" id="boardEmpty" hidden><b>Componi il tuo outfit</b>Tocca i capi nell'armadio e li vedi qui, uno accanto all'altro.</div>
-    <div class="stagehint">Trascina per spostare · due dita, rotellina o angolo per la grandezza</div>
-    <button class="tidy" id="btnTidy" type="button">Riordina</button>
+    <div class="boardbar" role="toolbar" aria-label="Outfit">
+      <button type="button" id="btnRandom" aria-label="Sorprendimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      <button type="button" id="btnTidy" aria-label="Riordina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+      <button type="button" id="btnUndress" aria-label="Svuota la tavola"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
+      <button type="button" id="btnSaveOutfit" class="main" aria-label="Salva outfit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-9.2-9.4C1.7 7.3 4 4 7.3 4c2 0 3.6 1.1 4.7 2.7C13.1 5.1 14.7 4 16.7 4 20 4 22.3 7.3 21.2 10.6 19.5 15.4 12 20 12 20Z"/></svg></button>
+      <button type="button" id="btnMyOutfits" aria-label="I tuoi outfit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+    </div>
   </div>
 
   <main>
@@ -257,23 +273,14 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
     </section>
 
     <section class="pane" id="pane-outfit" hidden>
-      <h2>Prova cosa metterti</h2>
-      <div class="slots" id="slots"></div>
-      <div class="row">
-        <button class="btn" id="btnRandom" type="button">Sorprendimi</button>
-        <button class="btn ghost" id="btnUndress" type="button">Togli tutto</button>
-      </div>
-      <div class="row">
-        <input class="input" id="outfitName" placeholder="Nome dell'outfit, es. Sabato sera" style="flex:1 1 180px;min-width:0">
-        <button class="btn line" id="btnSaveOutfit" type="button">Salva outfit</button>
-      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <h2>I tuoi outfit</h2>
-        <div class="seg" id="outfitFilter">
+        <div class="seg outfitFilter">
           <button type="button" data-v="tutti" aria-pressed="true">Tutti</button>
           <button type="button" data-v="pref" aria-pressed="false">Preferiti</button>
         </div>
       </div>
+      <p class="hint">Tocca i capi nell'armadio per metterli sulla tavola. Tocca il cuore sulla tavola per salvare l'outfit.</p>
       <div class="outfits" id="outfits"></div>
     </section>
 
@@ -306,6 +313,15 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
 
 <input id="fileInput" type="file" accept="image/*" hidden>
 <input id="camInput" type="file" accept="image/*" capture="environment" hidden>
+
+<div class="sheetwrap" id="outfitSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ofTitle">
+    <div class="grab"></div>
+    <h2 id="ofTitle">I tuoi outfit <button type="button" data-close aria-label="Chiudi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
+    <div class="seg outfitFilter"><button type="button" data-v="tutti" aria-pressed="true">Tutti</button><button type="button" data-v="pref" aria-pressed="false">Preferiti</button></div>
+    <div class="outfits" id="outfits2"></div>
+  </div>
+</div>
 
 <div class="sheetwrap" id="addSheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
@@ -355,8 +371,6 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
     </div>
     <div class="row"><button class="btn ghost" id="edReset" type="button">Annulla i tocchi</button></div>
     <div id="edItem" style="display:flex;flex-direction:column;gap:14px">
-    <label class="lab2" for="edName">Nome del capo</label>
-    <input class="input" id="edName" placeholder="Es. Maglia nera">
     <span class="lab2">Categoria</span>
     <div class="chipsel" id="edCats"></div>
     <div class="colorline"><span class="dot" id="edDot"></span><span id="edColor">–</span></div>
@@ -368,16 +382,22 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
 <script type="module">
 
 const CATS = {
-  maglietta:   {label:'Maglie',            one:'Maglia',       slot:'maglia', sleeve:0.10},
-  canotta:     {label:'Canotte',           one:'Canotta',      slot:'maglia', sleeve:0},
-  camicia:     {label:'Camicie',           one:'Camicia',      slot:'maglia', sleeve:0.33},
-  felpa:       {label:'Felpe e Maglioni',  one:'Felpa',        slot:'strato', sleeve:0.34},
-  giacca:      {label:'Giacche e Cappotti',one:'Giacca',       slot:'strato', sleeve:0.34, long:true},
-  pantaloni:   {label:'Pantaloni',         one:'Pantaloni',    slot:'sotto',  leg:0.045},
-  pantaloncini:{label:'Pantaloncini',      one:'Pantaloncini', slot:'sotto',  leg:0.33},
-  scarpe:      {label:'Scarpe',            one:'Scarpe',       slot:'scarpe'},
+  cappello:    {label:'Cappelli',           one:'Cappello',      z:0, f:.45},
+  giacca:      {label:'Giacche e cappotti', one:'Giacca',        z:1, f:1},
+  felpa:       {label:'Felpe',              one:'Felpa',         z:2, f:1},
+  maglione:    {label:'Maglioni',           one:'Maglione',      z:2, f:1},
+  camicia:     {label:'Camicie',            one:'Camicia',       z:3, f:.95},
+  maglietta:   {label:'Magliette',          one:'Maglietta',     z:3, f:.95},
+  canotta:     {label:'Canotte',            one:'Canotta',       z:3, f:.85},
+  cintura:     {label:'Cinture',            one:'Cintura',       z:4, f:.6},
+  jeans:       {label:'Jeans',              one:'Jeans',         z:5, f:.9},
+  pantaloni:   {label:'Pantaloni',          one:'Pantaloni',     z:5, f:.9},
+  pantaloncini:{label:'Pantaloncini',       one:'Pantaloncini',  z:5, f:.8},
+  intimo:      {label:'Mutande e intimo',   one:'Intimo',        z:6, f:.5},
+  calze:       {label:'Calze',              one:'Calze',         z:7, f:.45},
+  scarpe:      {label:'Scarpe',             one:'Scarpe',        z:8, f:.75},
+  accessori:   {label:'Accessori',          one:'Accessorio',    z:9, f:.5},
 };
-const SLOTS=['strato','maglia','sotto','scarpe'];
 const ICON={
   x:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   trash:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
@@ -387,7 +407,6 @@ const ICON={
 };
 function armDelete(btn,onConfirm){ if(!btn.classList.contains('armed')){ btn.classList.add('armed'); btn.innerHTML=ICON.trash+'Elimina'; btn.setAttribute('aria-label','Tocca ancora per eliminare');
   clearTimeout(btn._t); btn._t=setTimeout(()=>{ btn.classList.remove('armed'); btn.innerHTML=ICON.x; btn.setAttribute('aria-label','Elimina'); },2600); return; } onConfirm(); }
-const SLOT_LABEL={strato:'Sopra',maglia:'Maglia',sotto:'Sotto',scarpe:'Scarpe'};
 
 /* ---------- Archivio locale ---------- */
 const mem={capi:new Map(),outfit:new Map(),prefs:new Map()};
@@ -410,7 +429,7 @@ async function _dbDel(s,id){ mem[s].delete(id); const d=await openDB(); if(!d) r
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 const state={ body:{sesso:'uomo',altezza:178,peso:74,petto:null,vita:null,fianchi:null,spalle:null},
-  items:[], outfits:[], pos:{}, wearing:{maglia:null,strato:null,sotto:null,scarpe:null}, filter:'tutti', query:'', outfitFilter:'tutti', view:'armadio' };
+  items:[], outfits:[], pos:{}, sel:[], filter:'tutti', query:'', outfitFilter:'tutti', view:'armadio' };
 
 /* ---------- Colori ---------- */
 const PALETTE=[['nero',[20,20,22]],['antracite',[55,58,64]],['grigio',[128,130,136]],['grigio chiaro',[190,192,196]],['bianco',[240,240,236]],
@@ -443,32 +462,34 @@ function resize(){ const r=canvas.getBoundingClientRect(); if(!r.width||!r.heigh
 new ResizeObserver(resize).observe(canvas);
 const dressAll=()=>draw();
 let drawTok=0, lastImgs={}, hits=[];
-async function loadWorn(){ const imgs={}; for(const s of SLOTS){ const it=state.items.find(i=>i.id===state.wearing[s]); if(it){ try{ imgs[s]=[it,await loadImg(it.img)]; }catch(e){} } } return imgs; }
+async function loadWorn(){ const out=[]; for(const id of state.sel){ const it=state.items.find(i=>i.id===id); if(it){ try{ out.push([it,await loadImg(it.img)]); }catch(e){} } } return out; }
 async function draw(){ if(!canvas.width) return; const tok=++drawTok; const imgs=await loadWorn(); if(tok!==drawTok) return; lastImgs=imgs; hits=paint(ctx,canvas.width,canvas.height,imgs);
-  document.getElementById('boardEmpty').hidden=SLOTS.some(s=>imgs[s]); }
-/* riquadri in una tavola 1 x 1.25, come le composizioni delle app di armadio */
-const UH=1.25;
-function boardLayout(has){
-  const n=SLOTS.filter(s=>has[s]).length;
-  if(n===1){ const s=SLOTS.find(s=>has[s]); return {[s]:s==='scarpe'?[0.12,0.38,0.76,0.5]:[0.1,0.1,0.8,1.05]}; }
-  if(has.strato&&has.maglia) return { strato:[0.02,0.03,0.54,0.6], maglia:[0.44,0.06,0.5,0.44], sotto:[0.5,0.47,0.46,0.74], scarpe:[0.04,0.84,0.44,0.34] };
-  const top=has.strato?'strato':'maglia';
-  if(has.sotto) return { [top]:[0.03,0.04,0.58,0.6], sotto:[0.5,0.38,0.46,0.82], scarpe:[0.05,0.84,0.42,0.34] };
-  return { [top]:[0.1,0.04,0.8,0.74], scarpe:[0.22,0.84,0.56,0.34] };
+  document.getElementById('boardEmpty').hidden=imgs.length>0; }
+/* composizione automatica: i capi in colonne, dall'alto (cappello) al basso (scarpe), come le foto dall'alto delle app di armadio */
+function boardLayout(list){
+  const n=list.length; if(!n) return {rects:[],tw:1,th:1};
+  const cols=n===1?1:n<=4?2:n<=9?3:4, gap=.12, colH=new Array(cols).fill(0);
+  const ord=[...list].sort((a,b)=>(CATS[a[0].cat]?.z??9)-(CATS[b[0].cat]?.z??9));
+  const rects=[];
+  for(const [it,img] of ord){ const f=n===1?1:(CATS[it.cat]?.f||.8); let w=f, h=w*img.height/img.width; if(h>1.9){ w*=1.9/h; h=1.9; }
+    let c=0; for(let i=1;i<cols;i++) if(colH[i]<colH[c]-0.05) c=i;
+    rects.push({it,img,x:c+(1-w)/2,y:colH[c],w,h}); colH[c]+=h+gap; }
+  // centra in verticale ogni colonna rispetto alla più alta
+  const th=Math.max(...colH)-gap; for(let c=0;c<cols;c++){ const d=(th-(colH[c]-gap))/2; rects.forEach(r=>{ if(Math.floor(r.x+r.w/2)===c) r.y+=d; }); }
+  return {rects,tw:cols,th};
 }
 function paint(g,W,Hc,imgs){
   g.clearRect(0,0,W,Hc);
   const bg=g.createRadialGradient(W*.42,Hc*.38,10,W*.5,Hc*.5,Math.max(W,Hc)*.8); bg.addColorStop(0,'#fbfaf8'); bg.addColorStop(1,'#efeeea'); g.fillStyle=bg; g.fillRect(0,0,W,Hc);
-  const has={}; for(const s of SLOTS) has[s]=!!imgs[s]; const L=boardLayout(has);
-  const pad=Math.min(W,Hc)*0.07, u=Math.min((W-pad*2)/1,(Hc-pad*2)/UH), ox=(W-u)/2, oy=(Hc-u*UH)/2;
+  const {rects,tw,th}=boardLayout(imgs);
+  const padX=Math.min(W,Hc)*0.08, padT=Math.min(W,Hc)*0.1, padB=Math.min(W,Hc)*0.16;
+  const u=Math.min((W-padX*2)/tw,(Hc-padT-padB)/th), ox=(W-tw*u)/2, oy=padT+((Hc-padT-padB)-th*u)/2;
   const out=[]; const k=W/600;
-  for(const s of ['sotto','scarpe','maglia','strato']){ if(!imgs[s]||!L[s]) continue; const [it,img]=imgs[s]; const [rx,ry,rw,rh]=L[s];
-    const off=state.pos[s]||{dx:0,dy:0,k:1};
-    const sc=Math.min(rw*u/img.width,rh*u/img.height)*(off.k||1), w=img.width*sc, h=img.height*sc;
-    const x=ox+(rx+rw/2+off.dx)*u-w/2, y=oy+(ry+rh/2+off.dy)*u-h/2;
-    g.save(); g.shadowColor='rgba(40,36,30,.16)'; g.shadowBlur=26*k; g.shadowOffsetY=10*k; g.drawImage(img,x,y,w,h); g.restore();
-    g.save(); g.shadowColor='rgba(40,36,30,.12)'; g.shadowBlur=3*k; g.shadowOffsetY=1.5*k; g.drawImage(img,x,y,w,h); g.restore();
-    out.push({s,x,y,w,h,u}); }
+  for(const R of rects){ const off=state.pos[R.it.id]||{dx:0,dy:0,k:1}, kk=off.k||1;
+    const w=R.w*u*kk, h=R.h*u*kk, x=ox+(R.x+R.w/2+off.dx)*u-w/2, y=oy+(R.y+R.h/2+off.dy)*u-h/2;
+    g.save(); g.shadowColor='rgba(40,36,30,.16)'; g.shadowBlur=26*k; g.shadowOffsetY=10*k; g.drawImage(R.img,x,y,w,h); g.restore();
+    g.save(); g.shadowColor='rgba(40,36,30,.12)'; g.shadowBlur=3*k; g.shadowOffsetY=1.5*k; g.drawImage(R.img,x,y,w,h); g.restore();
+    out.push({s:R.it.id,x,y,w,h,u}); }
   if(g===ctx&&typeof sel!=='undefined'&&sel){ const h=out.find(o=>o.s===sel); if(h){ const r=Math.max(14,W*0.022);
     g.save();
     g.shadowColor='rgba(24,24,27,.25)'; g.shadowBlur=8*k; g.fillStyle='#fff'; g.beginPath(); g.arc(h.x+h.w,h.y+h.h,r,0,7); g.fill(); g.shadowColor='transparent';
@@ -572,7 +593,7 @@ function renderEdit(){ const {w,h,d,mask}=ed, out=new ImageData(w,h), o=out.data
   const ec=document.getElementById('editCanvas'); ec.width=w; ec.height=h; const g=ec.getContext('2d'); g.clearRect(0,0,w,h); g.drawImage(full,0,0);
   ed.rgb=dominant(cut); document.getElementById('edDot').style.background=hex(ed.rgb); document.getElementById('edColor').textContent='Colore principale: '+colorName(ed.rgb);
   autoName(); }
-function autoName(){ if(ed&&ed.kind==='capo'&&!ed.nameTouched) document.getElementById('edName').value=`${CATS[ed.cat].one} ${colorName(ed.rgb)}`; }
+function autoName(){}
 function guessCat(c){ const r=c.width/c.height; if(r>1.35) return 'scarpe'; if(r<0.62) return 'pantaloni'; return 'maglietta'; }
 function renderEdCats(){ const box=document.getElementById('edCats'); box.innerHTML='';
   for(const [k,v] of Object.entries(CATS)){ const b=document.createElement('button'); b.type='button'; b.textContent=v.label; b.setAttribute('aria-pressed',ed&&ed.cat===k);
@@ -588,7 +609,7 @@ async function openEditor(file,kind='capo'){
   const body=kind==='corpo'; document.getElementById('edItem').hidden=body;
   document.getElementById('edTitle').firstChild.textContent=body?'La tua foto ':'Nuovo capo ';
   document.getElementById('edSave').textContent=body?'Usa questa foto':'Aggiungi all\'armadio';
-  document.getElementById('edName').value=''; openSheet('editor'); renderBgSeg();
+  openSheet('editor'); renderBgSeg();
   await new Promise(r=>setTimeout(r,30)); autoMask(); renderEdit(); ed.cat=guessCat(ed.cut); renderEdCats(); autoName();
   my.src=src;
   if(hasAlpha){ setStatus('L\'immagine ha già lo sfondo trasparente.',false); return; }
@@ -606,7 +627,6 @@ async function aiRun(my){
 }
 function closeEditor(){ closeSheet('editor'); ed=null; }
 document.getElementById('edX').onclick=closeEditor;
-document.getElementById('edName').oninput=()=>{ if(ed) ed.nameTouched=true; };
 let tolT=null; document.getElementById('edTol').oninput=e=>{ if(!ed) return; ed.tol=+e.target.value; clearTimeout(tolT); tolT=setTimeout(()=>{ autoMask(); renderEdit(); },90); };
 document.getElementById('edReset').onclick=()=>{ if(!ed) return; ed.clicks=[]; autoMask(); renderEdit(); };
 document.querySelectorAll('#edBgSeg button').forEach(b=>b.onclick=()=>{ if(!ed) return; if(b.dataset.v==='ai'&&!ed.ai){ if(ed.aiBusy) showToast('L\'AI sta ancora lavorando, un attimo'); else if(ed.src){ ed.userPicked=false; aiRun(ed); } return; } ed.bg=b.dataset.v; ed.userPicked=true; ed.clicks=[]; autoMask(); renderEdit(); renderBgSeg(); });
@@ -615,14 +635,14 @@ document.getElementById('editCanvas').addEventListener('click',e=>{ if(!ed||ed.b
   if(x<0||y<0||x>=ed.w||y>=ed.h) return; const p=y*ed.w+x; ed.clicks.push(p); clickRemove(ed.mask,p); renderEdit(); });
 document.getElementById('edSave').onclick=async()=>{ if(!ed) return;
   const c=ed.cut, s=Math.min(1,720/Math.max(c.width,c.height)); const o=document.createElement('canvas'); o.width=Math.round(c.width*s); o.height=Math.round(c.height*s); o.getContext('2d').drawImage(c,0,0,o.width,o.height);
-  const item={id:uid(),cat:ed.cat,name:document.getElementById('edName').value.trim()||CATS[ed.cat].one,rgb:ed.rgb,colore:colorName(ed.rgb),img:o.toDataURL('image/png'),createdAt:Date.now()};
-  state.items.unshift(item); await dbPut('capi',item); closeEditor(); state.wearing[CATS[item.cat].slot]=item.id; dressAll(); renderAll(); showToast('Aggiunto all\'armadio'); };
+  const item={id:uid(),cat:ed.cat,name:'',rgb:ed.rgb,colore:colorName(ed.rgb),img:o.toDataURL('image/png'),createdAt:Date.now()};
+  state.items.unshift(item); await dbPut('capi',item); closeEditor(); if(!state.sel.includes(item.id)) state.sel.push(item.id); dressAll(); renderAll(); showToast('Aggiunto all\'armadio'); };
 
 /* ---------- Toast ---------- */
 let toastEl=null;
 function showToast(t){ if(!toastEl){ toastEl=document.createElement('div'); toastEl.setAttribute('role','status');
   toastEl.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:#18181b;color:#fff;padding:10px 16px;border-radius:999px;z-index:60;font-size:14px;font-weight:600;transition:opacity .3s;pointer-events:none;max-width:calc(100% - 32px);text-align:center'; document.body.appendChild(toastEl); }
-  toastEl.textContent=t; toastEl.style.opacity=1; clearTimeout(toastEl._t); toastEl._t=setTimeout(()=>toastEl.style.opacity=0,2200); }
+  toastEl.textContent=t; toastEl.style.bottom=(state.view==='outfit'&&isPhone())?'calc(176px + env(safe-area-inset-bottom,0px))':'calc(96px + env(safe-area-inset-bottom,0px))'; toastEl.style.opacity=1; clearTimeout(toastEl._t); toastEl._t=setTimeout(()=>toastEl.style.opacity=0,2200); }
 
 /* ---------- Viste ---------- */
 const TITLES={armadio:'Il tuo armadio',outfit:'Outfit',profilo:'Profilo'};
@@ -639,63 +659,58 @@ document.getElementById('searchInput').oninput=e=>{ state.query=e.target.value.t
 
 /* ---------- Armadio ---------- */
 const isPhone=()=>window.matchMedia('(max-width:900px)').matches;
-function wear(id){ const it=state.items.find(i=>i.id===id); if(!it) return; const s=CATS[it.cat].slot; state.wearing[s]=state.wearing[s]===id?null:id; delete state.pos[s]; dressAll(); renderAll(); }
+function wear(id){ const it=state.items.find(i=>i.id===id); if(!it) return; if(state.sel.includes(id)) state.sel=state.sel.filter(x=>x!==id); else state.sel.push(id); delete state.pos[id]; dressAll(); renderAll(); }
 function renderCats(){ const f=document.getElementById('cats'); f.innerHTML=''; const cnt={}; state.items.forEach(i=>cnt[i.cat]=(cnt[i.cat]||0)+1);
   const opts=[['tutti','Tutto'],...Object.entries(CATS).filter(([k])=>cnt[k]).map(([k,v])=>[k,v.label])];
   if(!opts.some(o=>o[0]===state.filter)) state.filter='tutti';
   for(const [k,l] of opts){ const b=document.createElement('button'); b.type='button'; b.textContent=l; const n=document.createElement('span'); n.className='n'; n.textContent=k==='tutti'?state.items.length:cnt[k]; b.appendChild(n); b.setAttribute('aria-pressed',state.filter===k); b.onclick=()=>{ state.filter=k; renderGrid(); }; f.appendChild(b); } }
 function renderGrid(){ renderCats(); const g=document.getElementById('grid'); g.innerHTML='';
-  const q=state.query; const list=state.items.filter(i=>(state.filter==='tutti'||i.cat===state.filter)&&(!q||(i.name+' '+i.colore+' '+CATS[i.cat].label).toLowerCase().includes(q)));
+  const q=state.query; const list=state.items.filter(i=>(state.filter==='tutti'||i.cat===state.filter)&&(!q||(i.colore+' '+CATS[i.cat].label+' '+CATS[i.cat].one).toLowerCase().includes(q)));
   if(!list.length){ g.innerHTML=state.items.length?'<div class="empty"><b>Nessun capo trovato</b>Prova un altro nome o un colore, per esempio “nero”.</div>':'<div class="empty"><b>Il tuo armadio è vuoto</b>Fotografa il primo capo steso sul letto, oppure cercalo su Google.<button class="btn" type="button" id="emptyAdd">'+ICON.plus+'Aggiungi un capo</button></div>'; const ea=document.getElementById('emptyAdd'); if(ea) ea.onclick=()=>openSheet('addSheet'); }
-  const worn=new Set(Object.values(state.wearing).filter(Boolean));
+  const worn=new Set(state.sel);
   list.forEach((it,idx)=>{ const on=worn.has(it.id);
-    const el=document.createElement('div'); el.className='item'+(on?' on':''); el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label',`${it.name}, ${on?'nell\'outfit, tocca per toglierlo':'tocca per aggiungerlo all\'outfit'}`);
+    const el=document.createElement('div'); el.className='item'+(on?' on':''); el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label',`${CATS[it.cat].one} ${it.colore}, ${on?'nell\'outfit, tocca per toglierlo':'tocca per aggiungerlo all\'outfit'}`);
     el.style.setProperty('--i',Math.min(idx,12));
     el.innerHTML=`<div class="ph"><img alt="">${on?'<span class="worn">Nell\'outfit</span>':it.esempio?'<span class="badge">Esempio</span>':''}<button class="del" type="button" aria-label="Elimina">${ICON.x}</button></div><div class="tx"><span class="t"></span><span class="c"><span class="sw"></span><span class="cl"></span></span></div>`;
-    el.querySelector('img').src=it.img; el.querySelector('.t').textContent=it.name; el.querySelector('.cl').textContent=`${CATS[it.cat].one} · ${it.colore}`; el.querySelector('.sw').style.background=hex(it.rgb||[128,128,128]);
-    el.onclick=()=>{ wear(it.id); if(isPhone()&&state.wearing[CATS[it.cat].slot]===it.id) showToast('Aggiunto all\'outfit'); };
+    el.querySelector('img').src=it.img; el.querySelector('.t').textContent=CATS[it.cat].one; el.querySelector('.cl').textContent=it.colore; el.querySelector('.sw').style.background=hex(it.rgb||[128,128,128]);
+    el.onclick=()=>{ wear(it.id); if(isPhone()&&state.sel.includes(it.id)) showToast('Aggiunto all\'outfit'); };
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); wear(it.id); } };
     const del=el.querySelector('.del'); del.onclick=e=>{ e.stopPropagation(); armDelete(del,()=>removeItem(it.id)); };
     g.appendChild(el); });
   document.getElementById('exampleBar').hidden=!state.items.some(i=>i.esempio); }
-async function removeItem(id){ state.items=state.items.filter(i=>i.id!==id); for(const s of SLOTS) if(state.wearing[s]===id) state.wearing[s]=null; await dbDel('capi',id); dressAll(); renderAll(); }
+async function removeItem(id){ state.items=state.items.filter(i=>i.id!==id); state.sel=state.sel.filter(x=>x!==id); await dbDel('capi',id); dressAll(); renderAll(); }
 document.getElementById('btnClearEx').onclick=async()=>{ for(const it of state.items.filter(i=>i.esempio)) await removeItem(it.id); await dbPut('prefs',{id:'esempiTolti',v:true}); showToast('Esempi tolti'); };
 
 /* ---------- Outfit ---------- */
-function renderSlots(){ const box=document.getElementById('slots'); box.innerHTML='';
-  for(const s of SLOTS){ const list=state.items.filter(i=>CATS[i.cat].slot===s); const cur=state.items.find(i=>i.id===state.wearing[s]);
-    const row=document.createElement('div'); row.className='slot';
-    row.innerHTML=`<span class="lab">${SLOT_LABEL[s]}</span><div class="cur${cur?'':' none'}">${cur?'<img alt="">':''}<span></span></div><div class="arrows"><button type="button" aria-label="${SLOT_LABEL[s]}: capo precedente">${ICON.left}</button><button type="button" aria-label="${SLOT_LABEL[s]}: capo successivo">${ICON.right}</button></div>`;
-    if(cur) row.querySelector('img').src=cur.img; row.querySelector('.cur span').textContent=cur?cur.name:(list.length?'Niente':'Nessun capo');
-    const [prev,next]=row.querySelectorAll('button'); prev.disabled=next.disabled=!list.length;
-    const step=dir=>{ const opts=[null,...list.map(i=>i.id)]; let k=opts.indexOf(state.wearing[s]); k=(k+dir+opts.length)%opts.length; state.wearing[s]=opts[k]; delete state.pos[s]; dressAll(); renderAll(); };
-    prev.onclick=()=>step(-1); next.onclick=()=>step(1); box.appendChild(row); } }
 function snapshot(){ const w=320,h=400; const c=document.createElement('canvas'); c.width=w; c.height=h; paint(c.getContext('2d'),w,h,lastImgs); return c.toDataURL('image/jpeg',0.86); }
-document.getElementById('btnSaveOutfit').onclick=async()=>{ if(!SLOTS.some(s=>state.wearing[s])){ showToast('Prima scegli almeno un capo'); return; }
+document.getElementById('btnSaveOutfit').onclick=async()=>{ if(!state.sel.length){ showToast('Prima scegli almeno un capo'); return; }
   await draw();
-  const ne=document.getElementById('outfitName'); const o={id:uid(),name:ne.value.trim()||`Outfit ${state.outfits.length+1}`,wearing:{...state.wearing},pos:JSON.parse(JSON.stringify(state.pos)),thumb:snapshot(),fav:false,createdAt:Date.now()};
-  ne.value=''; state.outfits.unshift(o); await dbPut('outfit',o); renderOutfits(); renderSub(); showToast('Outfit salvato'); };
+  const o={id:uid(),name:`Outfit ${state.outfits.length+1}`,items:[...state.sel],pos:JSON.parse(JSON.stringify(state.pos)),thumb:snapshot(),fav:false,createdAt:Date.now()};
+  sel=null; state.outfits.unshift(o); await dbPut('outfit',o); renderOutfits(); renderSub(); showToast('Outfit salvato'); };
 const HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-9.2-9.4C1.7 7.3 4 4 7.3 4c2 0 3.6 1.1 4.7 2.7C13.1 5.1 14.7 4 16.7 4 20 4 22.3 7.3 21.2 10.6 19.5 15.4 12 20 12 20Z"/></svg>';
-function renderOutfits(){ const box=document.getElementById('outfits'); box.innerHTML='';
+const outfitIds=o=>o.items||Object.values(o.wearing||{}).filter(Boolean);
+function renderOutfits(){ for(const bid of ['outfits','outfits2']) renderOutfitsIn(document.getElementById(bid)); }
+function renderOutfitsIn(box){ if(!box) return; box.innerHTML='';
   const list=state.outfits.filter(o=>state.outfitFilter==='tutti'||o.fav).sort((a,b)=>((b.fav?1:0)-(a.fav?1:0))||(b.createdAt-a.createdAt));
-  if(!list.length){ box.innerHTML=state.outfitFilter==='pref'?'<div class="empty"><b>Nessun preferito</b>Tocca il cuore su un outfit per tenerlo qui.</div>':'<div class="empty"><b>Nessun outfit salvato</b>Scegli i capi qui sopra, dai un nome e tocca “Salva outfit”.</div>'; return; }
+  if(!list.length){ box.innerHTML=state.outfitFilter==='pref'?'<div class="empty"><b>Nessun preferito</b>Tocca il cuore su un outfit per tenerlo qui.</div>':'<div class="empty"><b>Nessun outfit salvato</b>Componi un outfit sulla tavola e tocca il cuore per salvarlo.</div>'; return; }
   list.forEach((o,idx)=>{ const el=document.createElement('div'); el.className='outfit'; el.style.setProperty('--i',Math.min(idx,10)); el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label','Indossa '+o.name);
-    const n=SLOTS.filter(s=>o.wearing[s]).length, dt=new Date(o.createdAt);
+    const n=outfitIds(o).length, dt=new Date(o.createdAt);
     el.innerHTML=`<div class="ph"><img alt=""><button class="heart" type="button" aria-label="Preferito" aria-pressed="${!!o.fav}">${HEART}</button><button class="x" type="button" aria-label="Elimina">${ICON.x}</button></div><div class="t"></div><div class="d"></div>`;
     el.querySelector('img').src=o.thumb; el.querySelector('.t').textContent=o.name; el.querySelector('.d').textContent=`${n} capi · ${dt.getDate()}/${dt.getMonth()+1}`;
-    const go=()=>{ state.wearing={maglia:null,strato:null,sotto:null,scarpe:null}; state.pos=o.pos?JSON.parse(JSON.stringify(o.pos)):{}; for(const s of SLOTS){ const id=o.wearing[s]; if(id&&state.items.some(i=>i.id===id)) state.wearing[s]=id; } dressAll(); renderAll(); showToast('Outfit: '+o.name); };
+    const go=()=>{ state.sel=outfitIds(o).filter(id=>state.items.some(i=>i.id===id)); state.pos=o.pos&&!o.wearing?JSON.parse(JSON.stringify(o.pos)):{}; sel=null; closeSheet('outfitSheet'); dressAll(); renderAll(); };
     el.onclick=go; el.onkeydown=e=>{ if(e.key==='Enter') go(); };
     el.querySelector('.heart').onclick=async e=>{ e.stopPropagation(); o.fav=!o.fav; await dbPut('outfit',o); renderOutfits(); };
     const x=el.querySelector('.x'); x.onclick=e=>{ e.stopPropagation(); armDelete(x,async()=>{ state.outfits=state.outfits.filter(z=>z.id!==o.id); await dbDel('outfit',o.id); renderOutfits(); renderSub(); }); };
     box.appendChild(el); }); }
-document.querySelectorAll('#outfitFilter button').forEach(b=>b.onclick=()=>{ state.outfitFilter=b.dataset.v; document.querySelectorAll('#outfitFilter button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderOutfits(); });
-document.getElementById('btnUndress').onclick=()=>{ state.wearing={maglia:null,strato:null,sotto:null,scarpe:null}; dressAll(); renderAll(); };
-document.getElementById('btnRandom').onclick=()=>{ const pick=s=>{ const l=state.items.filter(i=>CATS[i.cat].slot===s); return l.length?l[Math.floor(Math.random()*l.length)].id:null; };
-  const w={maglia:pick('maglia'),strato:Math.random()<0.5?pick('strato'):null,sotto:pick('sotto'),scarpe:pick('scarpe')};
-  if(!Object.values(w).some(Boolean)){ showToast('Aggiungi qualche capo all\'armadio'); return; } state.wearing=w; state.pos={}; dressAll(); renderAll(); };
+document.querySelectorAll('.outfitFilter button').forEach(b=>b.onclick=()=>{ state.outfitFilter=b.dataset.v; document.querySelectorAll('.outfitFilter button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===b.dataset.v)); renderOutfits(); });
+document.getElementById('btnUndress').onclick=()=>{ state.sel=[]; state.pos={}; sel=null; dressAll(); renderAll(); };
+document.getElementById('btnMyOutfits').onclick=()=>{ renderOutfits(); openSheet('outfitSheet'); };
+document.getElementById('btnRandom').onclick=()=>{ const pick=cats=>{ const l=state.items.filter(i=>cats.includes(i.cat)); return l.length?l[Math.floor(Math.random()*l.length)].id:null; };
+  const w=[Math.random()<0.45?pick(['giacca']):null, pick(['maglietta','camicia','canotta','felpa','maglione']), pick(['jeans','pantaloni','pantaloncini']), pick(['scarpe'])].filter(Boolean);
+  if(!w.length){ showToast('Aggiungi qualche capo all\'armadio'); return; } state.sel=w; state.pos={}; sel=null; dressAll(); renderAll(); };
 function renderSub(){ const el=document.getElementById('headSub'); const n=state.items.length, o=state.outfits.length;
   el.textContent= state.view==='profilo' ? `${state.body.altezza} cm · ${state.body.peso} kg` : `${n} ${n===1?'capo':'capi'} · ${o} ${o===1?'outfit':'outfit'}`; }
-function renderAll(){ renderGrid(); renderSlots(); renderSub(); }
+function renderAll(){ renderGrid(); renderSub(); }
 
 /* ---------- Misure ---------- */
 const fields={altezza:'m-alt',peso:'m-peso',petto:'m-petto',vita:'m-vita',fianchi:'m-fianchi',spalle:'m-spalle'};
@@ -733,7 +748,7 @@ function drawSample(kind){ const c=document.createElement('canvas'), g=c.getCont
     g.fillStyle='#e3e4e8'; g.fillRect(55,262,600,40); g.fillStyle='#1f5eff'; g.beginPath(); g.moveTo(200,230); g.quadraticCurveTo(330,140,470,200); g.lineTo(460,215); g.quadraticCurveTo(330,170,210,245); g.closePath(); g.fill(); }
   return c; }
 const EX_IDS=['esempio-tshirt','esempio-camicia','esempio-felpa','esempio-giacca','esempio-nero','esempio-jeans','esempio-sneakers'];
-async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],['camicia','camicia','Camicia bianca'],['felpa','felpa','Felpa grigia'],['giacca','giacca','Giacca di jeans'],['nero','pantaloni','Pantaloni eleganti neri'],['jeans','pantaloni','Jeans chiari'],['sneakers','scarpe','Sneakers bianche']];
+async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],['camicia','camicia','Camicia bianca'],['felpa','felpa','Felpa grigia'],['giacca','giacca','Giacca di jeans'],['nero','pantaloni','Pantaloni eleganti neri'],['jeans','jeans','Jeans chiari'],['sneakers','scarpe','Sneakers bianche']];
   let t=Date.now(); for(const [k,cat,name] of defs){ const c=drawSample(k), rgb=dominant(c); const it={id:'esempio-'+k,cat,name,rgb,colore:colorName(rgb),img:c.toDataURL('image/png'),esempio:true,createdAt:t--,t:1}; state.items.push(it); await dbPut('capi',it,true); } }
 
 /* ---------- Sincronizzazione tra PC, telefono e iPad: stessa repository privata della dashboard (portale-dati) ---------- */
@@ -773,7 +788,7 @@ async function syncOnce(){
       const loc=list.find(o=>o.id===id), lt=loc?(loc.t||loc.createdAt||1):(tombs[store]?.[id]||0), ldel=!loc&&!!tombs[store]?.[id];
       const re=rem[id], rt=re?re.t:0;
       if(re&&rt>lt){ // il remoto è più nuovo
-        if(re.del){ if(loc){ await dbDel(store,id,true); if(store==='capi'){ state.items=state.items.filter(i=>i.id!==id); for(const s of SLOTS) if(state.wearing[s]===id) state.wearing[s]=null; } else state.outfits=state.outfits.filter(o=>o.id!==id); changedLocal=true; } }
+        if(re.del){ if(loc){ await dbDel(store,id,true); if(store==='capi'){ state.items=state.items.filter(i=>i.id!==id); state.sel=state.sel.filter(x=>x!==id); } else state.outfits=state.outfits.filter(o=>o.id!==id); changedLocal=true; } }
         else { const o=await ghRaw(`${SYNC_DIR}/${store}/${id}.json`); o.t=rt; await dbPut(store,o,true);
           if(store==='capi'){ state.items=[o,...state.items.filter(i=>i.id!==id)]; } else state.outfits=[o,...state.outfits.filter(x=>x.id!==id)]; changedLocal=true; }
       } else if(lt>rt&&(loc||ldel)){ // il locale è più nuovo
@@ -812,7 +827,7 @@ window.addEventListener('storage',e=>{ if(e.key==='pc_gh') syncSoon(200); });
   state.items.sort((a,b)=>b.createdAt-a.createdAt);
   state.outfits=(await dbAll('outfit')).sort((a,b)=>b.createdAt-a.createdAt);
   const has=id=>state.items.some(i=>i.id===id);
-  if(has('esempio-tshirt')) state.wearing={maglia:'esempio-tshirt',strato:null,sotto:has('esempio-nero')?'esempio-nero':null,scarpe:has('esempio-sneakers')?'esempio-sneakers':null};
+  state.sel=['esempio-tshirt','esempio-nero','esempio-sneakers'].filter(has);
   fillBodyForm(); updateSize(); resize(); draw(); renderAll(); renderOutfits(); renderSync(); syncSoon(400);
 })();
 </script>
