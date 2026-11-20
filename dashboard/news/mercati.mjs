@@ -23,7 +23,7 @@ const L = [
   // cripto
   ["BTC-USD", "Bitcoin", "Cripto"], ["ETH-USD", "Ethereum", "Cripto"], ["SOL-USD", "Solana", "Cripto"],
   // azioni
-  ["AAPL", "Apple", "Azioni"], ["MSFT", "Microsoft", "Azioni"], ["NVDA", "Nvidia", "Azioni"], ["AMZN", "Amazon", "Azioni"], ["GOOGL", "Alphabet (Google)", "Azioni"],
+  ["AAPL", "Apple", "Azioni"], ["MSFT", "Microsoft", "Azioni"], ["NVDA", "Nvidia", "Azioni"], ["ANT", "Anthropic", "Azioni"], ["AMZN", "Amazon", "Azioni"], ["GOOGL", "Alphabet (Google)", "Azioni"],
   ["META", "Meta", "Azioni"], ["TSLA", "Tesla", "Azioni"], ["AVGO", "Broadcom", "Azioni"], ["JPM", "JPMorgan", "Azioni"], ["NFLX", "Netflix", "Azioni"],
   ["NESN.SW", "Nestlé", "Azioni"], ["NOVN.SW", "Novartis", "Azioni"], ["ROG.SW", "Roche", "Azioni"], ["UBSG.SW", "UBS", "Azioni"],
   ["ASML.AS", "ASML", "Azioni"], ["SAP.DE", "SAP", "Azioni"], ["MC.PA", "LVMH", "Azioni"], ["NOVO-B.CO", "Novo Nordisk", "Azioni"],
@@ -55,7 +55,8 @@ for (let i = 0; i < L.length; i += 6){
       const lastDay = new Date(pts.at(-1)[0] * 1000).toISOString().slice(0, 10), mDay = new Date((m.regularMarketTime || 0) * 1000).toISOString().slice(0, 10);
       if (lastDay === mDay) pts.at(-1)[1] = m.regularMarketPrice; else if (m.regularMarketTime > pts.at(-1)[0]) pts.push([m.regularMarketTime, m.regularMarketPrice]);
     }
-    if (pts.length < 25) return null;
+    // le aziende appena quotate (es. Anthropic, in borsa dal 19/11/2026) hanno pochi giorni di storia: bastano 2 prezzi
+    if (pts.length < 2) return null;
     // storia per la scheda dello strumento: 1 anno giorno per giorno + tutta la storia mese per mese
     const mo = await chart(s, "max", "1mo"), mts = mo?.timestamp || [], mcl = mo?.indicators?.quote?.[0]?.close || [];
     const r4 = v => +v.toPrecision(5);
@@ -64,7 +65,9 @@ for (let i = 0; i < L.length; i += 6){
     const px = pts.map(p => p[1]), ret = px.slice(1).map((v, k) => v / px[k] - 1);
     const today = ret.at(-1), hist = ret.slice(-91, -1);
     const mean = hist.reduce((a, b) => a + b, 0) / hist.length;
-    const sd = Math.sqrt(hist.reduce((a, b) => a + (b - mean) ** 2, 0) / (hist.length - 1)) || 1e-9;
+    // con meno di 20 giorni di storia la "variazione tipica" non è affidabile: uso il 3% al giorno, normale per un titolo appena quotato
+    const sd = hist.length < 20 ? Math.max(0.03, hist.length > 2 ? Math.sqrt(hist.reduce((a, b) => a + (b - mean) ** 2, 0) / (hist.length - 1)) : 0)
+      : Math.sqrt(hist.reduce((a, b) => a + (b - mean) ** 2, 0) / (hist.length - 1)) || 1e-9;
     const wk = px.length > 6 ? px.at(-1) / px.at(-6) - 1 : null;
     return { s, n, cls, cur: m.currency || "", px: +px.at(-1).toPrecision(6), prev: +px.at(-2).toPrecision(6), pct: +(today * 100).toFixed(2),
       z: +(today / sd).toFixed(2), vol: +(sd * 100).toFixed(2), wk: wk == null ? null : +(wk * 100).toFixed(2),

@@ -2246,6 +2246,7 @@ const MK_INFO = {
 "AAPL": [1976, "Apple: iPhone, Mac, iPad e servizi. Fondata da Steve Jobs e Steve Wozniak.", "Vendite di iPhone (Cina compresa), servizi, dazi sulla produzione in Asia, intelligenza artificiale.", "Apple: iPhone, Mac, iPad and services. Founded by Steve Jobs and Steve Wozniak.", "iPhone sales (including China), services, tariffs on Asian production, AI."],
 "MSFT": [1975, "Microsoft: Windows, Office, il cloud Azure e grande socio di OpenAI.", "Crescita del cloud, intelligenza artificiale, spese per i data center.", "Microsoft: Windows, Office, the Azure cloud and a major OpenAI partner.", "Cloud growth, AI, data-centre spending."],
 "NVDA": [1993, "Nvidia: produce i chip (GPU) usati per addestrare l'intelligenza artificiale.", "Spese dei giganti tech in data center, limiti all'export verso la Cina, nuovi chip.", "Nvidia: makes the chips (GPUs) used to train AI.", "Big tech data-centre spending, export limits to China, new chips."],
+"ANT": [2021, "Anthropic: l'azienda di intelligenza artificiale che crea Claude, fondata da ex ricercatori di OpenAI. In borsa (Nasdaq) dal 19 novembre 2026, con la quotazione più grande della storia.", "Crescita dei ricavi e dei clienti di Claude, nuovi modelli, concorrenza di OpenAI e Google, costi dei data center, umore del mercato verso l'AI.", "Anthropic: the AI company that makes Claude, founded by former OpenAI researchers. Listed on Nasdaq since 19 November 2026, in the largest IPO in history.", "Growth in Claude's revenue and customers, new models, competition from OpenAI and Google, data-center costs, market mood towards AI."],
 "AMZN": [1994, "Amazon: commercio online e il cloud AWS, fondata da Jeff Bezos.", "Consumi, crescita di AWS, costi della logistica.", "Amazon: online retail and the AWS cloud, founded by Jeff Bezos.", "Consumer spending, AWS growth, logistics costs."],
 "GOOGL": [1998, "Alphabet, la società di Google, YouTube e Android.", "Pubblicità online, concorrenza dell'AI, cause antitrust, cloud.", "Alphabet, the parent of Google, YouTube and Android.", "Online ads, AI competition, antitrust cases, cloud."],
 "META": [2004, "Meta: Facebook, Instagram, WhatsApp. Fondata da Mark Zuckerberg.", "Pubblicità, spese per l'AI e la realtà virtuale, regole sulla privacy.", "Meta: Facebook, Instagram, WhatsApp. Founded by Mark Zuckerberg.", "Advertising, AI and VR spending, privacy rules."],
@@ -3881,7 +3882,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "114";
+const APP_V = "115";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
