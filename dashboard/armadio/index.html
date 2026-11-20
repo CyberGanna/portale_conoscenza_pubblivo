@@ -56,6 +56,11 @@ main{grid-area:main;overflow:auto;background:var(--bg)}
 .boardempty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px;color:var(--muted);font-size:14px;line-height:1.5;pointer-events:none}
 .boardempty b{color:var(--fg);font-size:17px;font-weight:600;letter-spacing:-.01em}
 .tidy{position:absolute;right:18px;top:18px;font:500 12px var(--f-ui);color:var(--fg);background:rgba(255,255,255,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--glass);padding:7px 13px;border-radius:999px;cursor:pointer}
+.syncinfo{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.syncinfo .dot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex:none;background:#a1a1aa}
+.syncinfo[data-st="ok"] .dot{background:#3f9f6b} .syncinfo[data-st="busy"] .dot{background:#5b7fbf} .syncinfo[data-st="err"] .dot{background:#c2553f}
+.syncinfo .k{display:block;font-size:13px;color:var(--fg)} .syncinfo .k b{font-weight:600}
+.syncinfo .h{display:block;font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:2px}
 .sizecard{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
 .sizecard .k{font-size:12px;color:var(--muted)}
 .sizecard .v{font-size:28px;font-weight:650;letter-spacing:-.02em;font-family:var(--f-mono)}
@@ -273,6 +278,7 @@ html.emb .back-dash{display:none} html.emb body{padding-top:0}
     </section>
 
     <section class="pane" id="pane-profilo" hidden>
+      <div class="syncinfo" id="syncInfo" data-st="off"><span class="dot"></span><div><span class="k">Sincronizzazione <b class="st">–</b></span><span class="h"></span></div></div>
       <div class="sizecard"><span class="k">La tua taglia stimata</span><span class="v" id="profSize">–</span><span class="h">Utile quando compri online. Calcolata dalle misure qui sotto.</span></div>
       <h2>Le tue misure</h2>
       <p class="hint">Misura petto e fianchi nel punto più largo, la vita nel punto più stretto. Se lasci vuoto, stimo io da altezza e peso.</p>
@@ -391,9 +397,15 @@ function openDB(){ if(dbp) return dbp; dbp=new Promise(res=>{ try{ const r=index
   r.onsuccess=()=>res(r.result); r.onerror=()=>res(null); }catch(e){ res(null); } }); return dbp; }
 async function dbAll(s){ const d=await openDB(); if(!d) return [...mem[s].values()];
   return new Promise(res=>{ try{ const q=d.transaction(s).objectStore(s).getAll(); q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([...mem[s].values()]); }catch(e){ res([...mem[s].values()]); } }); }
-async function dbPut(s,o){ mem[s].set(o.id,o); const d=await openDB(); if(!d) return;
+async function dbPut(s,o,keep){ if(!keep&&(s==='capi'||s==='outfit')){ o.t=Date.now(); syncSoon(); }
+  if(!keep&&s==='prefs'&&o.id==='corpo'){ o.t=state.bodyT=Date.now(); syncSoon(); }
+  if(!keep&&(s==='capi'||s==='outfit')){ const tb=mem.prefs.get('tombe'); if(tb&&tb.v[s]&&tb.v[s][o.id]){ delete tb.v[s][o.id]; _dbPut('prefs',tb); } }
+  return _dbPut(s,o); }
+async function _dbPut(s,o){ mem[s].set(o.id,o); const d=await openDB(); if(!d) return;
   return new Promise(res=>{ try{ const t=d.transaction(s,'readwrite'); t.objectStore(s).put(o); t.oncomplete=res; t.onerror=res; }catch(e){ res(); } }); }
-async function dbDel(s,id){ mem[s].delete(id); const d=await openDB(); if(!d) return;
+async function dbDel(s,id,keep){ if(!keep&&(s==='capi'||s==='outfit')){ const tb=mem.prefs.get('tombe')||(await dbAll('prefs')).find(x=>x.id==='tombe')||{id:'tombe',v:{capi:{},outfit:{}}}; (tb.v[s]=tb.v[s]||{})[id]=Date.now(); await _dbPut('prefs',tb); syncSoon(); }
+  return _dbDel(s,id); }
+async function _dbDel(s,id){ mem[s].delete(id); const d=await openDB(); if(!d) return;
   return new Promise(res=>{ try{ const t=d.transaction(s,'readwrite'); t.objectStore(s).delete(id); t.oncomplete=res; t.onerror=res; }catch(e){ res(); } }); }
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
@@ -487,7 +499,7 @@ const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size===0){ drag=null; canvas
 canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
 canvas.addEventListener('wheel',e=>{ const [px,py]=toPx(e); const h=hitAt(px,py)||(sel&&hits.find(x=>x.s===sel)); if(!h) return; e.preventDefault(); sel=h.s; const o=getPos(h.s); o.k=clampK((o.k||1)*Math.exp(-e.deltaY*0.0015)); repaint(); },{passive:false});
 document.getElementById('btnTidy').onclick=()=>{ state.pos={}; sel=null; draw(); };
-window.__arm={get hits(){ return hits; },state};
+window.__arm={get hits(){ return hits; },state,syncNow:()=>syncNow()};
 
 /* ---------- Fogli ---------- */
 function openSheet(id){ document.getElementById(id).hidden=false; }
@@ -714,11 +726,77 @@ function drawSample(kind){ const c=document.createElement('canvas'), g=c.getCont
   return c; }
 const EX_IDS=['esempio-tshirt','esempio-camicia','esempio-felpa','esempio-giacca','esempio-nero','esempio-jeans','esempio-sneakers'];
 async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],['camicia','camicia','Camicia bianca'],['felpa','felpa','Felpa grigia'],['giacca','giacca','Giacca di jeans'],['nero','pantaloni','Pantaloni eleganti neri'],['jeans','pantaloni','Jeans chiari'],['sneakers','scarpe','Sneakers bianche']];
-  let t=Date.now(); for(const [k,cat,name] of defs){ const c=drawSample(k), rgb=dominant(c); const it={id:'esempio-'+k,cat,name,rgb,colore:colorName(rgb),img:c.toDataURL('image/png'),esempio:true,createdAt:t--}; state.items.push(it); await dbPut('capi',it); } }
+  let t=Date.now(); for(const [k,cat,name] of defs){ const c=drawSample(k), rgb=dominant(c); const it={id:'esempio-'+k,cat,name,rgb,colore:colorName(rgb),img:c.toDataURL('image/png'),esempio:true,createdAt:t--,t:1}; state.items.push(it); await dbPut('capi',it,true); } }
+
+/* ---------- Sincronizzazione tra PC, telefono e iPad: stessa repository privata della dashboard (portale-dati) ---------- */
+const SYNC_DIR='armadio';
+const syCfg=()=>{ let gh='',repo=''; try{ gh=localStorage.getItem('pc_gh')||''; repo=localStorage.getItem('pc_repo')||'CyberGanna/portale-dati'; }catch(e){} return {gh,repo}; };
+const b64e=str=>{ const u=new TextEncoder().encode(str); let b=''; for(let i=0;i<u.length;i+=0x8000) b+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(b); };
+const b64d=b=>new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+async function ghApi(path,opt={}){ const c=syCfg();
+  const r=await fetch(`https://api.github.com/repos/${c.repo}/contents/${path}`,{cache:'no-store',...opt,headers:{Authorization:'Bearer '+c.gh,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});
+  if(r.status===401) throw new Error('la chiave GitHub non è valida o è scaduta');
+  if(r.status===403) throw new Error('la chiave GitHub non ha il permesso di scrivere');
+  return r; }
+async function ghPut(path,obj,sha,msg){ const r=await ghApi(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg||'Armadio: '+path,content:b64e(JSON.stringify(obj)),...(sha?{sha}:{})})});
+  if(!r.ok){ const e=new Error('GitHub '+r.status); e.status=r.status; throw e; } return (await r.json()).content.sha; }
+async function ghRaw(path){ const r=await ghApi(path+'?t='+Date.now(),{headers:{Accept:'application/vnd.github.raw+json'}}); if(!r.ok) throw new Error('GitHub '+r.status); return JSON.parse(await r.text()); }
+const SY={busy:false,again:false,err:'',last:0,timer:null};
+function syncSoon(ms=1500){ if(!syCfg().gh) return; clearTimeout(SY.timer); SY.timer=setTimeout(()=>syncNow(),ms); }
+async function syncNow(){
+  if(!syCfg().gh){ renderSync(); return; } if(SY.busy){ SY.again=true; return; } SY.busy=true; SY.err=''; renderSync();
+  try{ for(let tries=0;tries<3;tries++){ try{ await syncOnce(); break; }catch(e){ if(e.status===409||e.status===422){ continue; } throw e; } } SY.last=Date.now(); }
+  catch(e){ SY.err=String(e.message||e); console.warn('sync armadio',e); }
+  SY.busy=false; renderSync(); if(SY.again){ SY.again=false; syncSoon(300); } }
+async function syncOnce(){
+  // 1. stato remoto
+  let st={v:1,capi:{},outfit:{},corpo:null}, sha;
+  const r=await ghApi(`${SYNC_DIR}/stato.json?t=${Date.now()}`);
+  if(r.ok){ const j=await r.json(); sha=j.sha; try{ st={...st,...JSON.parse(j.content?b64d(j.content):'{}')}; }catch(e){} if(!j.content&&j.size) st={...st,...await ghRaw(`${SYNC_DIR}/stato.json`)}; }
+  else if(r.status===404){ const rr=await fetch(`https://api.github.com/repos/${syCfg().repo}`,{headers:{Authorization:'Bearer '+syCfg().gh}}); if(rr.status===404) throw new Error(`non trovo la repository ${syCfg().repo}`); }
+  else throw new Error('GitHub '+r.status);
+  let dirty=false, changedLocal=false;
+  const tombs=await getTombs();
+  // 2. capi e outfit, uno per uno: vince la modifica più recente
+  for(const store of ['capi','outfit']){
+    const list=store==='capi'?state.items:state.outfits, rem=st[store]||(st[store]={});
+    const ids=new Set([...list.map(o=>o.id),...Object.keys(rem),...Object.keys(tombs[store]||{})]);
+    for(const id of ids){
+      const loc=list.find(o=>o.id===id), lt=loc?(loc.t||loc.createdAt||1):(tombs[store]?.[id]||0), ldel=!loc&&!!tombs[store]?.[id];
+      const re=rem[id], rt=re?re.t:0;
+      if(re&&rt>lt){ // il remoto è più nuovo
+        if(re.del){ if(loc){ await dbDel(store,id,true); if(store==='capi'){ state.items=state.items.filter(i=>i.id!==id); for(const s of SLOTS) if(state.wearing[s]===id) state.wearing[s]=null; } else state.outfits=state.outfits.filter(o=>o.id!==id); changedLocal=true; } }
+        else { const o=await ghRaw(`${SYNC_DIR}/${store}/${id}.json`); o.t=rt; await dbPut(store,o,true);
+          if(store==='capi'){ state.items=[o,...state.items.filter(i=>i.id!==id)]; } else state.outfits=[o,...state.outfits.filter(x=>x.id!==id)]; changedLocal=true; }
+      } else if(lt>rt&&(loc||ldel)){ // il locale è più nuovo
+        if(ldel){ if(re&&!re.del&&re.sha){ try{ await ghApi(`${SYNC_DIR}/${store}/${id}.json`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'Armadio: tolto '+id,sha:re.sha})}); }catch(e){} } rem[id]={t:lt,del:true}; dirty=true; }
+        else { const s2=await ghPut(`${SYNC_DIR}/${store}/${id}.json`,loc,re&&!re.del?re.sha:undefined,'Armadio: '+(loc.name||id)); rem[id]={t:lt,sha:s2}; dirty=true; }
+      }
+    }
+  }
+  // 3. misure del profilo
+  const lc=state.bodyT||0, rc=st.corpo?st.corpo.t:0;
+  if(rc>lc){ state.body={...state.body,...st.corpo.v}; state.bodyT=rc; await dbPut('prefs',{id:'corpo',v:state.body,t:rc},true); fillBodyForm(); updateSize(); renderSub(); }
+  else if(lc>rc){ st.corpo={v:state.body,t:lc}; dirty=true; }
+  if(dirty) await ghPut(`${SYNC_DIR}/stato.json`,st,sha,'Armadio: sincronizzazione');
+  if(changedLocal){ state.items.sort((a,b)=>b.createdAt-a.createdAt); state.outfits.sort((a,b)=>b.createdAt-a.createdAt); dressAll(); renderAll(); renderOutfits(); }
+}
+async function getTombs(){ const all=await dbAll('prefs'), p=all.find(x=>x.id==='tombe'); const v=p?JSON.parse(JSON.stringify(p.v)):{capi:{},outfit:{}}; v.capi=v.capi||{};
+  // esempi tolti prima che esistesse la sincronizzazione: valgono come eliminati
+  if(all.some(x=>x.id==='esempiTolti')) for(const k of ['tshirt','camicia','felpa','giacca','nero','jeans','sneakers']){ const id='esempio-'+k; if(!state.items.some(i=>i.id===id)&&!v.capi[id]) v.capi[id]=2; }
+  return v; }
+function renderSync(){ const el=document.getElementById('syncInfo'); if(!el) return; const on=!!syCfg().gh;
+  el.dataset.st=!on?'off':SY.err?'err':SY.busy?'busy':'ok';
+  el.querySelector('.st').textContent=!on?'Non collegato':SY.err?'Errore':SY.busy?'Sincronizzo…':'Collegato';
+  el.querySelector('.h').textContent=!on?'Apri l\'Armadio dalla tua dashboard (dove hai già collegato GitHub) e capi, outfit e misure restano uguali su PC, telefono e iPad.':SY.err?('Non riesco a sincronizzare: '+SY.err+'. Riprovo da solo.'):'Capi, outfit e misure sono uguali su PC, telefono e iPad.'+(SY.last?' Ultimo controllo alle '+new Date(SY.last).toLocaleTimeString('it-CH',{hour:'2-digit',minute:'2-digit'})+'.':''); }
+setInterval(()=>{ if(document.visibilityState==='visible') syncNow(); },60000);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') syncSoon(200); });
+window.addEventListener('storage',e=>{ if(e.key==='pc_gh') syncSoon(200); });
 
 /* ---------- Avvio ---------- */
 (async function init(){
-  const prefs=await dbAll('prefs'); const corpo=prefs.find(p=>p.id==='corpo'); if(corpo) state.body={...state.body,...corpo.v};
+  const prefs=await dbAll('prefs'); const corpo=prefs.find(p=>p.id==='corpo'); if(corpo){ state.body={...state.body,...corpo.v}; state.bodyT=corpo.t||0; }
+  const tb=prefs.find(p=>p.id==='tombe'); if(tb) mem.prefs.set('tombe',tb);
   state.items=(await dbAll('capi')).filter(i=>CATS[i.cat]);
   if(!prefs.some(p=>p.id==='esempiV2')){ // sostituisce gli esempi della prima versione
     for(const i of state.items.filter(i=>i.esempio)) await dbDel('capi',i.id); state.items=state.items.filter(i=>!i.esempio);
@@ -727,7 +805,7 @@ async function seedExamples(){ const defs=[['tshirt','maglietta','Maglia nera'],
   state.outfits=(await dbAll('outfit')).sort((a,b)=>b.createdAt-a.createdAt);
   const has=id=>state.items.some(i=>i.id===id);
   if(has('esempio-tshirt')) state.wearing={maglia:'esempio-tshirt',strato:null,sotto:has('esempio-nero')?'esempio-nero':null,scarpe:has('esempio-sneakers')?'esempio-sneakers':null};
-  fillBodyForm(); updateSize(); resize(); draw(); renderAll(); renderOutfits();
+  fillBodyForm(); updateSize(); resize(); draw(); renderAll(); renderOutfits(); renderSync(); syncSoon(400);
 })();
 </script>
 
