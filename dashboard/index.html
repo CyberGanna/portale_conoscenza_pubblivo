@@ -721,6 +721,7 @@ const I18N = {
 "Apri il portale da qui e le tue note compaiono in questo riquadro": "Open the portal from here and your notes appear in this box", "Apri questa pagina in": "Open this page in",
 "Argento": "Silver", "Attacchi hacker": "Cyber attacks", "Azioni": "Stocks", "Beat chill, come il video": "Chill beat, like the video", "Calmo": "Calm",
 "Calendario": "Calendar", "Cambia città": "Change city", "Cambia città del meteo": "Change weather city", "Cambia grandezza": "Change size",
+"Va nel calendario «Mia Dashboard»: lo vedi anche sull'iPhone, senza notifiche": "Goes into the «Mia Dashboard» calendar: you see it on your iPhone too, without notifications",
 "Cambia il colore a tutti i tuoi eventi (passati e futuri) il cui titolo inizia con la parola che scrivi": "Change the colour of all your events (past and future) whose title starts with the word you type",
 "Categorie": "Categories", "Cerca nelle note…": "Search notes…", "Cerca una città…": "Search a city…", "Cerca…": "Search…", "Cervello": "Brain", "Chiudi": "Close", "Cina": "China",
 "Città del meteo": "Weather city", "Clicca l'icona": "Click the icon", "Collega Google Calendar per ricevere l'avviso anche con la dashboard chiusa": "Connect Google Calendar to get the alert even with the dashboard closed",
@@ -3268,7 +3269,7 @@ function brTodayCard(){
 /* ---------------- GOOGLE CALENDAR ----------------
    Accesso con l'account Google di Ale (OAuth nel browser, gratis). Il permesso dura un'ora,
    poi basta un tocco su "Collega" (o si rinnova da solo se la sessione Google è aperta). */
-const GC_SCOPE = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly";
+const GC_SCOPE = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.app.created";
 const GC_REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
 const GC_COL = { "": ["Colore del calendario", ""], 7: ["Pavone", "#039be5"], 9: ["Mirtillo", "#3f51b5"], 1: ["Lavanda", "#7986cb"], 3: ["Vinaccia", "#8e24aa"], 4: ["Fenicottero", "#e67c73"],
   11: ["Pomodoro", "#d50000"], 6: ["Mandarino", "#f4511e"], 5: ["Banana", "#f6bf26"], 2: ["Salvia", "#33b679"], 10: ["Basilico", "#0b8043"], 8: ["Grafite", "#616161"] };
@@ -3301,6 +3302,24 @@ const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "
 const evStart = e => new Date(e.start.dateTime || e.start.date + "T00:00:00");
 const evEnd = e => new Date(e.end.dateTime || e.end.date + "T00:00:00");
 const evAllDay = e => !e.start.dateTime;
+/* calendario tutto nostro ("Mia Dashboard") per gli eventi creati qui: senza notifiche. I promemoria restano nel calendario principale. */
+const GC_MINE = "Mia Dashboard";
+/* calendari da mostrare: solo i tuoi (e le festività), mai quelli condivisi da altri */
+const gcMineCal = c => c.primary || c.accessRole === "owner" || /#holiday@group\.v\.calendar\.google\.com$/.test(c.id || "");
+async function gcMyCal(fresh){
+  let id = ""; try { id = fresh ? "" : localStorage.getItem(KEY + "-gcmy") || ""; } catch {}
+  if (id) return id;
+  const L = (await gcApi("users/me/calendarList?minAccessRole=owner")).items || [];
+  const f = L.find(c => (c.summaryOverride || c.summary || "") === GC_MINE && !c.primary);
+  if (f) id = f.id;
+  else {
+    const c = await gcApi("calendars", { method: "POST", body: JSON.stringify({ summary: GC_MINE, description: "Eventi creati dalla Mia Dashboard (senza notifiche)", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }) });
+    id = c.id;
+  }
+  try { await gcApi("users/me/calendarList/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ defaultReminders: [], notificationSettings: { notifications: [] }, selected: true }) }); } catch {}
+  try { localStorage.setItem(KEY + "-gcmy", id); } catch {}
+  return id;
+}
 async function gcLoad(force){
   if (!gcId() || !gcOk() || GC.busy || (!force && Date.now() - GC.at < 5 * 6e4)) return;
   GC.busy = true; GC.err = "";
@@ -3309,9 +3328,9 @@ async function gcLoad(force){
     const to = new Date(from); to.setMonth(to.getMonth() + 4);
     const items = [];
     const cals = (await gcApi("users/me/calendarList?minAccessRole=reader")).items || [{ id: "primary", backgroundColor: "#2f7bff", summary: "" }];
-    for (const c of cals.filter(c => c.selected !== false).slice(0, 8)){
+    for (const c of cals.filter(c => c.selected !== false && gcMineCal(c)).slice(0, 8)){
       const j = await gcApi(`calendars/${encodeURIComponent(c.id)}/events?singleEvents=true&orderBy=startTime&maxResults=500&timeMin=${from.toISOString()}&timeMax=${to.toISOString()}`);
-      for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: (e.colorId && GC_COL[e.colorId]?.[1]) || c.backgroundColor || "#2f7bff", colorId: e.colorId || "", note: e.description || "", rec: !!e.recurringEventId, calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" || c.accessRole === "writer" });
+      for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: (e.colorId && GC_COL[e.colorId]?.[1]) || c.backgroundColor || "#2f7bff", colorId: e.colorId || "", note: e.description || "", rec: !!e.recurringEventId, calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" });
     }
     GC.ev = items.sort((a, b) => evStart(a) - evStart(b)); GC.at = Date.now();
     remPushPending();
@@ -3353,7 +3372,7 @@ async function gcBulk(){
   GC.bulk = { t, c, busy: true, msg: "Cerco gli eventi…" }; reView();
   let done = 0, fail = 0;
   try {
-    const cals = ((await gcApi("users/me/calendarList?minAccessRole=writer")).items || [{ id: "primary" }]);
+    const cals = ((await gcApi("users/me/calendarList?minAccessRole=owner")).items || [{ id: "primary" }]).filter(gcMineCal);
     for (const cal of cals){
       let page = "";
       do {
@@ -3385,7 +3404,7 @@ function gcCalView(){
   if (allD) eE.setDate(eE.getDate() - 1);
   const hm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   const cid = E ? E.colorId : (GC.form && GC.form.color) || "";
-  const form = GC.form ? `<div class="glass c" id="gc-form"><div class="hd"><div><h3>${E ? "Modifica evento" : "Nuovo evento"}</h3><small>${E ? (E.rec ? "Evento ripetuto: modifichi solo questa volta" : "Le modifiche vanno anche nel tuo Google Calendar") : "Va nel tuo Google Calendar e lo vedi anche sull'iPhone"}</small></div>${E && E.link ? `<a class="lnk" href="${esc(E.link)}" target="_blank" rel="noopener">Apri in Google</a>` : ""}</div>
+  const form = GC.form ? `<div class="glass c" id="gc-form"><div class="hd"><div><h3>${E ? "Modifica evento" : "Nuovo evento"}</h3><small>${E ? (E.rec ? "Evento ripetuto: modifichi solo questa volta" : "Le modifiche vanno anche nel tuo Google Calendar") : "Va nel calendario «Mia Dashboard»: lo vedi anche sull'iPhone, senza notifiche"}</small></div>${E && E.link ? `<a class="lnk" href="${esc(E.link)}" target="_blank" rel="noopener">Apri in Google</a>` : ""}</div>
       <div class="gc-f"><input class="input" id="gc-t" placeholder="Titolo" value="${E ? esc(E.t) : ""}">
         <div class="gc-row"><input class="input" id="gc-d" type="date" value="${dayKey(eS || sel)}">${E && allD && dayKey(eE) !== dayKey(eS) ? `<input class="input" id="gc-d2" type="date" value="${dayKey(eE)}">` : `<input type="hidden" id="gc-d2" value="">`}</div>
         <label class="gc-chk"><input type="checkbox" id="gc-all" ${allD ? "checked" : ""} onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
@@ -3423,7 +3442,12 @@ async function gcAdd(){
   if (!edit){ for (const x of [body.start, body.end]) for (const k of Object.keys(x)) if (x[k] === null) delete x[k]; if (!w) delete body.location; if (!color) delete body.colorId; }
   try { toast("Salvo…");
     if (edit) await gcApi(`calendars/${encodeURIComponent(edit.cal)}/events/${encodeURIComponent(edit.id)}`, { method: "PATCH", body: JSON.stringify(body) });
-    else await gcApi("calendars/primary/events", { method: "POST", body: JSON.stringify(body) });
+    else {
+      body.reminders = { useDefault: false, overrides: [] };
+      let my; try { my = await gcMyCal(); } catch (e){ if (/403/.test(e.message)){ toast("Serve un permesso in più per il calendario «Mia Dashboard»: ricollego"); return gcLogin(false); } throw e; }
+      try { await gcApi(`calendars/${encodeURIComponent(my)}/events`, { method: "POST", body: JSON.stringify(body) }); }
+      catch (e){ if (!/40[34]/.test(e.message)) throw e; my = await gcMyCal(true); await gcApi(`calendars/${encodeURIComponent(my)}/events`, { method: "POST", body: JSON.stringify(body) }); }
+    }
     GC.form = false; calSel = d + "T12:00:00"; toast(edit ? "Evento modificato" : "Evento aggiunto"); await gcLoad(true); reView(); }
   catch (e){ if (e.message === "scaduto") { toast("Permesso scaduto: ricollego"); gcLogin(false); } else toast("Errore: " + e.message); }
 }
@@ -3892,7 +3916,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "118";
+const APP_V = "119";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
