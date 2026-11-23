@@ -3293,6 +3293,7 @@ function gcLogin(silent){
   location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q;
 }
 async function gcApi(path, opt = {}){
+  if (!gcOk()) throw new Error("scaduto");
   const r = await fetch("https://www.googleapis.com/calendar/v3/" + path, { ...opt, headers: { Authorization: "Bearer " + GTOK.t, "Content-Type": "application/json", ...(opt.headers || {}) } });
   if (r.status === 401){ GTOK = null; try { localStorage.removeItem(KEY + "-gtok"); } catch {} throw new Error("scaduto"); }
   if (!r.ok) throw new Error("Google " + r.status);
@@ -3403,15 +3404,18 @@ function gcCalView(){
   const eS = E ? evStart(E) : null, eE = E ? evEnd(E) : null, allD = E && evAllDay(E);
   if (allD) eE.setDate(eE.getDate() - 1);
   const hm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  const cid = E ? E.colorId : (GC.form && GC.form.color) || "";
+  /* evento scritto prima che il permesso Google scadesse: lo ritrovi compilato */
+  let DR = {}; if (!E){ try { DR = JSON.parse(localStorage.getItem(KEY + "-gcdraft") || "{}") || {}; } catch {} if (DR.t && !GC.form && gcOk()) GC.form = { color: DR.color || "" }; }
+  if (!GC.form) DR = {};
+  const cid = E ? E.colorId : (GC.form && GC.form.color) || DR.color || "";
   const form = GC.form ? `<div class="glass c" id="gc-form"><div class="hd"><div><h3>${E ? "Modifica evento" : "Nuovo evento"}</h3><small>${E ? (E.rec ? "Evento ripetuto: modifichi solo questa volta" : "Le modifiche vanno anche nel tuo Google Calendar") : "Va nel calendario «Mia Dashboard»: lo vedi anche sull'iPhone, senza notifiche"}</small></div>${E && E.link ? `<a class="lnk" href="${esc(E.link)}" target="_blank" rel="noopener">Apri in Google</a>` : ""}</div>
-      <div class="gc-f"><input class="input" id="gc-t" placeholder="Titolo" value="${E ? esc(E.t) : ""}">
-        <div class="gc-row"><input class="input" id="gc-d" type="date" value="${dayKey(eS || sel)}">${E && allD && dayKey(eE) !== dayKey(eS) ? `<input class="input" id="gc-d2" type="date" value="${dayKey(eE)}">` : `<input type="hidden" id="gc-d2" value="">`}</div>
-        <label class="gc-chk"><input type="checkbox" id="gc-all" ${allD ? "checked" : ""} onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
-        <div id="gc-times" class="gc-row" style="${allD ? "display:none" : ""}"><input class="input" id="gc-s" type="time" value="${E && !allD ? hm(eS) : "09:00"}"><input class="input" id="gc-e" type="time" value="${E && !allD ? hm(eE) : "10:00"}"></div>
-        <input class="input" id="gc-w" placeholder="Luogo (facoltativo)" value="${E ? esc(E.where) : ""}">
+      <div class="gc-f"><input class="input" id="gc-t" placeholder="Titolo" value="${E ? esc(E.t) : esc(DR.t || "")}">
+        <div class="gc-row"><input class="input" id="gc-d" type="date" value="${DR.d || dayKey(eS || sel)}">${E && allD && dayKey(eE) !== dayKey(eS) ? `<input class="input" id="gc-d2" type="date" value="${dayKey(eE)}">` : `<input type="hidden" id="gc-d2" value="">`}</div>
+        <label class="gc-chk"><input type="checkbox" id="gc-all" ${allD || DR.all ? "checked" : ""} onchange="document.getElementById('gc-times').style.display=this.checked?'none':''"> Tutto il giorno</label>
+        <div id="gc-times" class="gc-row" style="${allD || DR.all ? "display:none" : ""}"><input class="input" id="gc-s" type="time" value="${E && !allD ? hm(eS) : DR.s || "09:00"}"><input class="input" id="gc-e" type="time" value="${E && !allD ? hm(eE) : DR.e || "10:00"}"></div>
+        <input class="input" id="gc-w" placeholder="Luogo (facoltativo)" value="${E ? esc(E.where) : esc(DR.w || "")}">
         ${gcColPick(cid)}
-        <div class="gc-row">${E ? `<button class="btn gc-del" onclick="gcDel(this)">${ico("trash")}<span class="gc-dt"> Elimina</span></button>` : ""}<span class="sp" style="flex:1"></span><button class="btn" onclick="GC.form=false;reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">${E ? "Salva modifiche" : "Salva evento"}</button></div></div></div>` : "";
+        <div class="gc-row">${E ? `<button class="btn gc-del" onclick="gcDel(this)">${ico("trash")}<span class="gc-dt"> Elimina</span></button>` : ""}<span class="sp" style="flex:1"></span><button class="btn" onclick="GC.form=false;try{localStorage.removeItem(KEY+'-gcdraft')}catch{};reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">${E ? "Salva modifiche" : "Salva evento"}</button></div></div></div>` : "";
   return `${!gcOk() ? gcConnectBox() : ""}
     ${GC.err ? `<div class="soon">${ico("cal")}<span>Google Calendar non risponde: ${esc(GC.err)}</span></div>` : ""}
     <div class="nw-bar"><span class="muted" style="font-size:13px">${GC.busy ? "Aggiorno…" : GC.ev ? (GC.ev.length + " eventi in calendario") : ""}</span><span class="sp"></span>
@@ -3433,6 +3437,9 @@ async function gcAdd(){
   const t = $("#gc-t").value.trim(), d = $("#gc-d").value, d2 = $("#gc-d2").value, all = $("#gc-all").checked, w = $("#gc-w").value.trim();
   const color = document.querySelector(".gc-col.on")?.dataset.k || "", edit = GC.form && GC.form.id ? GC.form : null;
   if (!t || !d) return toast("Scrivi titolo e data");
+  /* se serve ricollegare Google, l'evento resta scritto e lo ritrovi al ritorno */
+  const relog = msg => { if (!edit) try { localStorage.setItem(KEY + "-gcdraft", JSON.stringify({ t, d, all, w, color, s: $("#gc-s").value, e: $("#gc-e").value })); } catch {} toast(msg); gcLogin(false); };
+  if (!gcOk()) return relog("Permesso Google scaduto: ricollego, poi ripremi Salva");
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   let body;
   if (all){ const e = new Date((d2 && d2 >= d ? d2 : d) + "T00:00:00"); e.setDate(e.getDate() + 1); body = { start: { date: d, dateTime: null }, end: { date: dayKey(e), dateTime: null } }; }
@@ -3444,12 +3451,13 @@ async function gcAdd(){
     if (edit) await gcApi(`calendars/${encodeURIComponent(edit.cal)}/events/${encodeURIComponent(edit.id)}`, { method: "PATCH", body: JSON.stringify(body) });
     else {
       body.reminders = { useDefault: false, overrides: [] };
-      let my; try { my = await gcMyCal(); } catch (e){ if (/403/.test(e.message)){ toast("Serve un permesso in più per il calendario «Mia Dashboard»: ricollego"); return gcLogin(false); } throw e; }
+      let my; try { my = await gcMyCal(); } catch (e){ if (/403/.test(e.message)) return relog("Serve un permesso in più per il calendario «Mia Dashboard»: ricollego, poi ripremi Salva"); throw e; }
       try { await gcApi(`calendars/${encodeURIComponent(my)}/events`, { method: "POST", body: JSON.stringify(body) }); }
       catch (e){ if (!/40[34]/.test(e.message)) throw e; my = await gcMyCal(true); await gcApi(`calendars/${encodeURIComponent(my)}/events`, { method: "POST", body: JSON.stringify(body) }); }
     }
+    try { localStorage.removeItem(KEY + "-gcdraft"); } catch {}
     GC.form = false; calSel = d + "T12:00:00"; toast(edit ? "Evento modificato" : "Evento aggiunto"); await gcLoad(true); reView(); }
-  catch (e){ if (e.message === "scaduto") { toast("Permesso scaduto: ricollego"); gcLogin(false); } else toast("Errore: " + e.message); }
+  catch (e){ if (e.message === "scaduto") relog("Permesso Google scaduto: ricollego, poi ripremi Salva"); else toast("Errore: " + e.message); }
 }
 function gcEdit(cal, id){ GC.form = { cal, id }; if (cur !== "calendario") go("calendario"); else reView(); requestAnimationFrame(() => document.getElementById("gc-form")?.scrollIntoView({ behavior: "smooth", block: "start" })); }
 async function gcDel(btn){
@@ -3916,7 +3924,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "119";
+const APP_V = "120";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
