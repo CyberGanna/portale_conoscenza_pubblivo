@@ -3282,7 +3282,7 @@ const gcOk = () => GTOK && GTOK.exp > Date.now() + 60e3;
   // ritorno dalla pagina di Google: il token arriva nel frammento #access_token=...
   const h = new URLSearchParams(location.hash.slice(1));
   if (h.get("state") === "gcal" && h.get("access_token")){
-    GTOK = { t: h.get("access_token"), exp: Date.now() + (+h.get("expires_in") || 3600) * 1000 };
+    GTOK = { sc: h.get("scope") || "", t: h.get("access_token"), exp: Date.now() + (+h.get("expires_in") || 3600) * 1000 };
     try { localStorage.setItem(KEY + "-gtok", JSON.stringify(GTOK)); } catch {}
     history.replaceState(null, "", location.pathname + "#calendario");
   } else if (h.get("state") === "gcal" && h.get("error")) history.replaceState(null, "", location.pathname + "#calendario");
@@ -3296,7 +3296,7 @@ async function gcApi(path, opt = {}){
   if (!gcOk()) throw new Error("scaduto");
   const r = await fetch("https://www.googleapis.com/calendar/v3/" + path, { ...opt, headers: { Authorization: "Bearer " + GTOK.t, "Content-Type": "application/json", ...(opt.headers || {}) } });
   if (r.status === 401){ GTOK = null; try { localStorage.removeItem(KEY + "-gtok"); } catch {} throw new Error("scaduto"); }
-  if (!r.ok) throw new Error("Google " + r.status);
+  if (!r.ok){ let m = ""; try { m = (await r.json()).error.message || ""; } catch {} throw new Error("Google " + r.status + (m ? " (" + m + ")" : "")); }
   return r.status === 204 ? null : r.json();
 }
 const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -3451,9 +3451,22 @@ async function gcAdd(){
     if (edit) await gcApi(`calendars/${encodeURIComponent(edit.cal)}/events/${encodeURIComponent(edit.id)}`, { method: "PATCH", body: JSON.stringify(body) });
     else {
       body.reminders = { useDefault: false, overrides: [] };
-      let my; try { my = await gcMyCal(); } catch (e){ if (/403/.test(e.message)) return relog("Serve un permesso in più per il calendario «Mia Dashboard»: ricollego, poi ripremi Salva"); throw e; }
-      try { await gcApi(`calendars/${encodeURIComponent(my)}/events`, { method: "POST", body: JSON.stringify(body) }); }
-      catch (e){ if (!/40[34]/.test(e.message)) throw e; my = await gcMyCal(true); await gcApi(`calendars/${encodeURIComponent(my)}/events`, { method: "POST", body: JSON.stringify(body) }); }
+      /* calendario «Mia Dashboard»; se Google non dà il permesso (o hai tolto la spunta) l'evento va nel calendario principale, così si salva sempre */
+      const post = id => gcApi(`calendars/${encodeURIComponent(id)}/events`, { method: "POST", body: JSON.stringify(body) });
+      const noMine = GTOK.sc && !GTOK.sc.includes("calendar.app.created");
+      let ok = false;
+      if (!noMine){
+        let my = "";
+        try { my = await gcMyCal(); } catch (e){
+          if (e.message === "scaduto") throw e;
+          if (/403/.test(e.message) && !GTOK.sc) return relog("Serve un permesso in più per il calendario «Mia Dashboard»: ricollego, poi ripremi Salva");
+        }
+        if (my) try { await post(my); ok = true; } catch (e){
+          if (e.message === "scaduto") throw e;
+          try { my = await gcMyCal(true); await post(my); ok = true; } catch (e2){ if (e2.message === "scaduto") throw e2; }
+        }
+      }
+      if (!ok){ await post("primary"); toast("Salvato nel calendario principale"); }
     }
     try { localStorage.removeItem(KEY + "-gcdraft"); } catch {}
     GC.form = false; calSel = d + "T12:00:00"; toast(edit ? "Evento modificato" : "Evento aggiunto"); await gcLoad(true); reView(); }
@@ -3924,7 +3937,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "120";
+const APP_V = "121";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
