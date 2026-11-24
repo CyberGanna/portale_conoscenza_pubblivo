@@ -1780,6 +1780,43 @@ async function brSumMake(f, quiet){
   catch { BR_SUM_BUSY[f.path] = "err"; }
   if (cur === "cervello" && !BR.edit) reView();
 }
+/* FILM: per ogni film Aris cerca sul web e scrive una scheda (di cosa parla, anno, regia, attori…) dentro la nota, così vale su tutti i dispositivi */
+const BR_FILM_RX = /\n*## 🎬 Scheda di Aris\n[\s\S]*?\n[_*]Scheda fatta da Aris[^\n]*[_*]\n*/, BR_FILM_BUSY = {};
+const brFilmHas = f => /^## 🎬 Scheda di Aris/m.test(f.text);
+async function brFilmMake(path, quiet, redo){
+  let f = (BR.files || []).find(x => x.path === path); const key = mkKey();
+  if (!f || !key || BR_FILM_BUSY[path] === 1 || (brFilmHas(f) && !redo) || (BR.edit && BR.open === path)) return;
+  BR_FILM_BUSY[path] = 1; if (!quiet && cur === "cervello") reView();
+  try {
+    const sys = `Sei Aris, l'assistente di ${S.name}. Ti do il titolo di un film (ed eventuali appunti di ${S.name}). Cerca sul web il film e scrivi una scheda breve in italiano semplice. Usa solo fatti trovati: se un dato non lo trovi lascialo vuoto, non inventare. Trama senza spoiler sul finale. Se non riesci a capire quale film è, rispondi {"trovato":false}. Rispondi SOLO con JSON valido: {"trovato":true,"titolo":"titolo italiano","originale":"titolo originale","anno":"anno di uscita","uscita":"data di uscita al cinema o in streaming, se la trovi","regia":"","attori":"3-5 attori principali","genere":"","durata":"es. 2 h 28 min","paese":"","trama":"di cosa parla, 3-4 frasi","perche":"perché è conosciuto o cosa lo rende speciale, 1-2 frasi","voto":"es. IMDb 8,8/10 se lo trovi","dove":"dove si può vedere in Svizzera o Italia (piattaforma), se lo trovi"}` + LANG_SFX;
+    const txt = await groqText(key, sys, [{ role: "user", content: `Film: ${brTitle(f)}\n\nAppunti:\n${f.text.replace(BR_FILM_RX, "\n").replace(/^#.*$/m, "").trim().slice(0, 1500) || "(nessuno)"}` }], 900);
+    let o = null; const m = txt.match(/\{[\s\S]*\}/); try { o = JSON.parse(m ? m[0] : txt); } catch {}
+    if (!o || o.trovato === false || !o.trama) throw new Error(o && o.trovato === false ? "film non trovato" : "risposta non valida");
+    const v = k => String(o[k] || "").replace(/\s+/g, " ").trim(), row = a => a.filter(([, x]) => x).map(([k, x]) => `**${k}:** ${x}`).join(" · ");
+    const lines = [row([["Titolo originale", v("originale") !== v("titolo") ? v("originale") : ""], ["Anno", v("anno")], ["Uscita", v("uscita")]]), row([["Regia", v("regia")], ["Genere", v("genere")], ["Durata", v("durata")], ["Paese", v("paese")]]), row([["Attori", v("attori")]]),
+      `**Di cosa parla:** ${v("trama")}`, row([["Perché è conosciuto", v("perche")]]), row([["Voto", v("voto")], ["Dove vederlo", v("dove")]])].filter(Boolean);
+    const sec = `## 🎬 Scheda di Aris\n${lines.join("\n\n")}\n\n*Scheda fatta da Aris${groqText.web ? " cercando sul web" : ""} il ${new Date().toLocaleDateString("it-IT")}*\n`;
+    f = (BR.files || []).find(x => x.path === path) || f;
+    if (BR.edit && BR.open === path) throw new Error("nota aperta in modifica");
+    const base = f.text.replace(BR_FILM_RX, "\n\n").replace(/\n{3,}/g, "\n\n");
+    const out = /^#\s+[^\n]*\n/.test(base) ? base.replace(/^(#\s+[^\n]*\n)\n*/, `$1\n${sec}\n`) : `${sec}\n${base}`;
+    await brWrite(path, out.replace(/\s*$/, "") + "\n", "Cervello: scheda del film " + brTitle(f));
+    delete BR_FILM_BUSY[path]; if (!quiet) toast("Scheda del film pronta");
+  } catch (e){ BR_FILM_BUSY[path] = "err:" + e.message; if (!quiet) toast("Scheda non riuscita: " + e.message); setTimeout(() => { if (String(BR_FILM_BUSY[path]).startsWith("err")) delete BR_FILM_BUSY[path]; }, 15 * 6e4); }
+  if (cur === "cervello" && !BR.edit) reView();
+}
+function brFilmBox(f){
+  if (brFilmHas(f)) return `<div class="br-redo"><button class="btn" ${BR_FILM_BUSY[f.path] === 1 ? "disabled" : ""} onclick="brFilmMake(decodeURIComponent('${jq(f.path)}'),false,true)">${BR_FILM_BUSY[f.path] === 1 ? "Aris la sta rifacendo…" : "↻ Rifai la scheda del film"}</button></div>`;
+  const st = BR_FILM_BUSY[f.path];
+  return `<div class="br-sum"><b>🎬 Scheda del film</b><p>${st === 1 ? "Aris sta cercando il film sul web…" : !mkKey() ? "Per la scheda serve la chiave Groq gratuita (impostazioni AI del portale, in Conoscenza)." : String(st || "").startsWith("err") ? "Non ci sono riuscito: " + esc(String(st).slice(4)) : "Aris prepara la scheda: di cosa parla, quando è uscito, regia e attori."}</p>
+    ${st === 1 || !mkKey() ? "" : `<button class="btn blue" style="margin-top:8px" onclick="brFilmMake(decodeURIComponent('${jq(f.path)}'))">✨ Fai la scheda adesso</button>`}</div>`;
+}
+/* i film senza scheda: in sottofondo, uno alla volta */
+async function brFilmFill(){
+  if (brFilmFill.on || !mkKey()) return; brFilmFill.on = true;
+  try { for (const f of (BR.files || []).filter(f => brType(f.path) === "film" && !brFilmHas(f) && !BR_FILM_BUSY[f.path])){ await brFilmMake(f.path, true); await new Promise(r => setTimeout(r, 4000)); } }
+  finally { brFilmFill.on = false; }
+}
 /* le idee vecchie senza riassunto: lo faccio una volta, in sottofondo, una alla volta */
 async function brSumFill(){
   if (brSumFill.on || !mkKey()) return; brSumFill.on = true;
@@ -2936,7 +2973,7 @@ async function brLoad(force){
     }
     BR.at = Date.now();
   } catch (e){ BR.err = e.message || String(e); }
-  BR.busy = false; brRefresh(); setTimeout(brSumFill, 2500);
+  BR.busy = false; brRefresh(); setTimeout(brSumFill, 2500); setTimeout(brFilmFill, 6000);
   if (BR.files && !BR.err && !S.brFilm) setTimeout(brMoveFilm, 800);
   if (BR.files && !(Date.now() - (S.brRen || 0) < 6 * 36e5) && BR.files.some(f => !/\/diario\//.test(f.path) && brBadTitle(f))) setTimeout(() => brRetitle(), 1500);
 }
@@ -3048,7 +3085,7 @@ async function brNew(type, title){
 function brDiary(){ BR.tab = "elenco"; brNew("diario", brToday()); }
 async function brSaveEdit(){
   const ta = document.getElementById("br-ta"); if (!ta || !BR.open) return;
-  try { toast("Salvo…"); await brWrite(BR.open, ta.value.replace(/\s*$/, "") + "\n"); BR.edit = false; toast("Salvato"); reView(); }
+  try { toast("Salvo…"); const p = BR.open; await brWrite(p, ta.value.replace(/\s*$/, "") + "\n"); BR.edit = false; toast("Salvato"); reView(); if (brType(p) === "film") setTimeout(() => brFilmMake(p, true), 800); }
   catch (e){ toast("Errore: " + e.message); }
 }
 
@@ -3234,7 +3271,7 @@ function brView(){
   const note = open ? `<div class="glass c br-note"><div class="hd"><div><h3>${esc(brTitle(open))}</h3><small><span class="br-dot" style="background:${BR_COL[brType(open.path)]}"></span>${esc(open.path.slice(BR_DIR.length))}</small></div>
         <div style="display:flex;gap:8px">${BR.edit ? `<button class="btn" onclick="BR.edit=false;reView()">Annulla</button><button class="btn blue" onclick="brSaveEdit()">Salva</button>` : `<button class="btn" onclick="BR.edit=true;reView()">Modifica</button><button class="btn" title="Elimina la nota" onclick="brDel(this)">${ico("trash")}</button><button class="btn" onclick="BR.open=null;reView()">Chiudi</button>`}</div></div>
       ${BR.edit ? `<textarea id="br-ta" class="input br-ta">${esc(open.text)}</textarea><small class="muted">Scrivi [[nome]] per collegare un'altra nota. Markdown: # titolo, **grassetto**, - elenco, - [ ] da fare.</small>`
-        : `${brType(open.path) === "idee" ? brSumBox(open) + `<div class="br-redo ${brThin(open) ? "thin" : ""}">${brThin(open) ? "<span>Questa idea è spiegata poco (forse il video non si è sentito bene).</span>" : ""}<button class="btn" ${BR_REDO[open.path] ? "disabled" : ""} onclick="brRedo(decodeURIComponent('${jq(open.path)}'))">${BR_REDO[open.path] ? "Aris la sta riscrivendo…" : "✨ Rifalla più dettagliata"}</button></div>` : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
+        : `${brType(open.path) === "film" ? brFilmBox(open) : ""}${brType(open.path) === "idee" ? brSumBox(open) + `<div class="br-redo ${brThin(open) ? "thin" : ""}">${brThin(open) ? "<span>Questa idea è spiegata poco (forse il video non si è sentito bene).</span>" : ""}<button class="btn" ${BR_REDO[open.path] ? "disabled" : ""} onclick="brRedo(decodeURIComponent('${jq(open.path)}'))">${BR_REDO[open.path] ? "Aris la sta riscrivendo…" : "✨ Rifalla più dettagliata"}</button></div>` : ""}<div class="br-md">${brMd(brType(open.path) === "idee" ? open.text.replace(BR_SUM_RX, "").replace(/\n{3,}/g, "\n\n") : open.text)}</div>${back.length ? `<div class="br-back"><small class="muted">Collegata da</small> ${back.map(f => `<a class="wl" href="#" onclick="event.preventDefault();BR.open=decodeURIComponent('${jq(f.path)}');reView()">${esc(brTitle(f))}</a>`).join(" · ")}</div>` : ""}`}</div>` : "";
   const list = BR_TYPES.map(([k, t, col]) => { const L = shown.filter(f => brType(f.path) === k); if (!L.length) return "";
     return `<div class="br-grp"><div class="br-h"><span class="br-dot" style="background:${col}"></span>${t} <span class="muted">${L.length}</span></div>${L.slice().reverse().map(f => `<button class="br-it ${open && open.path === f.path ? "on" : ""}" onclick="BR.open=decodeURIComponent('${jq(f.path)}');BR.edit=false;reView()"><b>${esc(brTitle(f))}</b><small>${esc(f.text.replace(/^#.*$/m, "").replace(/[#*\[\]>`-]/g, "").trim().slice(0, 90))}</small></button>`).join("")}</div>`; }).join("");
   return head("Cervello", BR.busy ? "Sincronizzo con GitHub…" : `${files.length} note · ${esc(c.repo)}/cervello`) + ai + `
@@ -3944,7 +3981,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "122";
+const APP_V = "123";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
