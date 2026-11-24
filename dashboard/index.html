@@ -3327,13 +3327,17 @@ async function gcLoad(force){
   try {
     const from = new Date(); from.setDate(1); from.setMonth(from.getMonth() - 1); from.setHours(0, 0, 0, 0);
     const to = new Date(from); to.setMonth(to.getMonth() + 4);
+    /* se stai guardando un mese più lontano (es. marzo dell'anno prossimo) carica anche quello */
+    const vf = new Date(calY, calM, 1), vt = new Date(calY, calM + 1, 8);
+    if (vf < from) from.setTime(vf.getTime()); if (vt > to) to.setTime(vt.getTime());
     const items = [];
     const cals = (await gcApi("users/me/calendarList?minAccessRole=reader")).items || [{ id: "primary", backgroundColor: "#2f7bff", summary: "" }];
     for (const c of cals.filter(c => c.selected !== false && gcMineCal(c)).slice(0, 8)){
-      const j = await gcApi(`calendars/${encodeURIComponent(c.id)}/events?singleEvents=true&orderBy=startTime&maxResults=500&timeMin=${from.toISOString()}&timeMax=${to.toISOString()}`);
-      for (const e of j.items || []) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: (e.colorId && GC_COL[e.colorId]?.[1]) || c.backgroundColor || "#2f7bff", colorId: e.colorId || "", note: e.description || "", rec: !!e.recurringEventId, calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" });
+      let page = "", all = [];
+      do { const j = await gcApi(`calendars/${encodeURIComponent(c.id)}/events?singleEvents=true&orderBy=startTime&maxResults=2500&timeMin=${from.toISOString()}&timeMax=${to.toISOString()}${page ? "&pageToken=" + encodeURIComponent(page) : ""}`); all = all.concat(j.items || []); page = j.nextPageToken || ""; } while (page && all.length < 10000);
+      for (const e of all) if (e.status !== "cancelled" && e.start) items.push({ id: e.id, cal: c.id, col: (e.colorId && GC_COL[e.colorId]?.[1]) || c.backgroundColor || "#2f7bff", colorId: e.colorId || "", note: e.description || "", rec: !!e.recurringEventId, calName: c.summaryOverride || c.summary, t: e.summary || "(senza titolo)", where: e.location || "", start: e.start, end: e.end, link: e.htmlLink, own: c.accessRole === "owner" });
     }
-    GC.ev = items.sort((a, b) => evStart(a) - evStart(b)); GC.at = Date.now();
+    GC.ev = items.sort((a, b) => evStart(a) - evStart(b)); GC.at = Date.now(); GC.span = [from.getTime(), to.getTime()];
     remPushPending();
     try { localStorage.setItem(KEY + "-gcal", JSON.stringify(GC.ev)); } catch {}
   } catch (e){ GC.err = e.message === "scaduto" ? "" : e.message; }
@@ -3416,6 +3420,9 @@ function gcCalView(){
         <input class="input" id="gc-w" placeholder="Luogo (facoltativo)" value="${E ? esc(E.where) : esc(DR.w || "")}">
         ${gcColPick(cid)}
         <div class="gc-row">${E ? `<button class="btn gc-del" onclick="gcDel(this)">${ico("trash")}<span class="gc-dt"> Elimina</span></button>` : ""}<span class="sp" style="flex:1"></span><button class="btn" onclick="GC.form=false;try{localStorage.removeItem(KEY+'-gcdraft')}catch{};reView()">Annulla</button><button class="btn blue" onclick="gcAdd()">${E ? "Salva modifiche" : "Salva evento"}</button></div></div></div>` : "";
+  /* mese fuori dal periodo già caricato: lo carico adesso */
+  const mf = new Date(calY, calM, 1).getTime(), mt = new Date(calY, calM + 1, 1).getTime(), mk = calY + "-" + calM;
+  if (gcOk() && !GC.busy && GC.span && (mf < GC.span[0] || mt > GC.span[1]) && GC.tried !== mk){ GC.tried = mk; setTimeout(() => gcLoad(true), 0); }
   return `${!gcOk() ? gcConnectBox() : ""}
     ${GC.err ? `<div class="soon">${ico("cal")}<span>Google Calendar non risponde: ${esc(GC.err)}</span></div>` : ""}
     <div class="nw-bar"><span class="muted" style="font-size:13px">${GC.busy ? "Aggiorno…" : GC.ev ? (GC.ev.length + " eventi in calendario") : ""}</span><span class="sp"></span>
@@ -3937,7 +3944,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "121";
+const APP_V = "122";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;
