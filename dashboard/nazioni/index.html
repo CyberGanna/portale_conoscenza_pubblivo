@@ -35,6 +35,13 @@ button{cursor:pointer;border:0;background:none}
 .c.t{fill:#141a27}
 .c.off{fill:#0b0f17;stroke:#141a26}
 @media (hover:hover){ body.explore .c:not(.t):hover,body.dove .c:not(.t):not(.off):hover{fill:var(--land-h)} }
+.c.k-eu{fill:#2b4f8f}.c.k-as{fill:#8a6a17}.c.k-af{fill:#93501f}.c.k-na{fill:#5b3f96}.c.k-sa{fill:#1d6b52}.c.k-oc{fill:#1c6878}
+.m.k-eu{stroke:#60a5fa}.m.k-as{stroke:#facc15}.m.k-af{stroke:#fb923c}.m.k-na{stroke:#a78bfa}.m.k-sa{stroke:#34d399}.m.k-oc{stroke:#22d3ee}
+.cleg{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:11.5px;color:var(--muted)} .cleg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.cont{display:inline-block;margin-top:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid var(--line-2)}
+.fb .t span.cont{display:inline-block;margin-top:5px;font-size:11.5px} #excard .cont{margin:4px 0 2px}
+#exbar .btn{white-space:nowrap;padding:9px 12px}
+.btn.on{background:var(--ink);color:#0a0c12;border-color:var(--ink)}
 .c.known{fill:#1d5a4a} .c.rip{fill:#6b2236}
 .c.tg{fill:var(--target);stroke:#fff3c4;stroke-width:1.2px}
 .c.ok{fill:var(--ok);stroke:#d1fae5;stroke-width:1.2px}
@@ -186,6 +193,11 @@ const ZONE = { mondo:"Tutto il mondo", eu:"Europa", as:"Asia", af:"Africa", na:"
 /* nazioni che stanno tutte su isole (anche quelle che dividono un'isola con un vicino, come Haiti o Irlanda) */
 const ISOLE = new Set("IS IE GB MT CY JP PH ID LK MV SG BH TW TL MG MU SC KM CV ST CU JM HT DO BS BB TT GD LC VC KN AG DM NZ PG FJ SB VU WS TO KI TV NR PW FM MH".split(" "));
 const CONT_N = { eu:"Europa", as:"Asia", af:"Africa", na:"Nord e Centro America", sa:"Sud America", oc:"Oceania" };
+const CONT_COL = { eu:"#60a5fa", as:"#facc15", af:"#fb923c", na:"#a78bfa", sa:"#34d399", oc:"#22d3ee" };
+/* continente scritto per esteso; per chi sta a cavallo (Russia, Turchia...) li dico tutti e due */
+const contTxt = k => { const c = C[k]; if (!c) return ""; const all = [c.c, ...(ALSO[k] || [])].filter(x => CONT_N[x]); return all.map(x => CONT_N[x]).join(" e "); };
+const contPill = k => `<span class="cont" style="color:${CONT_COL[C[k].c] || "#fff"};border-color:${CONT_COL[C[k].c] || "#fff"}55">🌍 ${esc(contTxt(k))}</span>`;
+const contLegend = () => `<div class="cleg">${Object.entries(CONT_N).map(([k, t]) => `<span><i style="background:${CONT_COL[k]}"></i>${t}</span>`).join("")}</div>`;
 const ALSO = { RU:["as"], TR:["eu"], KZ:["eu"], GE:["eu"], AZ:["eu"], AM:["eu"], EG:["as"] }; // paesi a cavallo di due continenti
 const ALIAS = { US:["usa","america","stati uniti d'america","u.s.a."], GB:["uk","inghilterra","gran bretagna","united kingdom","britain"], NL:["olanda","holland","netherlands"], MM:["birmania","burma"], SZ:["swaziland"],
   CD:["congo","rd congo","repubblica democratica del congo","congo kinshasa","zaire"], CG:["congo brazzaville","repubblica del congo"], CZ:["cechia","czechia"], CI:["costa d'avorio","ivory coast"], KP:["nord corea"], KR:["sud corea"],
@@ -364,15 +376,16 @@ function paint(){
   for (const c of M.c){
     const p = PATH[c.k]; if (!p) continue;
     const off = c.q && zona !== "mondo" && !inZone(c.k, zona) && !(G && G.ripasso);
-    p.setAttribute("class", "c" + (c.q ? "" : " t") + (off ? " off" : "") + (!G && !EX && c.q ? (S.c[c.k] && S.c[c.k].r ? " rip" : isKnown(c.k) ? " known" : "") : ""));
-    if (MARK[c.k]) MARK[c.k].setAttribute("class", "m" + (off ? " off" : "") + (!G && !EX ? (S.c[c.k] && S.c[c.k].r ? " rip" : isKnown(c.k) ? " known" : "") : ""));
+    const kc = EX && S.opt.cont && c.q && CONT_N[c.c] ? " k-" + c.c : "";
+    p.setAttribute("class", "c" + (c.q ? "" : " t") + (off ? " off" : "") + kc + (!G && !EX && c.q ? (S.c[c.k] && S.c[c.k].r ? " rip" : isKnown(c.k) ? " known" : "") : ""));
+    if (MARK[c.k]) MARK[c.k].setAttribute("class", "m" + (off ? " off" : "") + kc + (!G && !EX ? (S.c[c.k] && S.c[c.k].r ? " rip" : isKnown(c.k) ? " known" : "") : ""));
   }
   $("#glows").innerHTML = "";
 }
 function hl(k, cls){
   if (!k) return;
-  const p = PATH[k]; if (p){ p.classList.remove("tg", "ok", "ko", "sel", "known", "rip", "off"); p.classList.add(cls); p.parentNode.insertBefore(p, $("#glows")); }
-  if (MARK[k]){ MARK[k].classList.remove("tg", "ok", "ko", "sel", "off"); MARK[k].classList.add(cls); }
+  const p = PATH[k]; if (p){ p.classList.remove("tg", "ok", "ko", "sel", "known", "rip", "off", ...Object.keys(CONT_N).map(x => "k-" + x)); p.classList.add(cls); p.parentNode.insertBefore(p, $("#glows")); }
+  if (MARK[k]){ MARK[k].classList.remove("tg", "ok", "ko", "sel", "off", ...Object.keys(CONT_N).map(x => "k-" + x)); MARK[k].classList.add(cls); }
   if (cls === "tg" || cls === "ok") $("#glows").innerHTML = `<path class="glow${cls === "ok" ? " ok" : ""}" d="${C[k].d}"/>`;
 }
 function setLabels(list){ LABELS = list; placeLabels(); }
@@ -395,7 +408,7 @@ function home(){
       <button class="mode" onclick="start('nome')"><span class="ic" style="background:linear-gradient(135deg,#fbbf24,#f97316)">🗺️</span><span><b>Che nazione è?</b><span class="d">Si colora una nazione sulla mappa, tu dici come si chiama</span></span></button>
       <button class="mode" onclick="start('dove')"><span class="ic" style="background:linear-gradient(135deg,#38bdf8,#6366f1)">📍</span><span><b>Dov'è?</b><span class="d">Ti dico il nome, tu la tocchi sulla mappa</span></span></button>
       <button class="mode" onclick="start('misto',true)" ${rip.length ? "" : "disabled"}><span class="ic" style="background:linear-gradient(135deg,#fb7185,#e11d48)">🔁</span><span><b>Ripasso</b><span class="d">${rip.length ? "Solo le nazioni che hai sbagliato, nei due modi" : "Vuoto: le nazioni che sbagli arrivano qui"}</span></span>${rip.length ? `<span class="badge">${rip.length}</span>` : ""}</button>
-      <button class="mode" onclick="explore()"><span class="ic" style="background:linear-gradient(135deg,#34d399,#14b8a6)">🔎</span><span><b>Esplora</b><span class="d">Tocca la mappa e scopri i nomi, senza punteggio</span></span></button>
+      <button class="mode" onclick="explore()"><span class="ic" style="background:linear-gradient(135deg,#34d399,#14b8a6)">🔎</span><span><b>Esplora</b><span class="d">Tocca la mappa e scopri nomi e continenti, senza punteggio</span></span></button>
     </div>
     <div class="sec"><h3>Zona</h3><div class="chips">${Object.entries(ZONE).map(([k, t]) => `<button class="chip ${z === k ? "on" : ""}" onclick="opt('zona','${k}')">${t}</button>`).join("")}</div></div>
     <div class="sec"><h3>Domande per partita</h3><div class="chips">${[10, 20, 50, 0].map(n => `<button class="chip ${S.opt.n === n ? "on" : ""}" onclick="opt('n',${n})">${n || "Tutte (" + inz.length + ")"}</button>`).join("")}</div></div>
@@ -493,10 +506,10 @@ function answerNome(k){
   document.querySelectorAll(".opt").forEach(b => { b.disabled = true; if (b.dataset.k === G.cur) b.classList.add("ok"); else if (b.dataset.k === k) b.classList.add("ko"); });
   const x = mark(G.cur, good); good ? G.ok++ : (G.ko++, G.wrong.push(G.cur));
   hl(G.cur, good ? "ok" : "ko");
-  setLabels([{ k:G.cur, cls: good ? "ok" : "ko" }]);
+  setLabels([{ k:G.cur, cls: good ? "ok" : "ko", sub: contTxt(G.cur) }]);
   const said = k && k[0] === "?" ? k.slice(1) : k ? C[k].n : null;
   feedback(good, good ? "Giusto! " + C[G.cur].n : "Era " + C[G.cur].n,
-    good ? (x.r ? "Ancora una giusta e esce dal ripasso" : x.ok === 1 && !G.ripasso ? "Nuova nazione imparata" : CONT_N[C[G.cur].c]) : (said ? `Hai risposto ${said}. ` : "") + "L'ho messa nel ripasso");
+    good ? (x.r ? "Ancora una giusta e esce dal ripasso" : x.ok === 1 && !G.ripasso ? "Nuova nazione imparata" : "") : (said ? `Hai risposto ${said}. ` : "") + "L'ho messa nel ripasso");
 }
 function answerDove(k, sx, sy){
   if (G.wait) return;
@@ -507,22 +520,22 @@ function answerDove(k, sx, sy){
   const good = k === G.cur;
   const x = mark(G.cur, good); good ? G.ok++ : (G.ko++, G.wrong.push(G.cur));
   hl(G.cur, "ok");
-  const labs = [{ k:G.cur, cls:"ok" }];
+  const labs = [{ k:G.cur, cls:"ok", sub: contTxt(G.cur) }];
   let sub;
-  if (!good && k && C[k]){ hl(k, "ko"); labs.push({ k, cls:"ko", sub:"hai toccato" }); sub = `Hai toccato ${C[k].n}, a ${fmtKm(km(C[k].ll, c.ll))}. L'ho messa nel ripasso`; }
+  if (!good && k && C[k]){ hl(k, "ko"); labs.push({ k, cls:"ko", sub:"hai toccato · " + contTxt(k) }); sub = `Hai toccato ${C[k].n}, a ${fmtKm(km(C[k].ll, c.ll))}. L'ho messa nel ripasso`; }
   else if (!good) sub = k === null && sx == null ? "L'ho messa nel ripasso" : "Hai toccato il mare. L'ho messa nel ripasso";
   setLabels(labs);
   /* inquadro la risposta giusta (e quella sbagliata, se vicina) */
   let b = c.b.slice();
   if (!good && k && C[k] && km(C[k].ll, c.ll) < 4000){ const q = C[k].b; b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[2]), Math.max(b[3], q[3])]; }
-  feedback(good, good ? "Giusto! " + c.n : "Ecco dov'è " + c.n, good ? (x.r ? "Ancora una giusta e esce dal ripasso" : CONT_N[c.c]) : sub);
+  feedback(good, good ? "Giusto! " + c.n : "Ecco dov'è " + c.n, good ? (x.r ? "Ancora una giusta e esce dal ripasso" : "") : sub);
   requestAnimationFrame(() => goTo(fitBox(b, .6, 70)));
 }
 function feedback(good, title, sub){
-  $("#ans").innerHTML = `<div class="fb ${good ? "ok" : "ko"}"><span class="ico">${good ? "✓" : "✗"}</span><span class="t"><b>${esc(title)}</b><span>${esc(sub || "")}</span></span>
+  $("#ans").innerHTML = `<div class="fb ${good ? "ok" : "ko"}"><span class="ico">${good ? "✓" : "✗"}</span><span class="t"><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}${contPill(G.cur)}</span>
     <button class="btn blue" id="nx" onclick="next()">${G.i + 1 >= G.list.length ? "Fine" : "Avanti"}</button></div>`;
   const nx = $("#nx"); if (!matchMedia("(pointer:coarse)").matches) nx.focus();
-  if (good){ clearTimeout(G.auto); const i = G.i; G.auto = setTimeout(() => { if (G && G.i === i && G.wait) next(); }, 1400); }
+  if (good){ clearTimeout(G.auto); const i = G.i; G.auto = setTimeout(() => { if (G && G.i === i && G.wait) next(); }, 2000); }
 }
 document.addEventListener("keydown", e => { if (e.key === "Enter" && G && G.wait && document.activeElement?.id !== "ty"){ e.preventDefault(); next(); }
   if (e.key === "Escape"){ if (G) quit(); else if (EX) home(); }
@@ -544,18 +557,19 @@ function startList(list){ G = { mode:"misto", mix:true, ripasso:true, zona:"mond
 let EX = null;
 function explore(k){
   G = null; EX = { k:null }; document.body.className = "explore"; showOnly("exbar"); paint();
-  $("#exbar").innerHTML = `<div class="q"><b>Esplora</b><small>Tocca una nazione per vedere come si chiama</small></div>${`<button class="x" onclick="home()" aria-label="Chiudi"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`}`;
+  $("#exbar").innerHTML = `<div class="q"><b>Esplora</b><small>Tocca una nazione per vedere come si chiama</small>${S.opt.cont ? contLegend() : ""}</div><button class="btn ${S.opt.cont ? "on" : ""}" onclick="togCont()">🌍 Continenti</button>${`<button class="x" onclick="home()" aria-label="Chiudi"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`}`;
   setLabels([]);
   if (k) exPick(k, true); else requestAnimationFrame(() => goTo(fitBox(zoneBox("mondo"), .95)));
 }
+function togCont(){ S.opt.cont = !S.opt.cont; save(); const k = EX && EX.k; explore(); if (k) exPick(k); }
 function exPick(k, zoom){
   paint(); if (!k || !C[k]){ EX.k = null; $("#excard").hidden = true; setLabels([]); return; }
   const c = C[k]; EX.k = k;
   if (!c.q){ setLabels([{ k, t:c.n, sub:"territorio, non è nel gioco" }]); $("#excard").hidden = true; return; }
   hl(k, "sel"); const x = st(k);
-  setLabels([{ k, cls:"sel" }]);
+  setLabels([{ k, cls:"sel", sub: contTxt(k) }]);
   $("#excard").hidden = false;
-  $("#excard").innerHTML = `<b>${esc(c.n)}</b><div class="muted">${esc(CONT_N[c.c] || "")}${x.ok || x.ko ? ` · ✓ ${x.ok}  ✗ ${x.ko}` : " · mai chiesta"}${x.r ? " · da ripassare" : ""}</div>
+  $("#excard").innerHTML = `<b>${esc(c.n)}</b>${contPill(k)}<div class="muted">${x.ok || x.ko ? `✓ ${x.ok}  ✗ ${x.ko}` : "Mai chiesta"}${x.r ? " · da ripassare" : ""}</div>
     <div class="row"><button class="btn grow" onclick="setRip('${k}',${x.r ? 0 : 1});exPick('${k}')">${x.r ? "Togli dal ripasso" : "Aggiungi al ripasso"}</button></div>`;
   if (zoom) requestAnimationFrame(() => goTo(focusView(k)));
 }
