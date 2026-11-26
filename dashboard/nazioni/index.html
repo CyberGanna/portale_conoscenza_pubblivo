@@ -427,9 +427,10 @@ function start(mode, ripasso = false){
   const z = ripasso ? "mondo" : S.opt.zona;
   let pool = ripasso ? ripList() : Q.filter(k => inZone(k, z));
   pool = shuffle(pool.slice());
-  /* prima quelle mai viste o sbagliate, poi le altre */
-  if (!ripasso) pool.sort((a, b) => score(a) - score(b) + (Math.random() - .5) * .8);
+  /* ordine completamente casuale; quelle uscite nelle ultime partite vanno in fondo, così non escono sempre le stesse */
+  if (!ripasso){ const rec = new Set(S.recent || []); pool = [...pool.filter(k => !rec.has(k)), ...pool.filter(k => rec.has(k))]; }
   const n = ripasso ? pool.length : (S.opt.n || pool.length);
+  if (!ripasso){ S.recent = [...pool.slice(0, n), ...(S.recent || [])].filter((k, i, arr) => arr.indexOf(k) === i).slice(0, Math.max(0, Math.floor(pool.length * .6))); save(); }
   G = { mode, mix: mode === "misto", ripasso, zona: z, list: pool.slice(0, n), i: -1, ok: 0, ko: 0, wrong: [], cur: null, wait: false };
   document.body.className = "play"; paint(); next();
 }
@@ -448,11 +449,11 @@ function next(){
     $("#qbar").innerHTML = `<div class="q"><small>${prog}</small><b>Che nazione è quella <em>colorata</em>?</b><div class="bar"><i style="width:${pct}%"></i></div></div>${exitBtn()}`;
     hl(G.cur, "tg");
     if (S.opt.risp === "scrivo") askType(); else askChoices();
-    requestAnimationFrame(() => goTo(focusView(G.cur)));
+    { const k0 = G.cur; requestAnimationFrame(() => goTo(focusView(k0))); }
   } else {
     $("#qbar").innerHTML = `<div class="q"><small>${prog}</small><b>Dov'è <em>${esc(C[G.cur].n)}</em>?</b><div class="bar"><i style="width:${pct}%"></i></div></div>${exitBtn()}`;
     $("#ans").innerHTML = `<div class="hint">Trascina e ingrandisci la mappa, poi tocca la nazione.</div><div class="row"><button class="btn grow" onclick="answerDove(null)">Non lo so</button></div>`;
-    requestAnimationFrame(() => goTo(startView(G.zona)));
+    { const z0 = G.zona; requestAnimationFrame(() => goTo(startView(z0))); }
   }
 }
 const exitBtn = () => `<button class="x" onclick="quit()" aria-label="Esci"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
