@@ -33,7 +33,7 @@ button{cursor:pointer;border:0;background:none}
 .grat{fill:none;stroke:rgba(255,255,255,.035);stroke-width:1px;vector-effect:non-scaling-stroke}
 .c{fill:var(--land);stroke:var(--border);stroke-width:.6px;vector-effect:non-scaling-stroke;stroke-linejoin:round;transition:fill .25s}
 .c.t{fill:#141a27}
-.c.off{fill:var(--dim);stroke:#1a2130}
+.c.off{fill:#0b0f17;stroke:#141a26}
 @media (hover:hover){ body.explore .c:not(.t):hover,body.dove .c:not(.t):not(.off):hover{fill:var(--land-h)} }
 .c.known{fill:#1d5a4a} .c.rip{fill:#6b2236}
 .c.tg{fill:var(--target);stroke:#fff3c4;stroke-width:1.2px}
@@ -182,7 +182,9 @@ button{cursor:pointer;border:0;background:none}
 <script>
 "use strict";
 /* ============ dati ============ */
-const ZONE = { mondo:"Tutto il mondo", eu:"Europa", as:"Asia", af:"Africa", na:"Nord e Centro America", sa:"Sud America", oc:"Oceania" };
+const ZONE = { mondo:"Tutto il mondo", eu:"Europa", as:"Asia", af:"Africa", na:"Nord e Centro America", sa:"Sud America", oc:"Oceania", isole:"Isole" };
+/* nazioni che stanno tutte su isole (anche quelle che dividono un'isola con un vicino, come Haiti o Irlanda) */
+const ISOLE = new Set("IS IE GB MT CY JP PH ID LK MV SG BH TW TL MG MU SC KM CV ST CU JM HT DO BS BB TT GD LC VC KN AG DM NZ PG FJ SB VU WS TO KI TV NR PW FM MH".split(" "));
 const CONT_N = { eu:"Europa", as:"Asia", af:"Africa", na:"Nord e Centro America", sa:"Sud America", oc:"Oceania" };
 const ALSO = { RU:["as"], TR:["eu"], KZ:["eu"], GE:["eu"], AZ:["eu"], AM:["eu"], EG:["as"] }; // paesi a cavallo di due continenti
 const ALIAS = { US:["usa","america","stati uniti d'america","u.s.a."], GB:["uk","inghilterra","gran bretagna","united kingdom","britain"], NL:["olanda","holland","netherlands"], MM:["birmania","burma"], SZ:["swaziland"],
@@ -209,7 +211,7 @@ function mark(k, good){
 function setRip(k, on){ const x = { ...st(k), r: on ? 1 : 0, s: 0, t: Date.now() }; S.c[k] = x; save(); syncSoon(); }
 const isKnown = k => { const x = S.c[k]; return x && x.ok > 0 && !x.r; };
 const ripList = () => Q.filter(k => S.c[k] && S.c[k].r);
-const inZone = (k, z) => z === "mondo" || C[k].c === z || (ALSO[k] || []).includes(z);
+const inZone = (k, z) => z === "mondo" || (z === "isole" ? ISOLE.has(k) : C[k].c === z || (ALSO[k] || []).includes(z));
 
 /* ============ util ============ */
 const $ = s => document.querySelector(s);
@@ -281,7 +283,7 @@ function zoomBy(f){ cancelAnimationFrame(anim); const R = rect(); const k = Math
 const ZBOX = {};
 function zoneBox(z){
   if (ZBOX[z]) return ZBOX[z];
-  if (z === "mondo") return ZBOX[z] = [0, 0, M.W, M.H];
+  if (z === "mondo" || z === "isole") return ZBOX[z] = [0, 0, M.W, M.H];
   let b = [1e9, 1e9, -1e9, -1e9];
   for (const k of Q) if (C[k].c === z && !(z === "oc" && ["KI", "FJ", "TO", "WS", "TV"].includes(k))){ const q = C[k].b; b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[2]), Math.max(b[3], q[3])]; }
   if (z === "eu") b = [b[0], b[1], Math.min(b[2], 640), b[3]]; // la Russia arriva fino al Pacifico: taglio
@@ -388,7 +390,7 @@ function home(){
   $("#home").innerHTML = `
     <div><h1>Nazioni</h1><p>Impara a riconoscere tutte le nazioni del mondo. Quelle che sbagli finiscono nel ripasso finché non le azzecchi due volte di fila.</p></div>
     <div class="prog"><div class="ring"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${R}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/><circle cx="29" cy="29" r="${R}" fill="none" stroke="url(#gr)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${L * pct} ${L}" ${pct ? "" : "hidden"}/><defs><linearGradient id="gr"><stop offset="0" stop-color="#2f7bff"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs></svg><b>${Math.round(pct * 100)}%</b></div>
-      <div class="tx">Ne conosci <b>${kn} su ${inz.length}</b><br>${z === "mondo" ? "in tutto il mondo" : "in " + ZONE[z]}${rip.length ? ` · <b style="color:#fda4af">${rip.length}</b> da ripassare` : ""}</div></div>
+      <div class="tx">Ne conosci <b>${kn} su ${inz.length}</b><br>${z === "mondo" ? "in tutto il mondo" : z === "isole" ? "tra le nazioni-isola" : "in " + ZONE[z]}${rip.length ? ` · <b style="color:#fda4af">${rip.length}</b> da ripassare` : ""}</div></div>
     <div class="modes">
       <button class="mode" onclick="start('nome')"><span class="ic" style="background:linear-gradient(135deg,#fbbf24,#f97316)">🗺️</span><span><b>Che nazione è?</b><span class="d">Si colora una nazione sulla mappa, tu dici come si chiama</span></span></button>
       <button class="mode" onclick="start('dove')"><span class="ic" style="background:linear-gradient(135deg,#38bdf8,#6366f1)">📍</span><span><b>Dov'è?</b><span class="d">Ti dico il nome, tu la tocchi sulla mappa</span></span></button>
@@ -446,9 +448,11 @@ function quit(){ clearTimeout(G && G.auto); const done = G ? G.ok + G.ko : 0; if
 /* risposta: 4 scelte, con i paesi vicini come trappole (sono quelli che si confondono) */
 function askChoices(){
   const c = C[G.cur];
-  const near = Q.filter(k => k !== G.cur).map(k => [k, Math.hypot(C[k].x - c.x, C[k].y - c.y)]).sort((a, b) => a[1] - b[1]).slice(0, 7).map(a => a[0]);
+  /* nelle Isole le trappole sono altre nazioni-isola */
+  const cand = G.zona === "isole" ? Q.filter(k => ISOLE.has(k)) : Q;
+  const near = cand.filter(k => k !== G.cur).map(k => [k, Math.hypot(C[k].x - c.x, C[k].y - c.y)]).sort((a, b) => a[1] - b[1]).slice(0, 7).map(a => a[0]);
   const pick = shuffle(near).slice(0, 2);
-  const far = shuffle(Q.filter(k => k !== G.cur && !pick.includes(k) && C[k].c === c.c)); pick.push(far[0] || shuffle(Q.filter(k => k !== G.cur && !pick.includes(k)))[0]);
+  const far = shuffle(cand.filter(k => k !== G.cur && !pick.includes(k) && C[k].c === c.c)); pick.push(far[0] || shuffle(cand.filter(k => k !== G.cur && !pick.includes(k)))[0]);
   const opts = shuffle([G.cur, ...pick]);
   $("#ans").innerHTML = `<div class="opts">${opts.map(k => `<button class="opt" data-k="${k}" onclick="answerNome('${k}')">${esc(C[k].n)}</button>`).join("")}</div>
     <div class="row"><button class="btn grow" onclick="answerNome(null)">Non lo so</button></div>`;
