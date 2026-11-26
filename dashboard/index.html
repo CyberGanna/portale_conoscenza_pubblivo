@@ -668,6 +668,7 @@ html.no-anim .orbs i{animation:none !important}
   <symbol id="i-net" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="5" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="19" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="M10.2 10.2 6.3 6.3M13.9 10.6 17.6 7.2M10.2 13.8l-3.9 3.9M13.8 13.6l3.9 3.3M5 7v10"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4.5c2.5-1.6 5-1.6 7.5 0s5 1.6 7.5 0V13c-2.5 1.6-5 1.6-7.5 0s-5-1.6-7.5 0"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
   <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/></symbol>
   <symbol id="i-git" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-11.5 7.5"/></symbol>
@@ -737,7 +738,7 @@ const I18N = {
 "Es. Il mio bot di trading": "E.g. My trading bot", "Es. chiamare il dentista": "E.g. call the dentist", "Esteri e geopolitica": "World and geopolitics", "Evento": "Event",
 "Fatto": "Done", "Fatto, l'ho creato": "Done, I created it", "Filtri": "Filters", "Fine": "Done", "Fonti:": "Sources:", "Francia": "France", "Gas naturale": "Natural gas",
 "Germania": "Germany", "Giappone": "Japan", "Giorno libero": "Free day", "Google Calendar collegato": "Google Calendar connected", "Grafo": "Graph", "Grandezza icone": "Icon size",
-"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "Video salvati": "Saved videos", "Armadio": "Wardrobe", "Video": "Videos", "MONDO": "WORLD", "IO": "ME", "Calendario globale": "World calendar", "Globale": "World", "Idee": "Ideas", "Ieri": "Yesterday",
+"Grandi": "Large", "Grano": "Wheat", "INFORMAZIONE": "INFORMATION", "Video salvati": "Saved videos", "Armadio": "Wardrobe", "Nazioni": "Countries", "Video": "Videos", "MONDO": "WORLD", "IO": "ME", "Calendario globale": "World calendar", "Globale": "World", "Idee": "Ideas", "Ieri": "Yesterday",
 "Il Cervello salva le note come file Markdown nella stessa repository privata che usa il portale per sincronizzarsi (": "The Brain saves notes as Markdown files in the same private repository the portal uses to sync (",
 "Il titolo inizia con… (es. Verifica)": "Title starts with… (e.g. Test)", "Il tuo nome": "Your name", "Il tuo secondo cervello, in stile Obsidian": "Your second brain, Obsidian style",
 "Impostazioni": "Settings", "In alto tocca il nome e chiamalo esattamente": "At the top tap the name and call it exactly", "Incolla qui il tuo Client ID di Google": "Paste your Google Client ID here",
@@ -928,13 +929,14 @@ const APPS = [
   { id: "mercati", t: "Mercati", i: "chart", g: "linear-gradient(135deg,#4ade80,#14b8a6)" },
   { id: "meteo", t: "Meteo", i: "sun", g: "linear-gradient(135deg,#60a5fa,#22d3ee)" },
   { id: "promemoria", t: "Promemoria", i: "bell", g: "linear-gradient(135deg,#fb923c,#f43f5e)" },
+  { id: "nazioni", t: "Nazioni", i: "flag", g: "linear-gradient(135deg,#fbbf24,#10b981)" },
   { id: "armadio", t: "Armadio", i: "hanger", g: "linear-gradient(135deg,#e5e7eb,#94a3b8)" },
   { id: "video", t: "Video salvati", s: "Video", i: "play", g: "linear-gradient(135deg,#f472b6,#a855f7)" },
   { id: "sveglie", t: "Sveglie", i: "alarm", g: "linear-gradient(135deg,#818cf8,#a855f7)" },
   { id: "collegamenti", t: "Collegamenti", i: "link", g: "linear-gradient(135deg,#2dd4bf,#818cf8)" },
   { id: "impostazioni", t: "Impostazioni", i: "sliders", g: "linear-gradient(135deg,#cbd5e1,#64748b)" },
 ];
-const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "armadio", "conoscenza", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
+const NAV = [["MONDO", ["oggi", "globale", "notizie", "mercati", "meteo"]], ["IO", ["calendario", "promemoria", "sveglie", "video", "armadio", "conoscenza", "nazioni", "cervello", "aitrading"]], ["STRUMENTI", ["collegamenti", "impostazioni"]]];
 const appById = id => APPS.find(a => a.id === id);
 let cur = "oggi";
 const isPhone = () => matchMedia("(max-width:899px)").matches;
@@ -1264,6 +1266,9 @@ const VIEWS = {
     return `<div class="portal portal-slot"></div>`;
   },
   armadio(){
+    return `<div class="portal portal-slot"></div>`;
+  },
+  nazioni(){
     return `<div class="portal portal-slot"></div>`;
   },
 
@@ -2878,6 +2883,7 @@ function useGeo(){
 const EMBEDS = {
   conoscenza: { host: "portal-host", t: "Portale conoscenza", src: () => "../?v=" + Date.now() },
   armadio: { host: "armadio-host", t: "Armadio", src: () => "armadio/?v=" + Date.now() },
+  nazioni: { host: "nazioni-host", t: "Nazioni", src: () => "nazioni/?v=" + Date.now() },
 };
 function portalSync(){
   const slot = EMBEDS[cur] ? document.querySelector((isPhone() ? "#sheet-body" : "#pc-body") + " .portal-slot") : null;
@@ -3981,7 +3987,7 @@ document.addEventListener("visibilitychange", () => document.hidden ? Sound.paus
 paintMusic(); paintLang();
 /* aggiornamenti dell'app: su iPhone l'app aperta dall'icona resta in memoria con il codice vecchio.
    Quando torna in primo piano controllo se c'è una versione nuova e, appena è pronta, ricarico da solo. */
-const APP_V = "123";
+const APP_V = "124";
 let swReg = null, bootAt = Date.now();
 if ("serviceWorker" in navigator){
   const hadCtl = !!navigator.serviceWorker.controller;

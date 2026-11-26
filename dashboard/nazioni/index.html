@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050608">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="../icons/icon.svg">
+<title>Nazioni</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050608; --sea:#08101e; --land:#1b2233; --land-h:#273149; --border:#3a4560; --dim:#10151f;
+  --glass:rgba(16,20,30,.78); --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+  --ink:#eef1f7; --muted:#97a0b3; --faint:#5d6578;
+  --target:#fbbf24; --ok:#34d399; --ko:#f43f5e; --blue:#2f7bff; --blue-2:#5b9bff;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:Sora,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+[hidden]{display:none!important}
+
+/* ---------- mappa ---------- */
+#map{position:fixed;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;background:radial-gradient(ellipse at 50% 40%,#0b1426 0%,#050608 75%)}
+#map.drag{cursor:grabbing}
+#map svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sphere{fill:var(--sea);stroke:rgba(91,155,255,.18);stroke-width:1px;vector-effect:non-scaling-stroke}
+.grat{fill:none;stroke:rgba(255,255,255,.035);stroke-width:1px;vector-effect:non-scaling-stroke}
+.c{fill:var(--land);stroke:var(--border);stroke-width:.6px;vector-effect:non-scaling-stroke;stroke-linejoin:round;transition:fill .25s}
+.c.t{fill:#141a27}
+.c.off{fill:var(--dim);stroke:#1a2130}
+@media (hover:hover){ body.explore .c:not(.t):hover,body.dove .c:not(.t):not(.off):hover{fill:var(--land-h)} }
+.c.known{fill:#1d5a4a} .c.rip{fill:#6b2236}
+.c.tg{fill:var(--target);stroke:#fff3c4;stroke-width:1.2px}
+.c.ok{fill:var(--ok);stroke:#d1fae5;stroke-width:1.2px}
+.c.ko{fill:var(--ko);stroke:#ffe4e6;stroke-width:1.2px}
+.c.sel{fill:var(--blue-2);stroke:#dbeafe;stroke-width:1.2px}
+.m{fill:rgba(255,255,255,.07);stroke:rgba(200,210,230,.55);stroke-width:1px;vector-effect:non-scaling-stroke}
+.m.off{display:none}
+.m.known{stroke:var(--ok)} .m.rip{stroke:var(--ko)}
+.m.tg{fill:rgba(251,191,36,.35);stroke:var(--target);stroke-width:2px} .m.ok{fill:rgba(52,211,153,.35);stroke:var(--ok);stroke-width:2px} .m.ko{fill:rgba(244,63,94,.35);stroke:var(--ko);stroke-width:2px} .m.sel{fill:rgba(91,155,255,.35);stroke:var(--blue-2);stroke-width:2px}
+.m.tg,.m.ok{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{stroke-opacity:.35}}
+.glow{fill:none;stroke:var(--target);stroke-opacity:.45;stroke-width:7px;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none;animation:glow 1.6s ease-in-out infinite}
+.glow.ok{stroke:var(--ok)}
+@keyframes glow{50%{stroke-opacity:.12}}
+
+#labels{position:fixed;inset:0;pointer-events:none;z-index:3}
+.lab{position:absolute;transform:translate(-50%,-130%);padding:5px 10px;border-radius:10px;background:rgba(8,10,16,.88);border:1px solid var(--line-2);font-size:12.5px;font-weight:600;white-space:nowrap;box-shadow:0 8px 20px -8px #000}
+.lab.ok{border-color:rgba(52,211,153,.7);color:#bbf7d0} .lab.ko{border-color:rgba(244,63,94,.7);color:#fecdd3} .lab.sel{border-color:rgba(91,155,255,.7)}
+.lab small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+#tip{position:fixed;z-index:4;pointer-events:none;padding:4px 9px;border-radius:8px;background:rgba(8,10,16,.9);border:1px solid var(--line-2);font-size:12px;font-weight:500;display:none}
+
+/* ---------- comandi mappa ---------- */
+.zoom{position:fixed;right:16px;bottom:calc(20px + var(--safe-b));z-index:5;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:42px;height:42px;border-radius:14px;background:var(--glass);border:1px solid var(--line-2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;place-items:center;font-size:20px;font-weight:500}
+.zoom button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.zoom button:active{transform:scale(.94)}
+
+/* ---------- pannelli ---------- */
+.glass{background:var(--glass);border:1px solid var(--line-2);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
+#home{position:fixed;z-index:6;top:16px;left:16px;bottom:16px;width:380px;border-radius:26px;overflow-y:auto;padding:22px 20px 24px;display:flex;flex-direction:column;gap:18px;scrollbar-width:thin}
+#home h1{font-size:24px;font-weight:700;letter-spacing:-.03em}
+#home h1 + p{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.5}
+.prog{display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.ring{width:58px;height:58px;flex:none;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:13px}
+.prog .tx{font-size:13px;color:var(--muted);line-height:1.55}
+.prog .tx b{color:var(--ink);font-weight:600}
+.modes{display:grid;gap:10px}
+.mode{display:flex;align-items:center;gap:13px;text-align:left;padding:14px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);transition:background .2s,transform .2s var(--ease)}
+.mode:hover{background:rgba(255,255,255,.075)}
+.mode:active{transform:scale(.98)}
+.mode .ic{width:44px;height:44px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:21px}
+.mode b{display:block;font-size:15px;font-weight:600}
+.mode span.d{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
+.mode .badge{margin-left:auto;min-width:26px;height:26px;padding:0 8px;border-radius:13px;background:var(--ko);font-size:12px;font-weight:600;display:grid;place-items:center;flex:none}
+.mode[disabled]{opacity:.45;cursor:default}
+.sec h3{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line-2);font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.02)}
+.chip.on{background:var(--ink);color:#0a0c12;border-color:var(--ink);font-weight:600}
+.riplist{display:flex;flex-wrap:wrap;gap:6px}
+.riplist button{padding:5px 10px;border-radius:9px;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.3);font-size:12.5px;color:#fecdd3}
+.muted{color:var(--muted);font-size:12.5px;line-height:1.5}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.sync{font-size:11.5px;color:var(--faint);display:flex;align-items:center;gap:7px}
+.sync i{width:7px;height:7px;border-radius:50%;background:#5d6578;flex:none}
+.sync[data-st=ok] i{background:var(--ok)} .sync[data-st=err] i{background:var(--ko)} .sync[data-st=busy] i{background:var(--target)}
+
+/* in gioco */
+#qbar{position:fixed;z-index:6;top:16px;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));border-radius:22px;padding:12px 12px 12px 18px;display:flex;align-items:center;gap:12px}
+#qbar .q{flex:1;min-width:0}
+#qbar .q small{display:block;font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+#qbar .q b{display:block;font-size:19px;font-weight:600;letter-spacing:-.02em;line-height:1.25;margin-top:2px}
+#qbar .q b em{font-style:normal;color:var(--target)}
+.x{width:38px;height:38px;border-radius:12px;border:1px solid var(--line-2);display:grid;place-items:center;flex:none;color:var(--muted)}
+.x svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.bar{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--ok));transition:width .4s var(--ease)}
+
+#ans{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));width:min(560px,calc(100% - 32px));border-radius:22px;padding:12px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{padding:13px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:14.5px;font-weight:500;min-height:50px;line-height:1.25;transition:background .2s}
+.opt:hover{background:rgba(255,255,255,.1)}
+.opt.ok{background:rgba(52,211,153,.22);border-color:var(--ok);color:#d1fae5}
+.opt.ko{background:rgba(244,63,94,.2);border-color:var(--ko);color:#ffe4e6}
+.opt[disabled]{cursor:default}
+.type{position:relative}
+.type input{width:100%;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line-2);font-size:16px;outline:none}
+.type input:focus{border-color:var(--blue-2)}
+.sugg{position:absolute;left:0;right:0;bottom:calc(100% + 6px);border-radius:14px;overflow:hidden;background:rgba(14,18,27,.97);border:1px solid var(--line-2)}
+.sugg button{display:block;width:100%;text-align:left;padding:11px 16px;font-size:14px;border-bottom:1px solid var(--line)}
+.sugg button:last-child{border-bottom:0}
+.sugg button:hover,.sugg button.on{background:rgba(91,155,255,.18)}
+.row{display:flex;gap:8px;margin-top:8px}
+.btn{padding:11px 16px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid var(--line-2);font-weight:500;font-size:13.5px}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.btn.grow{flex:1}
+.fb{display:flex;align-items:center;gap:12px}
+.fb .ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:19px;font-weight:700}
+.fb.ok .ico{background:rgba(52,211,153,.2);color:var(--ok)} .fb.ko .ico{background:rgba(244,63,94,.2);color:var(--ko)}
+.fb .t{flex:1;min-width:0}
+.fb .t b{display:block;font-size:15.5px}
+.fb .t span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
+.hint{font-size:12.5px;color:var(--muted);text-align:center;padding:4px 0 2px}
+
+/* fine partita */
+#end{position:fixed;z-index:7;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));max-height:calc(100% - 40px);overflow-y:auto;border-radius:26px;padding:24px;text-align:center}
+#end .big{font-size:46px;font-weight:700;letter-spacing:-.04em;margin:6px 0 2px}
+#end h2{font-size:19px;font-weight:600}
+#end .riplist{justify-content:center;margin:14px 0 4px}
+#end .row{flex-wrap:wrap;margin-top:18px} #end .btn{white-space:nowrap}
+
+/* esplora */
+#exbar{position:fixed;z-index:6;top:16px;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));border-radius:22px;padding:12px 12px 12px 18px;display:flex;align-items:center;gap:12px}
+#exbar .q{flex:1;min-width:0}
+#exbar .q b{font-size:16px;font-weight:600}
+#exbar .q small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+#excard{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));width:min(420px,calc(100% - 32px));border-radius:22px;padding:14px 16px}
+#excard b{font-size:18px;display:block}
+#excard .muted{margin-top:3px}
+
+@media (max-width:760px){
+  #home{top:auto;left:0;right:0;bottom:0;width:auto;max-height:62%;border-radius:26px 26px 0 0;padding:18px 16px calc(20px + var(--safe-b));border-bottom:0}
+  #home::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:-6px auto 2px;flex:none}
+  #home h1{font-size:21px} #home h1 + p{display:none} #home{gap:14px}
+  .zoom{top:calc(14px + var(--safe-t));bottom:auto;right:12px}
+  body.home .zoom{display:none}
+  body.play .zoom,body.explore .zoom{top:calc(104px + var(--safe-t))}
+  #qbar,#exbar{top:calc(10px + var(--safe-t));width:calc(100% - 20px);padding:10px 10px 10px 14px;border-radius:18px}
+  #qbar .q b{font-size:17px}
+  #ans{bottom:calc(10px + var(--safe-b));width:calc(100% - 20px);padding:10px;border-radius:18px}
+  .opt{font-size:14px;padding:11px 10px;min-height:46px}
+  #excard{bottom:calc(10px + var(--safe-b));width:calc(100% - 20px)}
+}
+</style>
+</head>
+<body class="home">
+<div id="map"><svg id="svg" aria-label="Mappa del mondo"><g id="world"></g></svg></div>
+<div id="labels"></div>
+<div id="tip"></div>
+<div class="zoom">
+  <button onclick="zoomBy(1.6)" aria-label="Ingrandisci">+</button>
+  <button onclick="zoomBy(1/1.6)" aria-label="Rimpicciolisci">−</button>
+  <button onclick="reframe()" aria-label="Inquadra"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+<aside id="home" class="glass"></aside>
+<div id="qbar" class="glass" hidden></div>
+<div id="ans" class="glass" hidden></div>
+<div id="end" class="glass" hidden></div>
+<div id="exbar" class="glass" hidden></div>
+<div id="excard" class="glass" hidden></div>
+
+<script>
+"use strict";
+/* ============ dati ============ */
+const ZONE = { mondo:"Tutto il mondo", eu:"Europa", as:"Asia", af:"Africa", na:"Nord e Centro America", sa:"Sud America", oc:"Oceania" };
+const CONT_N = { eu:"Europa", as:"Asia", af:"Africa", na:"Nord e Centro America", sa:"Sud America", oc:"Oceania" };
+const ALSO = { RU:["as"], TR:["eu"], KZ:["eu"], GE:["eu"], AZ:["eu"], AM:["eu"], EG:["as"] }; // paesi a cavallo di due continenti
+const ALIAS = { US:["usa","america","stati uniti d'america","u.s.a."], GB:["uk","inghilterra","gran bretagna","united kingdom","britain"], NL:["olanda","holland","netherlands"], MM:["birmania","burma"], SZ:["swaziland"],
+  CD:["congo","rd congo","repubblica democratica del congo","congo kinshasa","zaire"], CG:["congo brazzaville","repubblica del congo"], CZ:["cechia","czechia"], CI:["costa d'avorio","ivory coast"], KP:["nord corea"], KR:["sud corea"],
+  VA:["citta del vaticano","santa sede","vatican"], MK:["macedonia"], TL:["timor leste"], CF:["repubblica centrafricana","centrafrica"], DO:["repubblica dominicana","santo domingo"], AE:["emirati","eau","uae","emirati arabi"],
+  BA:["bosnia"], TT:["trinidad"], ST:["sao tome"], RU:["federazione russa"], BY:["belarus"], MD:["moldova"], KG:["kirghisia","kyrgyzstan"], PS:["palestine","stato di palestina"], VC:["saint vincent","st vincent"], KN:["saint kitts","st kitts"],
+  AG:["antigua"], FM:["micronesia"], GW:["guinea bissau"], PG:["papua"], BH:["bahrain"], RW:["rwanda"], KZ:["kazakhstan","kazakistan"], TJ:["tajikistan"], CV:["cabo verde"], LK:["ceylon"], IR:["persia"], TH:["tailandia"],
+  AZ:["azerbaijan"], DJ:["djibouti"], SS:["sud sudan","south sudan"], ZA:["sud africa","repubblica sudafricana"], LC:["st lucia"], SA:["arabia"], MC:["principato di monaco"], CH:["confederazione elvetica"], DE:["deutschland"] };
+let M = null, C = {}, Q = [], NAMEIDX = [];
+
+/* ============ stato (salvato nel telefono/PC e sincronizzato) ============ */
+const LS = "nazioni-ale";
+let S = { c:{}, opt:{ zona:"mondo", n:20, risp:"scelte" } };
+try { const s = JSON.parse(localStorage.getItem(LS) || "null"); if (s) S = { ...S, ...s, opt:{ ...S.opt, ...(s.opt||{}) } }; } catch(e) {}
+function save(){ try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e) {} }
+const st = k => S.c[k] || { ok:0, ko:0, s:0, r:0, t:0 };
+function mark(k, good){
+  const x = { ...st(k) };
+  if (good){ x.ok++; x.s++; if (x.r && x.s >= 2) x.r = 0; }
+  else { x.ko++; x.s = 0; x.r = 1; }
+  x.t = Date.now(); S.c[k] = x; save(); syncSoon();
+  return x;
+}
+function setRip(k, on){ const x = { ...st(k), r: on ? 1 : 0, s: 0, t: Date.now() }; S.c[k] = x; save(); syncSoon(); }
+const isKnown = k => { const x = S.c[k]; return x && x.ok > 0 && !x.r; };
+const ripList = () => Q.filter(k => S.c[k] && S.c[k].r);
+const inZone = (k, z) => z === "mondo" || C[k].c === z || (ALSO[k] || []).includes(z);
+
+/* ============ util ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function lev(a, b){ /* distanza tra parole; due lettere scambiate contano come un solo errore */
+  const m = a.length, n = b.length, d = Array.from({ length:m + 1 }, (_, i) => [i, ...Array(n).fill(0)]); for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++){ d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1); }
+  return d[m][n]; }
+function km(a, b){ const R = 6371, r = Math.PI / 180, dl = (b[1] - a[1]) * r, dn = (b[0] - a[0]) * r;
+  const h = Math.sin(dl / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+const fmtKm = d => d < 100 ? "meno di 100 km" : "circa " + (Math.round(d / 50) * 50).toLocaleString("it-CH") + " km";
+
+/* ============ mappa: disegno, zoom e trascinamento ============ */
+const svg = $("#svg"), world = $("#world"), mapEl = $("#map");
+const V = { k:1, x:0, y:0 }; let kMin = .5, kMax = 200, anim = null;
+const PATH = {}, MARK = {};
+function draw(){
+  const NS = "http://www.w3.org/2000/svg";
+  let h = `<path class="sphere" d="${M.sphere}"/><path class="grat" d="${M.grat}"/>`;
+  for (const c of M.c) h += `<path class="c${c.q ? "" : " t"}" data-k="${c.k}" d="${c.d}"/>`;
+  h += `<g id="glows"></g><g id="marks">`;
+  for (const c of M.c) if (c.q && c.a < 3) h += `<circle class="m" data-k="${c.k}" cx="${c.x}" cy="${c.y}" r="1"/>`;
+  world.innerHTML = h + `</g>`;
+  world.querySelectorAll(".c").forEach(p => PATH[p.dataset.k] = p);
+  world.querySelectorAll(".m").forEach(p => MARK[p.dataset.k] = p);
+}
+function rect(){ /* parte di schermo libera dai pannelli, dove inquadrare */
+  const W = innerWidth, H = innerHeight, phone = W <= 760;
+  let l = 0, t = 0, r = W, b = H;
+  const vis = id => { const e = document.getElementById(id); return e && !e.hidden ? e.getBoundingClientRect() : null; };
+  const home = vis("home"), qb = vis("qbar") || vis("exbar"), an = vis("ans") || vis("excard");
+  if (home){ if (phone) b = home.top; else l = home.right; }
+  if (qb) t = Math.max(t, qb.bottom); if (an) b = Math.min(b, an.top);
+  if (phone && !home) t = Math.max(t, 0);
+  return { l:l + 10, t:t + 10, r:r - 10, b:b - 10 };
+}
+function apply(){
+  world.setAttribute("transform", `matrix(${V.k} 0 0 ${V.k} ${V.x} ${V.y})`);
+  const rr = Math.max(3.2, Math.min(7, 2.6 + V.k * .25)) / V.k;
+  for (const k in MARK) MARK[k].setAttribute("r", rr);
+  placeLabels();
+}
+function clampV(v){ return { k: Math.max(kMin, Math.min(kMax, v.k)), x: v.x, y: v.y }; }
+function fitBox(b, pad = .82, minSpan = 0){
+  const R = rect(); let [x0, y0, x1, y1] = b;
+  if (minSpan){ const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, w = Math.max(x1 - x0, minSpan), h = Math.max(y1 - y0, minSpan * .6); x0 = cx - w / 2; x1 = cx + w / 2; y0 = cy - h / 2; y1 = cy + h / 2; }
+  const k = Math.max(kMin, Math.min(kMax, Math.min((R.r - R.l) / (x1 - x0), (R.b - R.t) / (y1 - y0)) * pad));
+  return { k, x:(R.l + R.r) / 2 - k * (x0 + x1) / 2, y:(R.t + R.b) / 2 - k * (y0 + y1) / 2 };
+}
+function goTo(v, ms = 650){
+  cancelAnimationFrame(anim); const a = { ...V }, t0 = performance.now();
+  if (ms <= 0){ Object.assign(V, v); apply(); return; }
+  /* zoom "morbido": interpolo in scala logaritmica, così non scatta */
+  const step = now => { const p = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - p, 3);
+    const k = Math.exp(Math.log(a.k) + (Math.log(v.k) - Math.log(a.k)) * e);
+    /* tengo fermo il punto che sto inseguendo */
+    const ca = [(innerWidth / 2 - a.x) / a.k, (innerHeight / 2 - a.y) / a.k], cb = [(innerWidth / 2 - v.x) / v.k, (innerHeight / 2 - v.y) / v.k];
+    const cx = ca[0] + (cb[0] - ca[0]) * e, cy = ca[1] + (cb[1] - ca[1]) * e;
+    V.k = k; V.x = innerWidth / 2 - cx * k; V.y = innerHeight / 2 - cy * k; apply();
+    if (p < 1) anim = requestAnimationFrame(step); };
+  anim = requestAnimationFrame(step);
+}
+function zoomAt(f, sx, sy){ const k = Math.max(kMin, Math.min(kMax, V.k * f)); f = k / V.k; V.x = sx - (sx - V.x) * f; V.y = sy - (sy - V.y) * f; V.k = k; apply(); }
+function zoomBy(f){ cancelAnimationFrame(anim); const R = rect(); const k = Math.max(kMin, Math.min(kMax, V.k * f));
+  const sx = (R.l + R.r) / 2, sy = (R.t + R.b) / 2, mx = (sx - V.x) / V.k, my = (sy - V.y) / V.k; goTo({ k, x:sx - k * mx, y:sy - k * my }, 300); }
+const ZBOX = {};
+function zoneBox(z){
+  if (ZBOX[z]) return ZBOX[z];
+  if (z === "mondo") return ZBOX[z] = [0, 0, M.W, M.H];
+  let b = [1e9, 1e9, -1e9, -1e9];
+  for (const k of Q) if (C[k].c === z && !(z === "oc" && ["KI", "FJ", "TO", "WS", "TV"].includes(k))){ const q = C[k].b; b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[2]), Math.max(b[3], q[3])]; }
+  if (z === "eu") b = [b[0], b[1], Math.min(b[2], 640), b[3]]; // la Russia arriva fino al Pacifico: taglio
+  return ZBOX[z] = b;
+}
+function reframe(){
+  if (G && G.cur && G.mode === "nome" && !G.done) return goTo(focusView(G.cur));
+  goTo(fitBox(zoneBox(G ? G.zona : (EX ? "mondo" : S.opt.zona)), .95));
+}
+/* su telefono (schermo stretto) la zona riempie l'altezza: si trascina di lato invece di vedere un mondo minuscolo */
+function startView(z){ const b = zoneBox(z), R = rect(), v = fitBox(b, .95);
+  if ((R.r - R.l) / (R.b - R.t) < (b[2] - b[0]) / (b[3] - b[1]) * .8){ const k = Math.min(v.k * 2.4, (R.b - R.t) / (b[3] - b[1]) * .92); const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2; return { k, x:(R.l + R.r) / 2 - k * cx, y:(R.t + R.b) / 2 - k * cy }; }
+  return v; }
+function focusView(k){ const c = C[k]; return fitBox(c.b, .5, 90); }
+const screenOf = (x, y) => [V.x + x * V.k, V.y + y * V.k];
+
+/* gesti: un dito trascina, due dita zoomano, rotellina zooma; un tocco senza movimento è una "scelta" */
+const PT = new Map(); let pinch = null, moved = 0, down = null;
+mapEl.addEventListener("pointerdown", e => {
+  cancelAnimationFrame(anim); mapEl.setPointerCapture(e.pointerId);
+  PT.set(e.pointerId, [e.clientX, e.clientY]);
+  if (PT.size === 1){ moved = 0; down = { x:e.clientX, y:e.clientY, t:performance.now() }; }
+  if (PT.size === 2){ const [a, b] = [...PT.values()]; pinch = { d:Math.hypot(a[0] - b[0], a[1] - b[1]), k:V.k, cx:(a[0] + b[0]) / 2, cy:(a[1] + b[1]) / 2 }; moved = 99; }
+});
+mapEl.addEventListener("pointermove", e => {
+  if (!PT.has(e.pointerId)){ hover(e); return; }
+  const p = PT.get(e.pointerId), dx = e.clientX - p[0], dy = e.clientY - p[1];
+  PT.set(e.pointerId, [e.clientX, e.clientY]);
+  if (PT.size >= 2 && pinch){
+    const [a, b] = [...PT.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]), cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
+    V.x += cx - pinch.cx; V.y += cy - pinch.cy; pinch.cx = cx; pinch.cy = cy;
+    zoomAt(pinch.k * d / pinch.d / V.k, cx, cy); return;
+  }
+  if (down){ moved = Math.max(moved, Math.hypot(e.clientX - down.x, e.clientY - down.y)); }
+  if (moved > 6){ mapEl.classList.add("drag"); V.x += dx; V.y += dy; apply(); $("#tip").style.display = "none"; }
+});
+function up(e){
+  const was = PT.has(e.pointerId); PT.delete(e.pointerId);
+  if (PT.size < 2) pinch = null;
+  if (PT.size === 0){ mapEl.classList.remove("drag");
+    if (was && moved <= 6 && down && performance.now() - down.t < 700) tap(e.clientX, e.clientY);
+    down = null; }
+}
+mapEl.addEventListener("pointerup", up); mapEl.addEventListener("pointercancel", e => { PT.delete(e.pointerId); pinch = null; down = null; mapEl.classList.remove("drag"); });
+mapEl.addEventListener("wheel", e => { e.preventDefault(); cancelAnimationFrame(anim); zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0022)), e.clientX, e.clientY); }, { passive:false });
+mapEl.addEventListener("pointerleave", () => $("#tip").style.display = "none");
+mapEl.addEventListener("dblclick", e => { e.preventDefault(); });
+document.addEventListener("gesturestart", e => e.preventDefault());
+addEventListener("scroll", () => { if (scrollX || scrollY) scrollTo(0, 0); }); // la pagina non deve mai scorrere: si muove solo la mappa // niente zoom della pagina su iPhone
+
+function hitAt(x, y){
+  const el = document.elementFromPoint(x, y);
+  if (el && el.dataset && el.dataset.k) return el.dataset.k;
+  /* vicino a un puntino di un paese piccolo? */
+  let best = null, bd = matchMedia("(pointer:coarse)").matches ? 22 : 14;
+  for (const k in MARK){ if (MARK[k].classList.contains("off")) continue; const c = C[k], [sx, sy] = screenOf(c.x, c.y), d = Math.hypot(sx - x, sy - y); if (d < bd){ bd = d; best = k; } }
+  return best;
+}
+function hover(e){
+  const tip = $("#tip");
+  /* nome al passaggio del mouse solo in Esplora (in "Dov'è?" sarebbe un aiuto) */
+  if (!EX || matchMedia("(pointer:coarse)").matches){ tip.style.display = "none"; return; }
+  const k = hitAt(e.clientX, e.clientY);
+  if (!k){ tip.style.display = "none"; return; }
+  tip.textContent = C[k].n; tip.style.display = "block"; tip.style.left = e.clientX + 14 + "px"; tip.style.top = e.clientY + 12 + "px";
+}
+function tap(x, y){
+  const k = hitAt(x, y);
+  if (G && G.mode === "dove" && !G.wait) return answerDove(k, x, y);
+  if (EX) return exPick(k);
+  if (!G && k && C[k] && C[k].q && $("#end").hidden) return explore(k);
+}
+
+/* colori e scritte sulla mappa */
+let LABELS = [];
+function paint(){
+  const zona = G ? G.zona : (EX ? "mondo" : S.opt.zona);
+  for (const c of M.c){
+    const p = PATH[c.k]; if (!p) continue;
+    const off = c.q && zona !== "mondo" && !inZone(c.k, zona) && !(G && G.ripasso);
+    p.setAttribute("class", "c" + (c.q ? "" : " t") + (off ? " off" : "") + (!G && !EX && c.q ? (S.c[c.k] && S.c[c.k].r ? " rip" : isKnown(c.k) ? " known" : "") : ""));
+    if (MARK[c.k]) MARK[c.k].setAttribute("class", "m" + (off ? " off" : "") + (!G && !EX ? (S.c[c.k] && S.c[c.k].r ? " rip" : isKnown(c.k) ? " known" : "") : ""));
+  }
+  $("#glows").innerHTML = "";
+}
+function hl(k, cls){
+  if (!k) return;
+  const p = PATH[k]; if (p){ p.classList.remove("tg", "ok", "ko", "sel", "known", "rip", "off"); p.classList.add(cls); p.parentNode.insertBefore(p, $("#glows")); }
+  if (MARK[k]){ MARK[k].classList.remove("tg", "ok", "ko", "sel", "off"); MARK[k].classList.add(cls); }
+  if (cls === "tg" || cls === "ok") $("#glows").innerHTML = `<path class="glow${cls === "ok" ? " ok" : ""}" d="${C[k].d}"/>`;
+}
+function setLabels(list){ LABELS = list; placeLabels(); }
+function placeLabels(){
+  $("#labels").innerHTML = LABELS.map(l => { const c = C[l.k], [x, y] = screenOf(c.x, c.y);
+    return `<div class="lab ${l.cls || ""}" style="left:${x}px;top:${y}px">${esc(l.t || c.n)}${l.sub ? `<small>${esc(l.sub)}</small>` : ""}</div>`; }).join("");
+}
+
+/* ============ schermata iniziale ============ */
+function showOnly(...ids){ for (const id of ["home", "qbar", "ans", "end", "exbar", "excard"]) $("#" + id).hidden = !ids.includes(id); }
+function home(){
+  G = null; EX = null; document.body.className = "home"; showOnly("home"); setLabels([]); paint();
+  const z = S.opt.zona, inz = Q.filter(k => inZone(k, z)), kn = inz.filter(isKnown).length, rip = ripList();
+  const pct = inz.length ? kn / inz.length : 0, R = 25, L = 2 * Math.PI * R;
+  $("#home").innerHTML = `
+    <div><h1>Nazioni</h1><p>Impara a riconoscere tutte le nazioni del mondo. Quelle che sbagli finiscono nel ripasso finché non le azzecchi due volte di fila.</p></div>
+    <div class="prog"><div class="ring"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${R}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/><circle cx="29" cy="29" r="${R}" fill="none" stroke="url(#gr)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${L * pct} ${L}" ${pct ? "" : "hidden"}/><defs><linearGradient id="gr"><stop offset="0" stop-color="#2f7bff"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs></svg><b>${Math.round(pct * 100)}%</b></div>
+      <div class="tx">Ne conosci <b>${kn} su ${inz.length}</b><br>${z === "mondo" ? "in tutto il mondo" : "in " + ZONE[z]}${rip.length ? ` · <b style="color:#fda4af">${rip.length}</b> da ripassare` : ""}</div></div>
+    <div class="modes">
+      <button class="mode" onclick="start('nome')"><span class="ic" style="background:linear-gradient(135deg,#fbbf24,#f97316)">🗺️</span><span><b>Che nazione è?</b><span class="d">Si colora una nazione sulla mappa, tu dici come si chiama</span></span></button>
+      <button class="mode" onclick="start('dove')"><span class="ic" style="background:linear-gradient(135deg,#38bdf8,#6366f1)">📍</span><span><b>Dov'è?</b><span class="d">Ti dico il nome, tu la tocchi sulla mappa</span></span></button>
+      <button class="mode" onclick="start('misto',true)" ${rip.length ? "" : "disabled"}><span class="ic" style="background:linear-gradient(135deg,#fb7185,#e11d48)">🔁</span><span><b>Ripasso</b><span class="d">${rip.length ? "Solo le nazioni che hai sbagliato, nei due modi" : "Vuoto: le nazioni che sbagli arrivano qui"}</span></span>${rip.length ? `<span class="badge">${rip.length}</span>` : ""}</button>
+      <button class="mode" onclick="explore()"><span class="ic" style="background:linear-gradient(135deg,#34d399,#14b8a6)">🔎</span><span><b>Esplora</b><span class="d">Tocca la mappa e scopri i nomi, senza punteggio</span></span></button>
+    </div>
+    <div class="sec"><h3>Zona</h3><div class="chips">${Object.entries(ZONE).map(([k, t]) => `<button class="chip ${z === k ? "on" : ""}" onclick="opt('zona','${k}')">${t}</button>`).join("")}</div></div>
+    <div class="sec"><h3>Domande per partita</h3><div class="chips">${[10, 20, 50, 0].map(n => `<button class="chip ${S.opt.n === n ? "on" : ""}" onclick="opt('n',${n})">${n || "Tutte (" + inz.length + ")"}</button>`).join("")}</div></div>
+    <div class="sec"><h3>Come rispondo a "Che nazione è?"</h3><div class="chips"><button class="chip ${S.opt.risp === "scelte" ? "on" : ""}" onclick="opt('risp','scelte')">Scelgo tra 4</button><button class="chip ${S.opt.risp === "scrivo" ? "on" : ""}" onclick="opt('risp','scrivo')">La scrivo io</button></div></div>
+    ${rip.length ? `<div class="sec"><h3>Da ripassare (${rip.length})</h3><div class="riplist">${rip.sort((a, b) => C[a].n.localeCompare(C[b].n, "it")).map(k => `<button onclick="explore('${k}')">${esc(C[k].n)}</button>`).join("")}</div></div>` : ""}
+    <div class="legend"><span><i style="background:#1d5a4a"></i>La conosci</span><span><i style="background:#6b2236"></i>Da ripassare</span><span><i style="background:#1b2233;border:1px solid #3a4560"></i>Mai vista</span></div>
+    <div class="sync" id="sync"><i></i><span></span></div>`;
+  renderSync();
+  requestAnimationFrame(() => goTo(fitBox(zoneBox(z), .95), 500));
+}
+function opt(k, v){ S.opt[k] = v; save(); home(); }
+
+/* ============ partita ============ */
+let G = null;
+function start(mode, ripasso = false){
+  const z = ripasso ? "mondo" : S.opt.zona;
+  let pool = ripasso ? ripList() : Q.filter(k => inZone(k, z));
+  pool = shuffle(pool.slice());
+  /* prima quelle mai viste o sbagliate, poi le altre */
+  if (!ripasso) pool.sort((a, b) => score(a) - score(b) + (Math.random() - .5) * .8);
+  const n = ripasso ? pool.length : (S.opt.n || pool.length);
+  G = { mode, mix: mode === "misto", ripasso, zona: z, list: pool.slice(0, n), i: -1, ok: 0, ko: 0, wrong: [], cur: null, wait: false };
+  document.body.className = "play"; paint(); next();
+}
+function score(k){ const x = S.c[k]; if (!x) return 0; if (x.r) return -1; return Math.min(3, x.ok) - x.ko * .5; }
+function next(){
+  G.i++; setLabels([]); paint();
+  if (G.i >= G.list.length) return finish();
+  G.cur = G.list[G.i]; G.wait = false;
+  G.qmode = G.mix ? (Math.random() < .5 ? "nome" : "dove") : G.mode;
+  document.body.className = "play " + (G.qmode === "dove" ? "dove" : "nome");
+  G.mode = G.mix ? G.qmode : G.mode;
+  showOnly("qbar", "ans");
+  const prog = `${G.i + 1} di ${G.list.length}  ·  ✓ ${G.ok}  ✗ ${G.ko}${G.ripasso ? "  ·  Ripasso" : ""}`;
+  const pct = G.i / G.list.length * 100;
+  if (G.qmode === "nome"){
+    $("#qbar").innerHTML = `<div class="q"><small>${prog}</small><b>Che nazione è quella <em>colorata</em>?</b><div class="bar"><i style="width:${pct}%"></i></div></div>${exitBtn()}`;
+    hl(G.cur, "tg");
+    if (S.opt.risp === "scrivo") askType(); else askChoices();
+    requestAnimationFrame(() => goTo(focusView(G.cur)));
+  } else {
+    $("#qbar").innerHTML = `<div class="q"><small>${prog}</small><b>Dov'è <em>${esc(C[G.cur].n)}</em>?</b><div class="bar"><i style="width:${pct}%"></i></div></div>${exitBtn()}`;
+    $("#ans").innerHTML = `<div class="hint">Trascina e ingrandisci la mappa, poi tocca la nazione.</div><div class="row"><button class="btn grow" onclick="answerDove(null)">Non lo so</button></div>`;
+    requestAnimationFrame(() => goTo(startView(G.zona)));
+  }
+}
+const exitBtn = () => `<button class="x" onclick="quit()" aria-label="Esci"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+function quit(){ clearTimeout(G && G.auto); const done = G ? G.ok + G.ko : 0; if (done){ G.list = G.list.slice(0, done); finish(); } else home(); }
+
+/* risposta: 4 scelte, con i paesi vicini come trappole (sono quelli che si confondono) */
+function askChoices(){
+  const c = C[G.cur];
+  const near = Q.filter(k => k !== G.cur).map(k => [k, Math.hypot(C[k].x - c.x, C[k].y - c.y)]).sort((a, b) => a[1] - b[1]).slice(0, 7).map(a => a[0]);
+  const pick = shuffle(near).slice(0, 2);
+  const far = shuffle(Q.filter(k => k !== G.cur && !pick.includes(k) && C[k].c === c.c)); pick.push(far[0] || shuffle(Q.filter(k => k !== G.cur && !pick.includes(k)))[0]);
+  const opts = shuffle([G.cur, ...pick]);
+  $("#ans").innerHTML = `<div class="opts">${opts.map(k => `<button class="opt" data-k="${k}" onclick="answerNome('${k}')">${esc(C[k].n)}</button>`).join("")}</div>
+    <div class="row"><button class="btn grow" onclick="answerNome(null)">Non lo so</button></div>`;
+}
+function askType(){
+  $("#ans").innerHTML = `<div class="type"><div class="sugg" id="sugg" hidden></div><input id="ty" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Scrivi il nome…" enterkeyhint="done"></div>
+    <div class="row"><button class="btn" onclick="answerNome(null)">Non lo so</button><button class="btn blue grow" onclick="submitType()">Conferma</button></div>`;
+  const inp = $("#ty"); let sel = -1;
+  inp.addEventListener("input", () => { sel = -1; suggest(inp.value, sel); });
+  inp.addEventListener("keydown", e => {
+    const items = [...document.querySelectorAll("#sugg button")];
+    if (e.key === "ArrowDown" || e.key === "ArrowUp"){ e.preventDefault(); if (!items.length) return; sel = (sel + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; suggest(inp.value, sel); }
+    if (e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); if (sel >= 0 && items[sel]) inp.value = items[sel].textContent; submitType(); }
+  });
+  if (!matchMedia("(pointer:coarse)").matches) setTimeout(() => inp.focus(), 50);
+}
+function suggest(v, sel){
+  const s = $("#sugg"), n = norm(v);
+  if (n.length < 2){ s.hidden = true; return; }
+  const hits = NAMEIDX.filter(x => x.a.some(a => a.startsWith(n) || (n.length >= 3 && a.includes(" " + n)))).slice(0, 5);
+  if (!hits.length){ s.hidden = true; return; }
+  s.hidden = false; s.innerHTML = hits.map((x, i) => `<button class="${i === sel ? "on" : ""}" onmousedown="event.preventDefault()" onclick="$('#ty').value=this.textContent;submitType()">${esc(C[x.k].n)}</button>`).join("");
+}
+function matchName(v){
+  const n = norm(v); if (!n) return null;
+  for (const x of NAMEIDX) if (x.a.includes(n)) return x.k;
+  /* piccoli errori di battitura: accetto solo se c'è un solo paese abbastanza vicino */
+  let best = null, bd = 9, second = 9;
+  for (const x of NAMEIDX) for (const a of x.a){ const d = lev(a, n); if (d < bd){ if (best !== x.k) second = bd; bd = d; best = x.k; } else if (d < second && x.k !== best) second = d; }
+  const tol = n.length >= 9 ? 2 : n.length >= 4 ? 1 : 0;
+  return bd <= tol && second > bd ? best : null;
+}
+function submitType(){ const v = $("#ty").value; if (!v.trim()) return; const k = matchName(v); answerNome(k || "?" + v); }
+
+function answerNome(k){
+  if (G.wait) return; G.wait = true;
+  const good = k === G.cur;
+  document.querySelectorAll(".opt").forEach(b => { b.disabled = true; if (b.dataset.k === G.cur) b.classList.add("ok"); else if (b.dataset.k === k) b.classList.add("ko"); });
+  const x = mark(G.cur, good); good ? G.ok++ : (G.ko++, G.wrong.push(G.cur));
+  hl(G.cur, good ? "ok" : "ko");
+  setLabels([{ k:G.cur, cls: good ? "ok" : "ko" }]);
+  const said = k && k[0] === "?" ? k.slice(1) : k ? C[k].n : null;
+  feedback(good, good ? "Giusto! " + C[G.cur].n : "Era " + C[G.cur].n,
+    good ? (x.r ? "Ancora una giusta e esce dal ripasso" : x.ok === 1 && !G.ripasso ? "Nuova nazione imparata" : CONT_N[C[G.cur].c]) : (said ? `Hai risposto ${said}. ` : "") + "L'ho messa nel ripasso");
+}
+function answerDove(k, sx, sy){
+  if (G.wait) return;
+  /* tocco vicinissimo al centro di un paese minuscolo: vale come giusto */
+  const c = C[G.cur];
+  if (k !== G.cur && sx != null){ const [tx, ty] = screenOf(c.x, c.y); if (Math.hypot(tx - sx, ty - sy) < (matchMedia("(pointer:coarse)").matches ? 24 : 16)) k = G.cur; }
+  G.wait = true;
+  const good = k === G.cur;
+  const x = mark(G.cur, good); good ? G.ok++ : (G.ko++, G.wrong.push(G.cur));
+  hl(G.cur, "ok");
+  const labs = [{ k:G.cur, cls:"ok" }];
+  let sub;
+  if (!good && k && C[k]){ hl(k, "ko"); labs.push({ k, cls:"ko", sub:"hai toccato" }); sub = `Hai toccato ${C[k].n}, a ${fmtKm(km(C[k].ll, c.ll))}. L'ho messa nel ripasso`; }
+  else if (!good) sub = k === null && sx == null ? "L'ho messa nel ripasso" : "Hai toccato il mare. L'ho messa nel ripasso";
+  setLabels(labs);
+  /* inquadro la risposta giusta (e quella sbagliata, se vicina) */
+  let b = c.b.slice();
+  if (!good && k && C[k] && km(C[k].ll, c.ll) < 4000){ const q = C[k].b; b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[2]), Math.max(b[3], q[3])]; }
+  feedback(good, good ? "Giusto! " + c.n : "Ecco dov'è " + c.n, good ? (x.r ? "Ancora una giusta e esce dal ripasso" : CONT_N[c.c]) : sub);
+  requestAnimationFrame(() => goTo(fitBox(b, .6, 70)));
+}
+function feedback(good, title, sub){
+  $("#ans").innerHTML = `<div class="fb ${good ? "ok" : "ko"}"><span class="ico">${good ? "✓" : "✗"}</span><span class="t"><b>${esc(title)}</b><span>${esc(sub || "")}</span></span>
+    <button class="btn blue" id="nx" onclick="next()">${G.i + 1 >= G.list.length ? "Fine" : "Avanti"}</button></div>`;
+  const nx = $("#nx"); if (!matchMedia("(pointer:coarse)").matches) nx.focus();
+  if (good){ clearTimeout(G.auto); const i = G.i; G.auto = setTimeout(() => { if (G && G.i === i && G.wait) next(); }, 1400); }
+}
+document.addEventListener("keydown", e => { if (e.key === "Enter" && G && G.wait && document.activeElement?.id !== "ty"){ e.preventDefault(); next(); }
+  if (e.key === "Escape"){ if (G) quit(); else if (EX) home(); }
+  if (G && !G.wait && G.qmode === "nome" && S.opt.risp === "scelte" && /^[1-4]$/.test(e.key)){ const b = document.querySelectorAll(".opt")[+e.key - 1]; if (b) b.click(); } });
+function finish(){
+  const tot = G.ok + G.ko, wrong = [...new Set(G.wrong)];
+  setLabels([]); paint(); document.body.className = "home"; showOnly("end");
+  const pct = tot ? Math.round(G.ok / tot * 100) : 0;
+  $("#end").innerHTML = `<h2>${pct >= 90 ? "Fantastico!" : pct >= 70 ? "Bravo!" : pct >= 40 ? "Buon allenamento" : "Si comincia così"}</h2>
+    <div class="big">${G.ok}<span style="color:var(--faint);font-weight:500">/${tot}</span></div>
+    <p class="muted">${pct}% giuste${G.ripasso ? " nel ripasso" : ""}</p>
+    ${wrong.length ? `<p class="muted" style="margin-top:14px">Da ripassare (le trovi nel Ripasso):</p><div class="riplist">${wrong.map(k => `<button onclick="explore('${k}')">${esc(C[k].n)}</button>`).join("")}</div>` : `<p class="muted" style="margin-top:14px">Nessun errore. Niente da aggiungere al ripasso.</p>`}
+    <div class="row">${wrong.length ? `<button class="btn blue grow" onclick="startList(${JSON.stringify(wrong).replace(/"/g, "'")})">Ripassa questi</button>` : ""}<button class="btn grow" onclick="start('${G.mix ? "misto" : G.mode}',${G.ripasso})">Gioca ancora</button><button class="btn grow" onclick="home()">Menu</button></div>`;
+  goTo(fitBox(zoneBox(G.zona), .95));
+}
+function startList(list){ G = { mode:"misto", mix:true, ripasso:true, zona:"mondo", list:shuffle(list.slice()), i:-1, ok:0, ko:0, wrong:[], cur:null, wait:false }; document.body.className = "play"; paint(); next(); }
+
+/* ============ esplora ============ */
+let EX = null;
+function explore(k){
+  G = null; EX = { k:null }; document.body.className = "explore"; showOnly("exbar"); paint();
+  $("#exbar").innerHTML = `<div class="q"><b>Esplora</b><small>Tocca una nazione per vedere come si chiama</small></div>${`<button class="x" onclick="home()" aria-label="Chiudi"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`}`;
+  setLabels([]);
+  if (k) exPick(k, true); else requestAnimationFrame(() => goTo(fitBox(zoneBox("mondo"), .95)));
+}
+function exPick(k, zoom){
+  paint(); if (!k || !C[k]){ EX.k = null; $("#excard").hidden = true; setLabels([]); return; }
+  const c = C[k]; EX.k = k;
+  if (!c.q){ setLabels([{ k, t:c.n, sub:"territorio, non è nel gioco" }]); $("#excard").hidden = true; return; }
+  hl(k, "sel"); const x = st(k);
+  setLabels([{ k, cls:"sel" }]);
+  $("#excard").hidden = false;
+  $("#excard").innerHTML = `<b>${esc(c.n)}</b><div class="muted">${esc(CONT_N[c.c] || "")}${x.ok || x.ko ? ` · ✓ ${x.ok}  ✗ ${x.ko}` : " · mai chiesta"}${x.r ? " · da ripassare" : ""}</div>
+    <div class="row"><button class="btn grow" onclick="setRip('${k}',${x.r ? 0 : 1});exPick('${k}')">${x.r ? "Togli dal ripasso" : "Aggiungi al ripasso"}</button></div>`;
+  if (zoom) requestAnimationFrame(() => goTo(focusView(k)));
+}
+
+/* ============ sincronizzazione (stessa repository privata della dashboard) ============ */
+const SYNC_FILE = "nazioni/stato.json";
+const syCfg = () => { let gh = "", repo = ""; try { gh = localStorage.getItem("pc_gh") || ""; repo = localStorage.getItem("pc_repo") || "CyberGanna/portale-dati"; } catch(e) {} return { gh, repo }; };
+const b64e = str => { const u = new TextEncoder().encode(str); let b = ""; for (let i = 0; i < u.length; i += 0x8000) b += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(b); };
+const b64d = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), c => c.charCodeAt(0)));
+const SY = { busy:false, again:false, err:"", last:0, timer:null };
+function syncSoon(ms = 2000){ if (!syCfg().gh) return; clearTimeout(SY.timer); SY.timer = setTimeout(syncNow, ms); }
+async function syncNow(){
+  if (!syCfg().gh){ renderSync(); return; } if (SY.busy){ SY.again = true; return; }
+  SY.busy = true; SY.err = ""; renderSync();
+  try { for (let i = 0; i < 3; i++){ try { await syncOnce(); break; } catch(e){ if (e.status === 409 || e.status === 422) continue; throw e; } } SY.last = Date.now(); }
+  catch(e){ SY.err = String(e.message || e); console.warn("sync nazioni", e); }
+  SY.busy = false; renderSync(); if (SY.again){ SY.again = false; syncSoon(300); }
+}
+async function syncOnce(){
+  const c = syCfg(), url = `https://api.github.com/repos/${c.repo}/contents/${SYNC_FILE}`, H = { Authorization:"Bearer " + c.gh, Accept:"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28" };
+  let rem = { v:1, c:{} }, sha;
+  const r = await fetch(url + "?t=" + Date.now(), { cache:"no-store", headers:H });
+  if (r.ok){ const j = await r.json(); sha = j.sha; try { rem = { ...rem, ...JSON.parse(b64d(j.content || "")) }; } catch(e) {} }
+  else if (r.status === 401) throw new Error("la chiave GitHub non è valida");
+  else if (r.status !== 404) throw new Error("GitHub " + r.status);
+  let dirty = false, changed = false;
+  for (const k of new Set([...Object.keys(S.c), ...Object.keys(rem.c || {})])){
+    const a = S.c[k], b = rem.c[k];
+    if (b && (!a || b.t > a.t)){ S.c[k] = b; changed = true; }
+    else if (a && (!b || a.t > b.t)){ rem.c[k] = a; dirty = true; }
+  }
+  if (changed){ save(); if (!G && !EX) home(); }
+  if (dirty){
+    const p = await fetch(url, { method:"PUT", headers:{ ...H, "Content-Type":"application/json" }, body:JSON.stringify({ message:"Nazioni: progressi", content:b64e(JSON.stringify(rem)), ...(sha ? { sha } : {}) }) });
+    if (!p.ok){ const e = new Error(p.status === 403 ? "la chiave GitHub non può scrivere" : "GitHub " + p.status); e.status = p.status; throw e; }
+  }
+}
+function renderSync(){
+  const el = $("#sync"); if (!el) return; const on = !!syCfg().gh;
+  el.dataset.st = !on ? "off" : SY.err ? "err" : SY.busy ? "busy" : "ok";
+  el.querySelector("span").textContent = !on ? "Progressi salvati su questo dispositivo (aprila dalla dashboard per averli uguali su PC e iPhone)"
+    : SY.err ? "Non riesco a sincronizzare: " + SY.err : SY.busy ? "Sincronizzo…" : "Progressi uguali su PC, iPhone e iPad";
+}
+setInterval(() => { if (document.visibilityState === "visible" && !G) syncNow(); }, 90000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") syncSoon(300); });
+
+/* ============ avvio ============ */
+addEventListener("resize", () => { if (!M) return; if (!G && !EX) goTo(fitBox(zoneBox(S.opt.zona), .95), 0); else apply(); });
+(async function init(){
+  try {
+    M = await (await fetch("mappa.json")).json();
+  } catch(e){ document.body.innerHTML = `<p style="padding:30px;color:#fda4af">Non riesco a caricare la mappa. Controlla la connessione e riapri.</p>`; return; }
+  for (const c of M.c) C[c.k] = c;
+  Q = M.c.filter(c => c.q).map(c => c.k);
+  NAMEIDX = Q.map(k => { const c = C[k]; return { k, a:[...new Set([c.n, c.en, c.en2, ...(ALIAS[k] || [])].map(norm))] }; });
+  draw();
+  kMin = Math.min(innerWidth / M.W, innerHeight / M.H) * .6; kMax = kMin * 400;
+  Object.assign(V, fitBox([0, 0, M.W, M.H], .95)); apply();
+  home(); syncSoon(400);
+})();
+</script>
+</body>
+</html>
